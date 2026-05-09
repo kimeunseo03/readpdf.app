@@ -61,130 +61,88 @@ async function fetchApartmentTradeApi(
     }
 
     const xml = await res.text();
+    console.log("public_transaction_api_response_preview", xml.slice(0, 300));
 
-console.log("public_transaction_api_response_preview", xml.slice(0, 300));
+    const itemMatches = [...xml.matchAll(/<item>([\s\S]*?)<\/item>/g)];
+    const transactions: TransactionItem[] = [];
+    const seenTransactionKeys = new Set<string>();
+    const allAptNames = new Set<string>();
 
-const itemMatches = [...xml.matchAll(/<item>([\s\S]*?)<\/item>/g)];
+    for (const match of itemMatches) {
+      const itemXml = match[1];
 
-const transactions: TransactionItem[] = [];
-const seenTransactionKeys = new Set<string>();
-const allAptNames = new Set<string>();
+      const aptNm = itemXml.match(/<aptNm>(.*?)<\/aptNm>/)?.[1]?.trim() ?? "";
+      if (aptNm) allAptNames.add(aptNm);
 
-for (const match of itemMatches) {
-  const itemXml = match[1];
+      const area = Number(
+        itemXml.match(/<excluUseAr>(.*?)<\/excluUseAr>/)?.[1] ?? ""
+      );
 
-  const aptNm =
-    itemXml.match(/<aptNm>(.*?)<\/aptNm>/)?.[1]?.trim() ?? "";
-  
-  if (aptNm) {
-  allAptNames.add(aptNm);
-}
+      const dealAmount = Number(
+        (itemXml.match(/<dealAmount>(.*?)<\/dealAmount>/)?.[1] ?? "")
+          .replace(/,/g, "")
+          .trim()
+      );
 
-  const areaText =
-    itemXml.match(/<excluUseAr>(.*?)<\/excluUseAr>/)?.[1] ?? "";
+      const dealYear = Number(
+        itemXml.match(/<dealYear>(.*?)<\/dealYear>/)?.[1] ?? 0
+      );
 
-  const area = Number(areaText);
+      const dealMonth = Number(
+        itemXml.match(/<dealMonth>(.*?)<\/dealMonth>/)?.[1] ?? 0
+      );
 
-  const dealAmountText =
-    itemXml.match(/<dealAmount>(.*?)<\/dealAmount>/)?.[1] ?? "";
+      const dealDay = Number(
+        itemXml.match(/<dealDay>(.*?)<\/dealDay>/)?.[1] ?? 0
+      );
 
-  const cleanedAmount = dealAmountText.replace(/,/g, "").trim();
+      const floor = Number(
+        itemXml.match(/<floor>(.*?)<\/floor>/)?.[1] ?? 0
+      );
 
-  const dealAmount = Number(cleanedAmount);
+      if (!dealAmount || !area) continue;
 
-  const dealYear = Number(
-    itemXml.match(/<dealYear>(.*?)<\/dealYear>/)?.[1] ?? 0
-  );
+      const isSimilarArea =
+        !params.exclusiveAreaM2 ||
+        Math.abs(area - params.exclusiveAreaM2) <= 3;
 
-  const dealMonth = Number(
-    itemXml.match(/<dealMonth>(.*?)<\/dealMonth>/)?.[1] ?? 0
-  );
+      if (!isSimilarArea) continue;
 
-  const dealDay = Number(
-    itemXml.match(/<dealDay>(.*?)<\/dealDay>/)?.[1] ?? 0
-  );
+      const transactionKey = [
+        dealAmount,
+        dealYear,
+        dealMonth,
+        dealDay,
+        area,
+        floor
+      ].join("|");
 
-  const floor = Number(
-    itemXml.match(/<floor>(.*?)<\/floor>/)?.[1] ?? 0
-  );
+      if (seenTransactionKeys.has(transactionKey)) continue;
 
-  if (!dealAmount || !area) {
-    continue;
-  }
+      seenTransactionKeys.add(transactionKey);
 
- const normalizedApiName = aptNm.replace(/\s/g, "");
-const normalizedTargetName =
-  params.buildingName?.replace(/\s/g, "") ?? "";
+      transactions.push({
+        dealAmount,
+        dealYear,
+        dealMonth,
+        dealDay,
+        area,
+        floor
+      });
+    }
 
-const isSameApartment =
-  normalizedTargetName.length > 0 &&
-  (
-    normalizedApiName.includes(normalizedTargetName) ||
-    normalizedTargetName.includes(normalizedApiName)
-  );
+    console.log("api_item_count", itemMatches.length);
+    console.log("api_apt_names", Array.from(allAptNames).slice(0, 20).join(", "));
+    console.log(
+      "valuation_filter_input",
+      JSON.stringify({
+        buildingName: params.buildingName,
+        exclusiveAreaM2: params.exclusiveAreaM2
+      })
+    );
+    console.log("filtered_transaction_count", transactions.length);
 
-const isSimilarArea =
-  !params.exclusiveAreaM2 ||
-  Math.abs(area - params.exclusiveAreaM2) <= 3;
-
-if (!isSimilarArea) {
-  continue;
-}
-
-const transactionKey = [
-  dealAmount,
-  dealYear,
-  dealMonth,
-  dealDay,
-  area,
-  floor
-].join("|");
-
-if (seenTransactionKeys.has(transactionKey)) {
-  continue;
-}
-
-seenTransactionKeys.add(transactionKey);
-
-transactions.push({
-  dealAmount,
-  dealYear,
-  dealMonth,
-  dealDay,
-  area,
-  floor
-});
-
-console.log(
-  "api_item_count",
-  itemMatches.length
-);
-
-console.log(
-  "valuation_filter_input",
-  JSON.stringify({
-    buildingName: params.buildingName,
-    exclusiveAreaM2: params.exclusiveAreaM2
-  })
-);
-
-console.log(
-  "api_apt_names_preview",
-  transactions.slice(0, 5)
-);
-    
-console.log("api_item_count", itemMatches.length);
-console.log("api_apt_names", Array.from(allAptNames).slice(0, 20).join(", "));
-console.log(
-  "valuation_filter_input",
-  JSON.stringify({
-    buildingName: params.buildingName,
-    exclusiveAreaM2: params.exclusiveAreaM2
-  })
-);    
-console.log("filtered_transaction_count", transactions.length);
-
-return transactions;
+    return transactions;
   } catch (error) {
     console.error("fetchApartmentTradeApi_error", error);
     return [];
@@ -198,28 +156,26 @@ export async function fetchPublicTransactions(
   console.log("valuation_legalDongCode", params.legalDongCode ?? "undefined");
 
   const baseArea = params.exclusiveAreaM2 ?? 84;
+  const recentMonths = getRecentDealYearMonths(12);
+  const apiTransactions: TransactionItem[] = [];
 
- const recentMonths = getRecentDealYearMonths(12);
-const apiTransactions: TransactionItem[] = [];
+  for (const dealYearMonth of recentMonths) {
+    const monthlyTransactions = await fetchApartmentTradeApi({
+      legalDongCode: params.legalDongCode,
+      dealYearMonth,
+      buildingName: params.buildingName,
+      exclusiveAreaM2: params.exclusiveAreaM2
+    });
 
-for (const dealYearMonth of recentMonths) {
-  const monthlyTransactions = await fetchApartmentTradeApi({
-    legalDongCode: params.legalDongCode,
-    dealYearMonth,
-    buildingName: params.buildingName,
-    exclusiveAreaM2: params.exclusiveAreaM2
-  });
+    apiTransactions.push(...monthlyTransactions);
 
-  apiTransactions.push(...monthlyTransactions);
-
-  if (apiTransactions.length >= 5) {
-    break;
+    if (apiTransactions.length >= 5) break;
   }
-}
 
-if (apiTransactions.length > 0) {
-  return apiTransactions;
-}
+  if (apiTransactions.length > 0) {
+    return apiTransactions;
+  }
+
   return [
     {
       dealAmount: 51000,
