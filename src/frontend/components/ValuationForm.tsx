@@ -233,7 +233,7 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
             onClick={() => window.print()}
             className="no-print mt-5 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium"
           >
-            리포트 인쇄 / PDF 저장
+            PDF 저장
           </button>
 
           <ValuationReport
