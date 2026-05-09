@@ -99,6 +99,25 @@ export async function estimateApartmentValue(
     (t) => t.similarityScore ?? 50
   );
 
+  const averageSimilarity =
+  weights.length > 0
+    ? average(weights)
+    : 0;
+
+let overallConfidence: "A" | "B" | "C" = "C";
+
+if (
+  filteredTransactions.length >= 5 &&
+  averageSimilarity >= 85
+) {
+  overallConfidence = "A";
+} else if (
+  filteredTransactions.length >= 3 &&
+  averageSimilarity >= 70
+) {
+  overallConfidence = "B";
+}
+  
   return {
     success: true,
 
@@ -120,7 +139,7 @@ export async function estimateApartmentValue(
   "IQR 방식으로 극단 거래가 제거된 보정 평균가 사용",
   "동일 단지 거래가 없는 경우 동일 법정동 유사 면적 거래를 fallback으로 사용"
 ],
-
+    overallConfidence,
     warnings
   };
 }
