@@ -58,9 +58,10 @@ async function fetchApartmentTradeApi(
 export async function fetchPublicTransactions(
   params: FetchParams
 ): Promise<TransactionItem[]> {
-  console.log("valuation_region", params.region);
-  console.log("valuation_legalDongCode", params.legalDongCode);
-  const baseArea = params.exclusiveAreaM2 ?? 84;
+  console.log("valuation_region_json", JSON.stringify(params.region));
+  console.log("valuation_legalDongCode", params.legalDongCode ?? "undefined");
+const baseArea = params.exclusiveAreaM2 ?? 84;
+  
 const apiTransactions = await fetchApartmentTradeApi({
   legalDongCode: params.legalDongCode,
   dealYearMonth: "202603",
