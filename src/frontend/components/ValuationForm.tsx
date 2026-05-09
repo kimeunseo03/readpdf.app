@@ -18,6 +18,7 @@ interface ValuationResult {
   lowestPrice?: number;
   highestPrice?: number;
   averagePrice?: number;
+  valuationBasis: string[];
   warnings: string[];
 }
 
@@ -140,6 +141,17 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
               <dd>{result.highestPrice?.toLocaleString() ?? "-"}만원</dd>
             </div>
           </dl>
+          
+          {result.valuationBasis.length > 0 && (
+            <div className="mt-4">
+              <p className="font-medium">평가 기준</p>
+              <ul className="mt-1 list-disc pl-5 text-gray-700">
+                 {result.valuationBasis.map((basis) => (
+                  <li key={basis}>{basis}</li>
+                ))}
+               </ul>
+            </div>
+           )}
 
           {result.warnings.length > 0 && (
             <div className="mt-4">
