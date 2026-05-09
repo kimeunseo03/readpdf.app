@@ -137,8 +137,11 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
             </div>
 
             <div>
-              <dt className="text-gray-500">평균가</dt>
+              <dt className="text-gray-500">보정 평균가</dt>
               <dd>{result.averagePrice?.toLocaleString() ?? "-"}만원</dd>
+            <p className="mt-1 text-xs text-gray-500">
+                유사도 점수와 극단 거래 제거 기준을 반영한 참고값입니다.
+              </p>
             </div>
 
             <div>
