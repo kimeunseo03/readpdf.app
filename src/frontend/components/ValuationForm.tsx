@@ -135,47 +135,47 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
 
           <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
 
-  <div className="rounded-xl border bg-white p-4">
-    <p className="text-xs text-gray-500">보정 평균가</p>
-
-    <p className="mt-2 text-2xl font-bold">
-      {result.averagePrice?.toLocaleString() ?? "-"}만원
-    </p>
-
-    <p className="mt-1 text-xs text-gray-400">
-      유사도/이상치 보정 반영
-    </p>
-  </div>
-
-  <div className="rounded-xl border bg-white p-4">
-    <p className="text-xs text-gray-500">최저 거래가</p>
-
-    <p className="mt-2 text-2xl font-bold">
-      {result.lowestPrice?.toLocaleString() ?? "-"}만원
-    </p>
-  </div>
-
-  <div className="rounded-xl border bg-white p-4">
-    <p className="text-xs text-gray-500">최고 거래가</p>
-
-    <p className="mt-2 text-2xl font-bold">
-      {result.highestPrice?.toLocaleString() ?? "-"}만원
-    </p>
-  </div>
-
-  <div className="rounded-xl border bg-white p-4">
-    <p className="text-xs text-gray-500">평가 신뢰도</p>
-
-    <p className="mt-2 text-2xl font-bold">
-      {result.overallConfidence ?? "-"}
-    </p>
-
-    <p className="mt-1 text-xs text-gray-400">
-      비교 거래 {result.comparableCount}건
-    </p>
-  </div>
-
-</div>
+          <div className="rounded-xl border bg-white p-4">
+            <p className="text-xs text-gray-500">보정 평균가</p>
+        
+            <p className="mt-2 text-2xl font-bold">
+              {result.averagePrice?.toLocaleString() ?? "-"}만원
+            </p>
+        
+            <p className="mt-1 text-xs text-gray-400">
+              유사도/이상치 보정 반영
+            </p>
+          </div>
+        
+          <div className="rounded-xl border bg-white p-4">
+            <p className="text-xs text-gray-500">최저 거래가</p>
+        
+            <p className="mt-2 text-2xl font-bold">
+              {result.lowestPrice?.toLocaleString() ?? "-"}만원
+            </p>
+          </div>
+        
+          <div className="rounded-xl border bg-white p-4">
+            <p className="text-xs text-gray-500">최고 거래가</p>
+        
+            <p className="mt-2 text-2xl font-bold">
+              {result.highestPrice?.toLocaleString() ?? "-"}만원
+            </p>
+          </div>
+        
+          <div className="rounded-xl border bg-white p-4">
+            <p className="text-xs text-gray-500">평가 신뢰도</p>
+        
+            <p className="mt-2 text-2xl font-bold">
+              {result.overallConfidence ?? "-"}
+            </p>
+        
+            <p className="mt-1 text-xs text-gray-400">
+              비교 거래 {result.comparableCount}건
+            </p>
+          </div>
+        
+        </div>
             <div>
               <dt className="text-gray-500">평가 신뢰도</dt>
             
