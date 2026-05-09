@@ -106,6 +106,21 @@ async function fetchApartmentTradeApi(
 
       if (!isSimilarArea) continue;
 
+      let similarityScore = 50;
+      let similarityReason = "동일 법정동";
+
+      if (isSameApartment) {
+      similarityScore += 40;
+      similarityReason = "동일 단지";
+}
+
+if (
+  params.exclusiveAreaM2 &&
+  Math.abs(area - params.exclusiveAreaM2) <= 1
+) {
+  similarityScore += 10;
+}
+
       const transactionKey = [
         dealAmount,
         dealYear,
@@ -125,9 +140,10 @@ async function fetchApartmentTradeApi(
         dealMonth,
         dealDay,
         area,
-        floor
+        floor,
+        similarityScore,
+        similarityReason
       });
-    }
 
     console.log("filtered_transaction_count", transactions.length);
 
