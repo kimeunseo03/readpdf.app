@@ -1,5 +1,9 @@
 import React, { useMemo, useState } from "react";
 import { Upload, FileText, CheckCircle2, AlertTriangle, ShieldCheck, Home, Database, Search, Loader2 } from "lucide-react";
+import * as pdfjsLib from "pdfjs-dist";
+import pdfWorkerSrc from "pdfjs-dist/build/pdf.worker.min.mjs?url";
+
+pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorkerSrc;
 
 const STEPS = [
   "PDF 등록",
@@ -249,9 +253,6 @@ function parseRegistryText(rawText, pageCount) {
 }
 
 async function extractPdfText(file) {
-  const pdfjsLib = await import("pdfjs-dist");
-  pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
-
   const buffer = await file.arrayBuffer();
   const pdf = await pdfjsLib.getDocument({ data: buffer }).promise;
   const pages = [];
@@ -260,10 +261,15 @@ async function extractPdfText(file) {
     const page = await pdf.getPage(pageNo);
     const content = await page.getTextContent();
     const text = content.items.map((item) => item.str).join(" ");
-    pages.push(`\n--- PAGE ${pageNo} ---\n${text}`);
+    pages.push("\n--- PAGE " + pageNo + " ---\n" + text);
   }
 
-  return { text: pages.join("\n"), pageCount: pdf.numPages };
+  const fullText = pages.join("\n");
+  if (!fullText.replace(/\\s/g, "")) {
+    throw new Error("NO_TEXT_LAYER");
+  }
+
+  return { text: fullText, pageCount: pdf.numPages };
 }
 
 function formatWon(value) {
