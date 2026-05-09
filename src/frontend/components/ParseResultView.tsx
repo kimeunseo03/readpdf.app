@@ -20,8 +20,8 @@ function FieldRow({ label, value }: { label: string; value?: string | number | b
 }
 
 export function ParseResultView({ response }: { response: ParseApiResponse }) {
-  const { parseResult, valuation, compliance } = response;
-  const { property, rightsRisk, confidence, review, sourceEvidence, meta } = parseResult;
+  const { parseResult } = response;
+  const { property, rightsRisk, confidence, review, meta } = parseResult;
 
   return (
     <div className="space-y-6">
@@ -86,43 +86,5 @@ export function ParseResultView({ response }: { response: ParseApiResponse }) {
           )}
         </section>
       )}
-
-      <section className="rounded-3xl border bg-white p-6 shadow-sm">
-        <h3 className="font-semibold text-slate-900">원문 근거</h3>
-        <div className="mt-4 space-y-3">
-          {sourceEvidence.length ? sourceEvidence.map((item, index) => (
-            <div key={`${item.field}-${index}`} className="rounded-2xl bg-slate-50 p-4 text-sm">
-              <div className="mb-2 flex items-center justify-between gap-3">
-                <span className="font-semibold text-slate-700">{item.field}</span>
-                <span className="text-xs text-slate-500">p.{item.page} · {(item.confidence * 100).toFixed(0)}%</span>
-              </div>
-              <p className="text-slate-600">{item.textSnippet}</p>
-            </div>
-          )) : <p className="text-sm text-slate-500">표시할 근거 스니펫이 없습니다.</p>}
-        </div>
-      </section>
-
-      <section className="rounded-3xl border bg-white p-6 shadow-sm">
-        <h3 className="font-semibold text-slate-900">가치평가 모듈 연결 상태</h3>
-        <p className="mt-2 text-sm text-slate-600">{valuation.message}</p>
-        <pre className="mt-4 overflow-auto rounded-2xl bg-slate-950 p-4 text-xs text-slate-50">
-          {JSON.stringify(valuation.input ?? null, null, 2)}
-        </pre>
-      </section>
-
-      <section className="rounded-3xl border bg-white p-6 shadow-sm">
-        <h3 className="font-semibold text-slate-900">마스킹된 텍스트 미리보기</h3>
-        <p className="mt-3 whitespace-pre-wrap rounded-2xl bg-slate-50 p-4 text-xs leading-6 text-slate-600">{meta.maskedTextPreview || "텍스트 없음"}</p>
-      </section>
-
-      <section className="rounded-3xl border bg-white p-6 shadow-sm">
-        <h3 className="font-semibold text-slate-900">컴플라이언스</h3>
-        <dl className="mt-4">
-          <FieldRow label="허용 데이터만 사용" value={compliance.usesOnlyPermittedSources ? "예" : "아니오"} />
-          <FieldRow label="무단 크롤링" value={compliance.prohibitedCrawlingDetected ? "탐지" : "없음"} />
-          <FieldRow label="유료서비스 의존" value={compliance.paidServiceDependency ? "있음" : "없음"} />
-        </dl>
-      </section>
-    </div>
   );
 }
