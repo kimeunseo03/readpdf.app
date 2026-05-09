@@ -16,12 +16,9 @@ async function fetchApartmentTradeApi(
   params: PublicTransactionApiParams
 ): Promise<TransactionItem[]> {
   try {
-    if (!params.legalDongCode) {
-      return [];
-    }
+    if (!params.legalDongCode) return [];
 
     const apiKey = process.env.PUBLIC_DATA_API_KEY;
-
     if (!apiKey) {
       console.warn("PUBLIC_DATA_API_KEY is missing.");
       return [];
