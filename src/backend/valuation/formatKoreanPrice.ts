@@ -6,8 +6,7 @@ export function formatKoreanPrice(value?: number) {
   const eok = Math.floor(value / 10000);
   const man = value % 10000;
 
-  const formattedNumber =
-    `${value.toLocaleString()}만원`;
+  const formattedNumber = `${value.toLocaleString()}만원`;
 
   if (eok <= 0) {
     return `${formattedNumber} (${man.toLocaleString()}만원)`;
