@@ -19,31 +19,46 @@ interface ValuationResult {
   lowestPrice?: number;
   highestPrice?: number;
   averagePrice?: number;
-  valuationBasis: string[];
+
   recentTransactions: {
-  dealAmount: number;
-  dealYear: number;
-  dealMonth: number;
-  dealDay: number;
-  area: number;
-  floor?: number;
-  similarityScore?: number;
-  similarityReason?: string;
-  reliabilityGrade?: "A" | "B" | "C";
-}[];
+    dealAmount: number;
+    dealYear: number;
+    dealMonth: number;
+    dealDay: number;
+    area: number;
+    floor?: number;
+
+    similarityScore?: number;
+    similarityReason?: string;
+
+    reliabilityGrade?: "A" | "B" | "C";
+  }[];
+
+  valuationBasis: string[];
+
   overallConfidence?: "A" | "B" | "C";
+
   warnings: string[];
 }
 
 export function ValuationForm({ initialValue }: ValuationFormProps) {
-  const [addressRaw, setAddressRaw] = useState(initialValue.addressRaw ?? "");
-  const [buildingName, setBuildingName] = useState(initialValue.buildingName ?? "");
+  const [addressRaw, setAddressRaw] = useState(
+    initialValue.addressRaw ?? ""
+  );
+
+  const [buildingName, setBuildingName] = useState(
+    initialValue.buildingName ?? ""
+  );
+
   const [exclusiveAreaM2, setExclusiveAreaM2] = useState(
     initialValue.exclusiveAreaM2?.toString() ?? ""
   );
 
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<ValuationResult | null>(null);
+
+  const [result, setResult] =
+    useState<ValuationResult | null>(null);
+
   const [error, setError] = useState<string | null>(null);
 
   async function runValuation() {
@@ -69,9 +84,14 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
       }
 
       const data = await res.json();
+
       setResult(data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "알 수 없는 오류가 발생했습니다.");
+      setError(
+        err instanceof Error
+          ? err.message
+          : "알 수 없는 오류가 발생했습니다."
+      );
     } finally {
       setLoading(false);
     }
@@ -79,11 +99,16 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
 
   return (
     <section className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
-      <h2 className="mb-4 text-lg font-semibold">가치평가 입력값 확인</h2>
+      <h2 className="mb-4 text-lg font-semibold">
+        가치평가 입력값 확인
+      </h2>
 
       <div className="space-y-4">
         <label className="block">
-          <span className="mb-1 block text-sm font-medium text-gray-700">주소</span>
+          <span className="mb-1 block text-sm font-medium text-gray-700">
+            주소
+          </span>
+
           <textarea
             value={addressRaw}
             onChange={(e) => setAddressRaw(e.target.value)}
@@ -93,7 +118,10 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
         </label>
 
         <label className="block">
-          <span className="mb-1 block text-sm font-medium text-gray-700">단지명</span>
+          <span className="mb-1 block text-sm font-medium text-gray-700">
+            단지명
+          </span>
+
           <input
             value={buildingName}
             onChange={(e) => setBuildingName(e.target.value)}
@@ -105,6 +133,7 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
           <span className="mb-1 block text-sm font-medium text-gray-700">
             전용면적㎡
           </span>
+
           <input
             type="number"
             value={exclusiveAreaM2}
@@ -131,168 +160,156 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
 
       {result && (
         <div className="mt-5 rounded-lg bg-gray-50 p-4 text-sm">
-          <h3 className="mb-3 font-semibold">가치평가 결과</h3>
+          <h3 className="mb-3 font-semibold">
+            가치평가 결과
+          </h3>
 
           <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+            <div className="rounded-xl border bg-white p-4">
+              <p className="text-xs text-gray-500">
+                보정 평균가
+              </p>
 
-          <div className="rounded-xl border bg-white p-4">
-            <p className="text-xs text-gray-500">보정 평균가</p>
-        
-            <p className="mt-2 text-2xl font-bold">
-              {result.averagePrice?.toLocaleString() ?? "-"}만원
-            </p>
-        
-            <p className="mt-1 text-xs text-gray-400">
-              유사도/이상치 보정 반영
-            </p>
-          </div>
-        
-          <div className="rounded-xl border bg-white p-4">
-            <p className="text-xs text-gray-500">최저 거래가</p>
-        
-            <p className="mt-2 text-2xl font-bold">
-              {result.lowestPrice?.toLocaleString() ?? "-"}만원
-            </p>
-          </div>
-        
-          <div className="rounded-xl border bg-white p-4">
-            <p className="text-xs text-gray-500">최고 거래가</p>
-        
-            <p className="mt-2 text-2xl font-bold">
-              {result.highestPrice?.toLocaleString() ?? "-"}만원
-            </p>
-          </div>
-        
-          <div className="rounded-xl border bg-white p-4">
-            <p className="text-xs text-gray-500">평가 신뢰도</p>
-        
-            <p className="mt-2 text-2xl font-bold">
-              {result.overallConfidence ?? "-"}
-            </p>
-        
-            <p className="mt-1 text-xs text-gray-400">
-              비교 거래 {result.comparableCount}건
-            </p>
-          </div>
-        
-        </div>
-            <div>
-              <dt className="text-gray-500">평가 신뢰도</dt>
-            
-              <dd>
-                {result.overallConfidence === "A" && "A · 높음"}
-                {result.overallConfidence === "B" && "B · 보통"}
-                {result.overallConfidence === "C" && "C · 낮음"}
-              </dd>
-            </div>
+              <p className="mt-2 text-2xl font-bold">
+                {result.averagePrice?.toLocaleString() ?? "-"}만원
+              </p>
 
-            <div>
-              <dt className="text-gray-500">보정 평균가</dt>
-              <dd>{result.averagePrice?.toLocaleString() ?? "-"}만원</dd>
-            <p className="mt-1 text-xs text-gray-500">
-                유사도 점수와 극단 거래 제거 기준을 반영한 참고값입니다.
+              <p className="mt-1 text-xs text-gray-400">
+                유사도/이상치 보정 반영
               </p>
             </div>
 
-            <div>
-              <dt className="text-gray-500">최저가</dt>
-              <dd>{result.lowestPrice?.toLocaleString() ?? "-"}만원</dd>
+            <div className="rounded-xl border bg-white p-4">
+              <p className="text-xs text-gray-500">
+                최저 거래가
+              </p>
+
+              <p className="mt-2 text-2xl font-bold">
+                {result.lowestPrice?.toLocaleString() ?? "-"}만원
+              </p>
             </div>
 
-            <div>
-              <dt className="text-gray-500">최고가</dt>
-              <dd>{result.highestPrice?.toLocaleString() ?? "-"}만원</dd>
+            <div className="rounded-xl border bg-white p-4">
+              <p className="text-xs text-gray-500">
+                최고 거래가
+              </p>
+
+              <p className="mt-2 text-2xl font-bold">
+                {result.highestPrice?.toLocaleString() ?? "-"}만원
+              </p>
             </div>
-          </dl>
-          
+
+            <div className="rounded-xl border bg-white p-4">
+              <p className="text-xs text-gray-500">
+                평가 신뢰도
+              </p>
+
+              <p className="mt-2 text-2xl font-bold">
+                {result.overallConfidence ?? "-"}
+              </p>
+
+              <p className="mt-1 text-xs text-gray-400">
+                비교 거래 {result.comparableCount}건
+              </p>
+            </div>
+          </div>
+
           {result.valuationBasis.length > 0 && (
             <div className="mt-4">
               <p className="font-medium">평가 기준</p>
+
               <ul className="mt-1 list-disc pl-5 text-gray-700">
-                 {result.valuationBasis.map((basis) => (
+                {result.valuationBasis.map((basis) => (
                   <li key={basis}>{basis}</li>
                 ))}
-               </ul>
+              </ul>
             </div>
-           )}
+          )}
 
           <button
-                type="button"
-                onClick={() => window.print()}
-                className="no-print mt-5 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium"
-              >
-                리포트 인쇄 / PDF 저장
-              </button>
-              
-              <ValuationReport
-                input={{
-                  addressRaw,
-                  buildingName,
-                  exclusiveAreaM2
-                }}
-                result={result}
-              />
+            type="button"
+            onClick={() => window.print()}
+            className="no-print mt-5 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium"
+          >
+            리포트 인쇄 / PDF 저장
+          </button>
+
+          <ValuationReport
+            input={{
+              addressRaw,
+              buildingName,
+              exclusiveAreaM2
+            }}
+            result={result}
+          />
 
           {result.recentTransactions.length > 0 && (
-  <div className="mt-4">
-    <p className="font-medium">비교 거래 내역</p>
+            <div className="mt-4">
+              <p className="font-medium">
+                비교 거래 내역
+              </p>
 
-    <div className="mt-2 overflow-x-auto">
-      <table className="w-full text-left text-xs">
-        <thead className="border-b text-gray-500">
-          <tr>
-            <th className="py-2">거래일</th>
-            <th className="py-2">거래금액</th>
-            <th className="py-2">전용면적</th>
-            <th className="py-2">층</th>
-            <th className="py-2">유사도</th>
-            <th className="py-2">신뢰도</th>
-          </tr>
-        </thead>
+              <div className="mt-2 overflow-x-auto">
+                <table className="w-full text-left text-xs">
+                  <thead className="border-b text-gray-500">
+                    <tr>
+                      <th className="py-2">거래일</th>
+                      <th className="py-2">거래금액</th>
+                      <th className="py-2">전용면적</th>
+                      <th className="py-2">층</th>
+                      <th className="py-2">유사도</th>
+                      <th className="py-2">신뢰도</th>
+                    </tr>
+                  </thead>
 
-        <tbody>
-          {result.recentTransactions.map((tx, index) => (
-            <tr
-              key={`${tx.dealYear}-${tx.dealMonth}-${tx.dealDay}-${tx.dealAmount}-${index}`}
-              className="border-b"
-            >
-              <td className="py-2">
-                {tx.dealYear}.
-                {String(tx.dealMonth).padStart(2, "0")}.
-                {String(tx.dealDay).padStart(2, "0")}
-              </td>
+                  <tbody>
+                    {result.recentTransactions.map(
+                      (tx, index) => (
+                        <tr
+                          key={`${tx.dealYear}-${tx.dealMonth}-${tx.dealDay}-${tx.dealAmount}-${index}`}
+                          className="border-b"
+                        >
+                          <td className="py-2">
+                            {tx.dealYear}.
+                            {String(tx.dealMonth).padStart(2, "0")}.
+                            {String(tx.dealDay).padStart(2, "0")}
+                          </td>
 
-              <td className="py-2">
-                {tx.dealAmount.toLocaleString()}만원
-              </td>
+                          <td className="py-2">
+                            {tx.dealAmount.toLocaleString()}만원
+                          </td>
 
-              <td className="py-2">
-                {tx.area}㎡
-              </td>
+                          <td className="py-2">
+                            {tx.area}㎡
+                          </td>
 
-              <td className="py-2">
-                {tx.floor ?? "-"}층
-              </td>
+                          <td className="py-2">
+                            {tx.floor ?? "-"}층
+                          </td>
 
-              <td className="py-2">
-                {tx.similarityScore ?? "-"}점
-                {tx.similarityReason ? ` · ${tx.similarityReason}` : ""}
-              </td>
+                          <td className="py-2">
+                            {tx.similarityScore ?? "-"}점
+                            {tx.similarityReason
+                              ? ` · ${tx.similarityReason}`
+                              : ""}
+                          </td>
 
-              <td className="py-2">
-                {tx.reliabilityGrade ?? "-"}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  </div>
-)}
-          
+                          <td className="py-2">
+                            {tx.reliabilityGrade ?? "-"}
+                          </td>
+                        </tr>
+                      )
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
           {result.warnings.length > 0 && (
             <div className="mt-4">
               <p className="font-medium">주의사항</p>
+
               <ul className="mt-1 list-disc pl-5 text-gray-700">
                 {result.warnings.map((warning) => (
                   <li key={warning}>{warning}</li>
