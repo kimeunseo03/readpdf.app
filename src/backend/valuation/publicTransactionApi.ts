@@ -209,5 +209,3 @@ export async function fetchPublicTransactions(
 }
 
   return [];
-  ];
-}
