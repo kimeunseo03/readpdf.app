@@ -137,20 +137,18 @@ function extractExclusiveAreaM2(text: string, floor?: number, unitNumber?: strin
   return value;
 }
 
-function extractLandRightRatio(text: string): string | undefined {
-  const sectionStart = text.search(/대지권의 표시/);
-  const section = sectionStart >= 0 ? text.slice(sectionStart, sectionStart + 900) : text;
+function extractLandRightRatio(section: string) {
+  const match = section.match(
+    /소유권대지권\s+(\d+(?:\.\d+)?)분의[\s\S]{0,40}?대지권\s+(\d+(?:\.\d+)?)/,
+  );
 
-  const direct = section.match(/소유권대지권\s+(\d+(?:\.\d+)?)\s*분의\s+(\d+(?:\.\d+)?)(?!\s*년)/);
-  if (direct) return `${direct[1]}분의${direct[2]}`;
+  if (!match) return null;
 
-  const dateInserted = section.match(/소유권대지권\s+(\d+(?:\.\d+)?)\s*분의\s*\d{4}년\s*\d{1,2}월\s*\d{1,2}일\s*대지권\s*(?:\([^)]*\)\s*)?(\d+(?:\.\d+)?)/);
-  if (dateInserted) return `${dateInserted[1]}분의${dateInserted[2]}`;
-
-  const loose = section.match(/(\d+(?:\.\d+)?)\s*분의\s*(?!\d{4}년)(\d+(?:\.\d+)?)/);
-  if (loose) return `${loose[1]}분의${loose[2]}`;
-
-  return undefined;
+  return {
+    denominator: Number(match[1]),
+    numerator: Number(match[2]),
+    display: `${match[1]}분의${match[2]}`,
+  };
 }
 
 export function parseRegistryText(params: {
