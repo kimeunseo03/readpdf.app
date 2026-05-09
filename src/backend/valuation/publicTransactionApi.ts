@@ -5,6 +5,7 @@ interface FetchParams {
   buildingName?: string;
   exclusiveAreaM2?: number;
   region?: ExtractedRegion;
+  legalDongCode?: string;
 }
 
 /**
@@ -14,6 +15,8 @@ interface FetchParams {
 export async function fetchPublicTransactions(
   params: FetchParams
 ): Promise<TransactionItem[]> {
+  console.log("valuation_region", params.region);
+  console.log("valuation_legalDongCode", params.legalDongCode);
   const baseArea = params.exclusiveAreaM2 ?? 84;
 
   return [
