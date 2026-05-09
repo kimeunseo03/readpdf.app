@@ -60,14 +60,6 @@ export function ParseResultView({ response }: { response: ParseApiResponse }) {
       
       <ValuationForm
   initialValue={{
-    addressRaw: result.property.addressRaw,
-    buildingName: result.property.buildingName,
-    exclusiveAreaM2: result.property.exclusiveAreaM2
-  }}
-/>
-
-      <ValuationForm
-  initialValue={{
     addressRaw: property.addressRaw,
     buildingName: property.buildingName,
     exclusiveAreaM2: property.exclusiveAreaM2
