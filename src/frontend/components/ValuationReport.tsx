@@ -36,7 +36,7 @@ export function ValuationReport({ input, result }: ValuationReportProps) {
         <h2 className="text-xl font-bold">아파트 가치평가 내부 검토 리포트</h2>
         <p className="mt-1 text-sm text-gray-500">
           내부 검토용 자료이며, 감정평가서 또는 법률 의견서가 아닙니다.
-        </p
+        </p>
         <p className="mt-1 text-xs text-gray-400">
           생성 시각: {generatedAt}
         </p>
