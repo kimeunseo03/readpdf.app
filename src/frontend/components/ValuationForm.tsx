@@ -30,6 +30,7 @@ interface ValuationResult {
   similarityReason?: string;
   reliabilityGrade?: "A" | "B" | "C";
 }[];
+  overallConfidence?: "A" | "B" | "C";
   warnings: string[];
 }
 
@@ -135,6 +136,16 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
             <div>
               <dt className="text-gray-500">비교 거래 수</dt>
               <dd>{result.comparableCount}건</dd>
+            </div>
+
+            <div>
+              <dt className="text-gray-500">평가 신뢰도</dt>
+            
+              <dd>
+                {result.overallConfidence === "A" && "A · 높음"}
+                {result.overallConfidence === "B" && "B · 보통"}
+                {result.overallConfidence === "C" && "C · 낮음"}
+              </dd>
             </div>
 
             <div>
