@@ -1,6 +1,7 @@
 import { normalizeAddress } from "./normalizeAddress";
 import { fetchPublicTransactions } from "./publicTransactionApi";
 import { extractRegion } from "./extractRegion";
+import { findLegalDongCode } from "./legalDongCode";
 
 import type {
   TransactionItem,
@@ -21,6 +22,7 @@ export async function estimateApartmentValue(
 ): Promise<ValuationResult> {
   const normalized = normalizeAddress(input);
   const region = extractRegion(normalized.normalizedAddress);
+  const legalDongCode = findLegalDongCode(region);
   const warnings: string[] = [];
 
   if (!normalized.normalizedAddress) {
@@ -31,10 +33,15 @@ export async function estimateApartmentValue(
     warnings.push("전용면적 정보가 부족합니다.");
   }
 
+  if (!legalDongCode) {
+  warnings.push("법정동코드를 찾을 수 없습니다.");
+}
+  
   const transactions = await fetchPublicTransactions({
   buildingName: normalized.buildingName,
   exclusiveAreaM2: normalized.area,
-  region
+  region,
+  legalDongCode
 });
   
   const prices = transactions.map((t) => t.dealAmount);
