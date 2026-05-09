@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { ValuationReport } from "./ValuationReport";
-import { formatKoreanPrice } from "@/backend/valuation/formatKoreanPrice";
+import { formatKoreanPrice } from "../../backend/valuation/formatKoreanPrice";
 
 
 interface ValuationFormProps {
