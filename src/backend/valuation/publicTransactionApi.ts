@@ -33,6 +33,7 @@ async function fetchApartmentTradeApi(
     if (!params.legalDongCode) return [];
 
     const apiKey = process.env.PUBLIC_DATA_API_KEY;
+
     if (!apiKey) {
       console.warn("PUBLIC_DATA_API_KEY is missing.");
       return [];
@@ -62,15 +63,15 @@ async function fetchApartmentTradeApi(
 
     const xml = await res.text();
     const itemMatches = [...xml.matchAll(/<item>([\s\S]*?)<\/item>/g)];
+
     const transactions: TransactionItem[] = [];
     const seenTransactionKeys = new Set<string>();
-    const allAptNames = new Set<string>();
 
     for (const match of itemMatches) {
       const itemXml = match[1];
 
-      const aptNm = itemXml.match(/<aptNm>(.*?)<\/aptNm>/)?.[1]?.trim() ?? "";
-      if (aptNm) allAptNames.add(aptNm);
+      const aptNm =
+        itemXml.match(/<aptNm>(.*?)<\/aptNm>/)?.[1]?.trim() ?? "";
 
       const area = Number(
         itemXml.match(/<excluUseAr>(.*?)<\/excluUseAr>/)?.[1] ?? ""
@@ -105,10 +106,11 @@ async function fetchApartmentTradeApi(
         Math.abs(area - params.exclusiveAreaM2) <= 3;
 
       if (!isSimilarArea) continue;
+
       const normalizedApiName = aptNm.replace(/\s/g, "");
       const normalizedTargetName =
         params.buildingName?.replace(/\s/g, "") ?? "";
-      
+
       const isSameApartment =
         normalizedTargetName.length > 0 &&
         (
@@ -120,16 +122,16 @@ async function fetchApartmentTradeApi(
       let similarityReason = "동일 법정동";
 
       if (isSameApartment) {
-      similarityScore += 40;
-      similarityReason = "동일 단지";
-}
+        similarityScore += 40;
+        similarityReason = "동일 단지";
+      }
 
-if (
-  params.exclusiveAreaM2 &&
-  Math.abs(area - params.exclusiveAreaM2) <= 1
-) {
-  similarityScore += 10;
-}
+      if (
+        params.exclusiveAreaM2 &&
+        Math.abs(area - params.exclusiveAreaM2) <= 1
+      ) {
+        similarityScore += 10;
+      }
 
       const transactionKey = [
         dealAmount,
@@ -154,17 +156,16 @@ if (
         similarityScore,
         similarityReason
       });
-      
-      }
-      
-      console.log("filtered_transaction_count", transactions.length);
+    }
+
+    console.log("filtered_transaction_count", transactions.length);
 
     return transactions;
-
-    } catch (error) {
-      console.error("fetchApartmentTradeApi_error", error);
-      return [];
-    }
+  } catch (error) {
+    console.error("fetchApartmentTradeApi_error", error);
+    return [];
+  }
+}
 
 export async function fetchPublicTransactions(
   params: FetchParams
@@ -200,7 +201,9 @@ export async function fetchPublicTransactions(
       dealMonth: 3,
       dealDay: 12,
       area: baseArea,
-      floor: 15
+      floor: 15,
+      similarityScore: 0,
+      similarityReason: "mock fallback"
     },
     {
       dealAmount: 53000,
@@ -208,7 +211,9 @@ export async function fetchPublicTransactions(
       dealMonth: 2,
       dealDay: 2,
       area: baseArea,
-      floor: 18
+      floor: 18,
+      similarityScore: 0,
+      similarityReason: "mock fallback"
     },
     {
       dealAmount: 52000,
@@ -216,7 +221,9 @@ export async function fetchPublicTransactions(
       dealMonth: 1,
       dealDay: 21,
       area: baseArea,
-      floor: 11
+      floor: 11,
+      similarityScore: 0,
+      similarityReason: "mock fallback"
     }
   ];
 }
