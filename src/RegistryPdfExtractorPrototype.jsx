@@ -261,11 +261,14 @@ async function extractPdfText(file) {
     const page = await pdf.getPage(pageNo);
     const content = await page.getTextContent();
     const text = content.items.map((item) => item.str).join(" ");
-    pages.push("\n--- PAGE " + pageNo + " ---\n" + text);
+    pages.push("
+--- PAGE " + pageNo + " ---
+" + text);
   }
 
-  const fullText = pages.join("\n");
-  if (!fullText.replace(/\\s/g, "")) {
+  const fullText = pages.join("
+");
+  if (!fullText.replace(/\s/g, "")) {
     throw new Error("NO_TEXT_LAYER");
   }
 
@@ -277,11 +280,25 @@ function formatWon(value) {
   return `${Number(value).toLocaleString("ko-KR")}원`;
 }
 
+function EditableField({ label, value, warn, onChange }) {
+  return (
+    <div className="rounded-xl border border-slate-200 bg-white p-4">
+      <div className="text-xs font-medium text-slate-500">{label}</div>
+      <input
+        value={value ?? ""}
+        onChange={(e) => onChange(e.target.value)}
+        className={`mt-2 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold outline-none focus:border-slate-400 ${warn ? "text-amber-700" : "text-slate-900"}`}
+      />
+    </div>
+  );
+}
+
 function Field({ label, value, warn }) {
   return (
     <div className="rounded-xl border border-slate-200 bg-white p-4">
       <div className="text-xs font-medium text-slate-500">{label}</div>
-      <div className={`mt-1 break-words text-sm font-semibold ${warn ? "text-amber-700" : "text-slate-900"}`}>{value ?? "-"}</div>
+      const [result, setResult] = useState(null);
+  const [reviewJson, setReviewJson] = useState("");ont-semibold ${warn ? "text-amber-700" : "text-slate-900"}`}>{value ?? "-"}</div>
     </div>
   );
 }
@@ -296,8 +313,10 @@ function JsonBlock({ data }) {
 
 export default function RegistryPdfExtractorPrototype() {
   const [file, setFile] = useState(null);
-  const [activeStep, setActiveStep] = useState(0);
+  const [activeStsetResult(null);
+    setReviewJson("");p] = useState(0);
   const [result, setResult] = useState(null);
+  const [reviewData, setReviewData] = useState(null);
   const [log, setLog] = useState([]);
   const [error, setError] = useState(null);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -305,7 +324,8 @@ export default function RegistryPdfExtractorPrototype() {
   const status = useMemo(() => {
     if (isProcessing) return "processing";
     if (!file) return "idle";
-    if (!result) return "ready";
+    if (!ressetResult(parsed);
+      setReviewJson(JSON.stringify(parsed, null, 2));";
     return "done";
   }, [file, result, isProcessing]);
 
@@ -314,6 +334,7 @@ export default function RegistryPdfExtractorPrototype() {
     setIsProcessing(true);
     setError(null);
     setResult(null);
+    setReviewData(null);
     setActiveStep(1);
     setLog(["PDF 파일 등록 확인", "브라우저에서 PDF 텍스트 레이어 추출 시작"]);
 
@@ -325,6 +346,7 @@ export default function RegistryPdfExtractorPrototype() {
       const parsed = parseRegistryText(extracted.text, extracted.pageCount);
       setActiveStep(5);
       setResult(parsed);
+      setReviewData(parsed);
       setLog((prev) => [
         ...prev,
         "가치평가 필수 항목 추출 완료",
@@ -454,7 +476,7 @@ export default function RegistryPdfExtractorPrototype() {
           </aside>
 
           <section className="space-y-6">
-            {!result ? (
+            {!reviewData ? (
               <div className="flex min-h-[520px] items-center justify-center rounded-3xl bg-white p-10 text-center shadow-sm ring-1 ring-slate-200">
                 <div>
                   <Home className="mx-auto h-12 w-12 text-slate-400" />
@@ -476,18 +498,149 @@ export default function RegistryPdfExtractorPrototype() {
                   </div>
 
                   <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                    <Field label="시도" value={result.valuation_input.sido} />
-                    <Field label="시군구" value={result.valuation_input.sigungu} />
-                    <Field label="읍면동/리" value={`${result.valuation_input.eup_myeon_dong || ""} ${result.valuation_input.ri || ""}`.trim()} />
-                    <Field label="지번" value={result.valuation_input.jibun} />
-                    <Field label="도로명주소" value={result.valuation_input.road_address} />
-                    <Field label="아파트명" value={result.valuation_input.apartment_name} />
-                    <Field label="동/호" value={`${result.valuation_input.building_dong || "-"} ${result.valuation_input.unit_ho || ""}`} />
-                    <Field label="층/총층" value={`${result.valuation_input.unit_floor ?? "-"}층 / ${result.valuation_input.total_floors ?? "-"}층`} />
-                    <Field label="전유면적" value={result.valuation_input.exclusive_area_m2 ? `${result.valuation_input.exclusive_area_m2}㎡` : "-"} />
-                    <Field label="대지권비율" value={`${result.valuation_input.land_right_ratio_denominator ?? "-"}분의 ${result.valuation_input.land_right_ratio_numerator ?? "-"}`} />
-                    <Field label="용도" value={result.valuation_input.use_type} />
-                    <Field label="구조" value={result.valuation_input.structure} />
+                    <EditableField
+                      label="시도"
+                      value={reviewData.valuation_input.sido}
+                      onChange={(v) => setReviewData((prev) => ({
+                        ...prev,
+                        valuation_input: { ...prev.valuation_input, sido: v }
+                      }))}
+                    />
+                    <EditableField
+                      label="시군구"
+                      value={reviewData.valuation_input.sigungu}
+                      onChange={(v) => setReviewData((prev) => ({
+                        ...prev,
+                        valuation_input: { ...prev.valuation_input, sigungu: v }
+                      }))}
+                    />
+                    <EditableField
+                      label="읍면동/리"
+                      value={`${reviewData.valuation_input.eup_myeon_dong || ""} ${reviewData.valuation_input.ri || ""}`.trim()}
+                      onChange={(v) => setReviewData((prev) => ({
+                        ...prev,
+                        valuation_input: {
+                          ...prev.valuation_input,
+                          eup_myeon_dong: v
+                        }
+                      }))}
+                    />
+                    <EditableField
+                      label="지번"
+                      value={reviewData.valuation_input.jibun}
+                      onChange={(v) => setReviewData((prev) => ({
+                        ...prev,
+                        valuation_input: { ...prev.valuation_input, jibun: v }
+                      }))}
+                    />
+                    <EditableField
+                      label="도로명주소"
+                      value={reviewData.valuation_input.road_address}
+                      onChange={(v) => setReviewData((prev) => ({
+                        ...prev,
+                        valuation_input: { ...prev.valuation_input, road_address: v }
+                      }))}
+                    />
+                    <EditableField
+                      label="아파트명"
+                      value={reviewData.valuation_input.apartment_name}
+                      onChange={(v) => setReviewData((prev) => ({
+                        ...prev,
+                        valuation_input: { ...prev.valuation_input, apartment_name: v }
+                      }))}
+                    />
+                    <EditableField
+                      label="동/호"
+                      value={`${reviewData.valuation_input.building_dong || ""} ${reviewData.valuation_input.unit_ho || ""}`.trim()}
+                      onChange={(v) => {
+                        const parts = v.split(" ");
+                        setReviewData((prev) => ({
+                          ...prev,
+                          valuation_input: {
+                            ...prev.valuation_input,
+                            building_dong: parts[0] || "",
+                            unit_ho: parts[1] || ""
+                          }
+                        }));
+                      }}
+                    />
+                    <EditableField
+                      label="층/총층"
+                      value={`${reviewData.valuation_input.unit_floor ?? ""}/${reviewData.valuation_input.total_floors ?? ""}`}
+                      onChange={(v) => {
+                        const parts = v.split("/");
+                        setReviewData((prev) => ({
+      <div className="mt-4 space-y-4">
+                    <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                      <div className="mb-2 text-sm font-semibold">검수/수정 JSON</div>
+                      <textarea
+                        value={reviewJson}
+                        onChange={(e) => setReviewJson(e.target.value)}
+                        className="min-h-\[320px\] w-full rounded-xl border border-slate-300 bg-white p-3 font-mono text-xs outline-none"
+                      />
+
+                      <div className="mt-4 flex gap-2">
+                        <button
+                          onClick={() => {
+                            const blob = new Blob([reviewJson], { type: "application/json" });
+                            const url = URL.createObjectURL(blob);
+                            const a = document.createElement("a");
+                            a.href = url;
+                            a.download = "valuation_input.json";
+                            a.click();
+                            URL.revokeObjectURL(url);
+                          }}
+                          className="rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white"
+                        >
+                          JSON 다운로드
+                        </button>
+                      </div>
+                    </div>
+
+                    <JsonBlock data={result} />
+                  </div>valuation_input: {
+                            ...prev.valuation_input,
+                            unit_floor: parts[0] || "",
+                            total_floors: parts[1] || ""
+                          }
+                        }));
+                      }}
+                    />
+                    <EditableField
+                      label="전유면적㎡"
+                      value={reviewData.valuation_input.exclusive_area_m2}
+                      onChange={(v) => setReviewData((prev) => ({
+                        ...prev,
+                        valuation_input: { ...prev.valuation_input, exclusive_area_m2: v }
+                      }))}
+                    />
+                    <EditableField
+                      label="대지권비율"
+                      value={`${reviewData.valuation_input.land_right_ratio_denominator ?? ""}/${reviewData.valuation_input.land_right_ratio_numerator ?? ""}`}
+                      onChange={(v) => {
+                        const parts = v.split("/");
+                        setReviewData((prev) => ({
+                          ...prev,
+                          valuation_input: {
+                            ...prev.valuation_input,
+                            land_right_ratio_denominator: parts[0] || "",
+                            land_right_ratio_numerator: parts[1] || ""
+                          }
+                        }));
+                      }}
+                    />
+                    <EditableField
+                      label="용도"
+                      value={reviewData.valuation_input.use_type}
+                      onChange={(v) => setReviewData((prev) => ({
+                        ...prev,
+                        valuation_input: { ...prev.valuation_input, use_type: v }
+                      }))}
+                    />
+                    <EditableField
+                      label="구조"
+                      value={reviewData.valuation_input.structure}
+                      onChange={(v) => setRevi
                     <Field label="최근 거래가액" value={formatWon(result.valuation_input.latest_transaction_price)} warn={!result.valuation_input.latest_transaction_price} />
                     <Field label="최근 거래일/원인" value={`${result.valuation_input.latest_transaction_date || "-"} / ${result.valuation_input.latest_transaction_cause || "-"}`} />
                     <Field label="현재 소유자" value={result.rights.current_owner} />
