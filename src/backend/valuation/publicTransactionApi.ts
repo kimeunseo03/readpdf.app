@@ -111,13 +111,33 @@ for (const match of itemMatches) {
     continue;
   }
 
-  if (
-    params.buildingName &&
-    aptNm &&
-    !aptNm.includes(params.buildingName.replace(/\s/g, ""))
-  ) {
-    continue;
-  }
+ const normalizedApiName = aptNm.replace(/\s/g, "");
+const normalizedTargetName =
+  params.buildingName?.replace(/\s/g, "") ?? "";
+
+const isSameApartment =
+  normalizedTargetName.length > 0 &&
+  (
+    normalizedApiName.includes(normalizedTargetName) ||
+    normalizedTargetName.includes(normalizedApiName)
+  );
+
+const isSimilarArea =
+  !params.exclusiveAreaM2 ||
+  Math.abs(area - params.exclusiveAreaM2) <= 3;
+
+if (!isSimilarArea) {
+  continue;
+}
+
+transactions.push({
+  dealAmount,
+  dealYear,
+  dealMonth,
+  dealDay,
+  area,
+  floor
+});
 
   if (
     params.exclusiveAreaM2 &&
