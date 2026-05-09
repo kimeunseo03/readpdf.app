@@ -16,6 +16,26 @@ function average(numbers: number[]) {
     numbers.reduce((acc, cur) => acc + cur, 0) / numbers.length
   );
 }
+function weightedAverage(
+  values: number[],
+  weights: number[]
+) {
+  if (!values.length || values.length !== weights.length) {
+    return 0;
+  }
+
+  const totalWeight = weights.reduce((sum, w) => sum + w, 0);
+
+  if (!totalWeight) {
+    return average(values);
+  }
+
+  const weightedSum = values.reduce((sum, value, index) => {
+    return sum + value * weights[index];
+  }, 0);
+
+  return Math.round(weightedSum / totalWeight);
+}
 
 function removeOutliersByIqr(values: number[]) {
   if (values.length < 4) return values;
@@ -59,8 +79,19 @@ export async function estimateApartmentValue(
   legalDongCode
 });
   
-  const prices = transactions.map((t) => t.dealAmount);
-  const filteredPrices = removeOutliersByIqr(prices);
+  const filteredTransactions = transactions.filter((tx) => {
+  return removeOutliersByIqr(
+    transactions.map((t) => t.dealAmount)
+  ).includes(tx.dealAmount);
+});
+  
+  const filteredPrices = filteredTransactions.map(
+    (t) => t.dealAmount
+  );
+  
+  const weights = filteredTransactions.map(
+    (t) => t.similarityScore ?? 50
+  );
 
   return {
     success: true,
@@ -72,7 +103,7 @@ export async function estimateApartmentValue(
 
     lowestPrice: filteredPrices.length ? Math.min(...filteredPrices) : undefined,
     highestPrice: filteredPrices.length ? Math.max(...filteredPrices) : undefined,
-    averagePrice: filteredPrices.length ? average(filteredPrices) : undefined,
+    averagePrice: filteredPrices.length ? weightedAverage(filteredPrices, weights) : undefined,
 
     recentTransactions: transactions,
     valuationBasis: [
