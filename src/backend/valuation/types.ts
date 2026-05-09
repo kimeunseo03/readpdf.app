@@ -11,8 +11,10 @@ export interface TransactionItem {
   dealDay: number;
   area: number;
   floor?: number;
+  
   similarityScore?: number;
   similarityReason?: string;
+  reliabilityGrade?: "A" | "B" | "C";
 }
 
 export interface PublicTransactionApiParams {
