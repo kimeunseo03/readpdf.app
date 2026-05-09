@@ -59,6 +59,13 @@ export async function estimateApartmentValue(
     averagePrice: prices.length ? average(prices) : undefined,
 
     recentTransactions: transactions,
+    valuationBasis: [
+  "국토교통부 아파트 매매 실거래가 자료 사용",
+  "동일 법정동 기준 조회",
+  "전용면적 ±3㎡ 비교군 사용",
+  "최근 12개월 거래 우선 사용",
+  "동일 단지 거래가 없는 경우 동일 법정동 유사 면적 거래를 fallback으로 사용"
+],
 
     warnings
   };
