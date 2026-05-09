@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { ValuationReport } from "./ValuationReport";
 
 interface ValuationFormProps {
   initialValue: {
@@ -177,6 +178,23 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
                </ul>
             </div>
            )}
+
+          <button
+                type="button"
+                onClick={() => window.print()}
+                className="mt-5 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium"
+              >
+                리포트 인쇄 / PDF 저장
+              </button>
+              
+              <ValuationReport
+                input={{
+                  addressRaw,
+                  buildingName,
+                  exclusiveAreaM2
+                }}
+                result={result}
+              />
 
           {result.recentTransactions.length > 0 && (
   <div className="mt-4">
