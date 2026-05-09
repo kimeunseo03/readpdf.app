@@ -39,5 +39,6 @@ export interface ValuationResult {
   recentTransactions: TransactionItem[];
   
   valuationBasis: string[];
+  overallConfidence?: "A" | "B" | "C";
   warnings: string[];
 }
