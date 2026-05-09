@@ -1,8 +1,10 @@
 import React, { useMemo, useState } from "react";
 import { Upload, FileText, CheckCircle2, AlertTriangle, ShieldCheck, Home, Database, Search, Loader2 } from "lucide-react";
 import * as pdfjsLib from "pdfjs-dist";
-pdfjsLib.GlobalWorkerOptions.workerSrc =
-  `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
+import pdfWorkerSrc from "pdfjs-dist/build/pdf.worker.min.mjs?url";
+
+pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorkerSrc;
+
 const STEPS = [
   "PDF 등록",
   "텍스트 추출",
