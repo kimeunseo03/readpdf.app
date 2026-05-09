@@ -147,11 +147,11 @@ if (
 
     console.log("filtered_transaction_count", transactions.length);
 
-    return transactions;
-  } catch (error) {
-    console.error("fetchApartmentTradeApi_error", error);
-    return [];
-  }
+return transactions;
+
+} catch (error) {
+  console.error("fetchApartmentTradeApi_error", error);
+  return [];
 }
 
 export async function fetchPublicTransactions(
