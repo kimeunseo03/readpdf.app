@@ -172,6 +172,14 @@ async function fetchApartmentTradeApi(
       if (seenTransactionKeys.has(transactionKey)) continue;
 
       seenTransactionKeys.add(transactionKey);
+      
+      let reliabilityGrade: "A" | "B" | "C" = "C";
+
+      if (similarityScore >= 85) {
+        reliabilityGrade = "A";
+      } else if (similarityScore >= 65) {
+        reliabilityGrade = "B";
+      }
 
       transactions.push({
         dealAmount,
@@ -181,7 +189,8 @@ async function fetchApartmentTradeApi(
         area,
         floor,
         similarityScore,
-        similarityReason
+        similarityReason,
+        reliabilityGrade
       });
     }
 
