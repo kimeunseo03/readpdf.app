@@ -13,6 +13,13 @@ export interface TransactionItem {
   floor?: number;
 }
 
+export interface PublicTransactionApiParams {
+  legalDongCode?: string;
+  dealYearMonth: string;
+  buildingName?: string;
+  exclusiveAreaM2?: number;
+}
+
 export interface ValuationResult {
   success: boolean;
 
