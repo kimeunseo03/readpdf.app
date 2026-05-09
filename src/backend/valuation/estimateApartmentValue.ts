@@ -17,6 +17,21 @@ function average(numbers: number[]) {
   );
 }
 
+function removeOutliersByIqr(values: number[]) {
+  if (values.length < 4) return values;
+
+  const sorted = [...values].sort((a, b) => a - b);
+
+  const q1 = sorted[Math.floor((sorted.length - 1) * 0.25)];
+  const q3 = sorted[Math.floor((sorted.length - 1) * 0.75)];
+  const iqr = q3 - q1;
+
+  const lowerBound = q1 - iqr * 1.5;
+  const upperBound = q3 + iqr * 1.5;
+
+  return sorted.filter((value) => value >= lowerBound && value <= upperBound);
+}
+
 export async function estimateApartmentValue(
   input: ValuationInput
 ): Promise<ValuationResult> {
@@ -45,6 +60,7 @@ export async function estimateApartmentValue(
 });
   
   const prices = transactions.map((t) => t.dealAmount);
+  const filteredPrices = removeOutliersByIqr(prices);
 
   return {
     success: true,
@@ -54,9 +70,9 @@ export async function estimateApartmentValue(
 
     comparableCount: transactions.length,
 
-    lowestPrice: prices.length ? Math.min(...prices) : undefined,
-    highestPrice: prices.length ? Math.max(...prices) : undefined,
-    averagePrice: prices.length ? average(prices) : undefined,
+    lowestPrice: filteredPrices.length ? Math.min(...filteredPrices) : undefined,
+    highestPrice: filteredPrices.length ? Math.max(...filteredPrices) : undefined,
+    averagePrice: filteredPrices.length ? average(filteredPrices) : undefined,
 
     recentTransactions: transactions,
     valuationBasis: [
@@ -64,6 +80,7 @@ export async function estimateApartmentValue(
   "동일 법정동 기준 조회",
   "전용면적 ±3㎡ 비교군 사용",
   "최근 12개월 거래 우선 사용",
+  "IQR 방식으로 극단 거래가 제거된 보정 평균가 사용",
   "동일 단지 거래가 없는 경우 동일 법정동 유사 면적 거래를 fallback으로 사용"
 ],
 
