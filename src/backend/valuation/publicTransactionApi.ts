@@ -1,8 +1,10 @@
 import type { TransactionItem } from "./types";
+import type { ExtractedRegion } from "./extractRegion";
 
 interface FetchParams {
   buildingName?: string;
   exclusiveAreaM2?: number;
+  region?: ExtractedRegion;
 }
 
 /**
