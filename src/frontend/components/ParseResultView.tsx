@@ -1,4 +1,5 @@
 import type { ParseApiResponse } from "@frontend/lib/api";
+import { ValuationForm } from "./ValuationForm";
 
 function ConfidenceBadge({ value }: { value: number }) {
   const label = value >= 0.9 ? "높음" : value >= 0.75 ? "보통" : "검토 필요";
@@ -56,6 +57,22 @@ export function ParseResultView({ response }: { response: ParseApiResponse }) {
           <FieldRow label="대지권 비율" value={property.landRightRatio} />
         </dl>
       </section>
+      
+      <ValuationForm
+  initialValue={{
+    addressRaw: result.property.addressRaw,
+    buildingName: result.property.buildingName,
+    exclusiveAreaM2: result.property.exclusiveAreaM2
+  }}
+/>
+
+      <ValuationForm
+  initialValue={{
+    addressRaw: property.addressRaw,
+    buildingName: property.buildingName,
+    exclusiveAreaM2: property.exclusiveAreaM2
+  }}
+/>
 
       <section className="rounded-3xl border bg-white p-6 shadow-sm">
         <h3 className="font-semibold text-slate-900">권리관계 리스크 플래그</h3>
