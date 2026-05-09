@@ -155,22 +155,6 @@ transactions.push({
   floor
 });
 
-  if (
-    params.exclusiveAreaM2 &&
-    Math.abs(area - params.exclusiveAreaM2) > 3
-  ) {
-    continue;
-  }
-
-  transactions.push({
-    dealAmount,
-    dealYear,
-    dealMonth,
-    dealDay,
-    area,
-    floor
-  });
-}
 console.log(
   "api_item_count",
   itemMatches.length
