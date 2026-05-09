@@ -28,6 +28,7 @@ interface ValuationResult {
   floor?: number;
   similarityScore?: number;
   similarityReason?: string;
+  reliabilityGrade?: "A" | "B" | "C";
 }[];
   warnings: string[];
 }
@@ -179,6 +180,7 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
             <th className="py-2">전용면적</th>
             <th className="py-2">층</th>
             <th className="py-2">유사도</th>
+            <th className="py-2">신뢰도</th>
           </tr>
         </thead>
 
@@ -209,6 +211,10 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
               <td className="py-2">
                 {tx.similarityScore ?? "-"}점
                 {tx.similarityReason ? ` · ${tx.similarityReason}` : ""}
+              </td>
+
+              <td className="py-2">
+                {tx.reliabilityGrade ?? "-"}
               </td>
             </tr>
           ))}
