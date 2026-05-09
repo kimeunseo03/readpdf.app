@@ -1,5 +1,6 @@
 import { normalizeAddress } from "./normalizeAddress";
 import { fetchPublicTransactions } from "./publicTransactionApi";
+import { extractRegion } from "./extractRegion";
 
 import type {
   TransactionItem,
@@ -19,7 +20,7 @@ export async function estimateApartmentValue(
   input: ValuationInput
 ): Promise<ValuationResult> {
   const normalized = normalizeAddress(input);
-
+  const region = extractRegion(normalized.normalizedAddress);
   const warnings: string[] = [];
 
   if (!normalized.normalizedAddress) {
