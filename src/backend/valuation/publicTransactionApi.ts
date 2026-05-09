@@ -61,8 +61,6 @@ async function fetchApartmentTradeApi(
     }
 
     const xml = await res.text();
-    console.log("public_transaction_api_response_preview", xml.slice(0, 300));
-
     const itemMatches = [...xml.matchAll(/<item>([\s\S]*?)<\/item>/g)];
     const transactions: TransactionItem[] = [];
     const seenTransactionKeys = new Set<string>();
@@ -131,15 +129,6 @@ async function fetchApartmentTradeApi(
       });
     }
 
-    console.log("api_item_count", itemMatches.length);
-    console.log("api_apt_names", Array.from(allAptNames).slice(0, 20).join(", "));
-    console.log(
-      "valuation_filter_input",
-      JSON.stringify({
-        buildingName: params.buildingName,
-        exclusiveAreaM2: params.exclusiveAreaM2
-      })
-    );
     console.log("filtered_transaction_count", transactions.length);
 
     return transactions;
