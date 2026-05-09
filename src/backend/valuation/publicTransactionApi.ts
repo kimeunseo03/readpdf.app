@@ -27,7 +27,7 @@ async function fetchApartmentTradeApi(
     const lawdCd = params.legalDongCode.slice(0, 5);
 
     const url = new URL(
-      "https://apis.data.go.kr/1613000/RTMSDataSvcAptTradeDev/getRTMSDataSvcAptTradeDev"
+      "https://apis.data.go.kr/1613000/RTMSDataSvcAptTrade/getRTMSDataSvcAptTrade"
     );
 
     url.searchParams.set("serviceKey", apiKey);
