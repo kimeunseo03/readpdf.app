@@ -191,8 +191,22 @@ export async function fetchPublicTransactions(
   }
 
   if (apiTransactions.length > 0) {
-    return apiTransactions;
-  }
+  return apiTransactions
+    .sort((a, b) => {
+      const scoreA = a.similarityScore ?? 0;
+      const scoreB = b.similarityScore ?? 0;
+
+      if (scoreB !== scoreA) {
+        return scoreB - scoreA;
+      }
+
+      const dateA = a.dealYear * 10000 + a.dealMonth * 100 + a.dealDay;
+      const dateB = b.dealYear * 10000 + b.dealMonth * 100 + b.dealDay;
+
+      return dateB - dateA;
+    })
+    .slice(0, 5);
+}
 
   return [];
   ];
