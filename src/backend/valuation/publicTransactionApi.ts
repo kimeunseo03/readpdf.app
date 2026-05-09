@@ -67,6 +67,7 @@ console.log("public_transaction_api_response_preview", xml.slice(0, 300));
 const itemMatches = [...xml.matchAll(/<item>([\s\S]*?)<\/item>/g)];
 
 const transactions: TransactionItem[] = [];
+const seenTransactionKeys = new Set<string>();
 const allAptNames = new Set<string>();
 
 for (const match of itemMatches) {
@@ -129,6 +130,21 @@ const isSimilarArea =
 if (!isSimilarArea) {
   continue;
 }
+
+const transactionKey = [
+  dealAmount,
+  dealYear,
+  dealMonth,
+  dealDay,
+  area,
+  floor
+].join("|");
+
+if (seenTransactionKeys.has(transactionKey)) {
+  continue;
+}
+
+seenTransactionKeys.add(transactionKey);
 
 transactions.push({
   dealAmount,
