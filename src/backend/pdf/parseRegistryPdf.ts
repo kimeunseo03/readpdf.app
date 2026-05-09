@@ -137,18 +137,27 @@ function extractExclusiveAreaM2(text: string, floor?: number, unitNumber?: strin
   return value;
 }
 
-function extractLandRightRatio(section: string) {
-  const match = section.match(
-    /소유권대지권\s+(\d+(?:\.\d+)?)분의[\s\S]{0,40}?대지권\s+(\d+(?:\.\d+)?)/,
+function extractLandRightRatio(text: string): string | undefined {
+  const sectionStart = text.search(/\(\s*대지권의 표시\s*\)/);
+  const section = sectionStart >= 0 ? text.slice(sectionStart, sectionStart + 700) : text;
+
+  const directMatch = section.match(
+    /소유권대지권\s+(\d+(?:\.\d+)?)분의\s+(\d+(?:\.\d+)?)/
   );
 
-  if (!match) return null;
+  if (directMatch && !/^\d{4}$/.test(directMatch[2])) {
+    return `${directMatch[1]}분의${directMatch[2]}`;
+  }
 
-  return {
-    denominator: Number(match[1]),
-    numerator: Number(match[2]),
-    display: `${match[1]}분의${match[2]}`,
-  };
+  const distortedMatch = section.match(
+    /소유권대지권\s+(\d+(?:\.\d+)?)분의[\s\S]{0,80}?대지권\s+(\d+(?:\.\d+)?)/
+  );
+
+  if (distortedMatch) {
+    return `${distortedMatch[1]}분의${distortedMatch[2]}`;
+  }
+
+  return undefined;
 }
 
 export function parseRegistryText(params: {
