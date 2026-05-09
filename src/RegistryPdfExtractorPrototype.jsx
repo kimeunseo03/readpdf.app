@@ -634,7 +634,7 @@ export default function RegistryPdfExtractorPrototype() {
                       <textarea
                         value={reviewJson}
                         onChange={(e) => setReviewJson(e.target.value)}
-                        className="min-h-\[320px\] w-full rounded-xl border border-slate-300 bg-white p-3 font-mono text-xs outline-none"
+                        className="min-h-[320px] w-full rounded-xl border border-slate-300 bg-white p-3 font-mono text-xs outline-none"
                       />
 
                       <div className="mt-4 flex gap-2">
