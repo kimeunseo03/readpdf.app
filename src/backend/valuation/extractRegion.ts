@@ -18,9 +18,11 @@ export function extractRegion(address?: string): ExtractedRegion {
   let sigungu: string | undefined;
   let eupmyeondong: string | undefined;
 
-  for (const part of parts) {
+  for (let i = 1; i < parts.length; i++) {
+    const part = parts[i];
+
     if (!sigungu && /(?:시|군|구)$/.test(part)) {
-      sigungu = sigungu ? `${sigungu} ${part}` : part;
+      sigungu = part;
       continue;
     }
 
