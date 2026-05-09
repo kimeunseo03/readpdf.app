@@ -105,6 +105,16 @@ async function fetchApartmentTradeApi(
         Math.abs(area - params.exclusiveAreaM2) <= 3;
 
       if (!isSimilarArea) continue;
+      const normalizedApiName = aptNm.replace(/\s/g, "");
+      const normalizedTargetName =
+        params.buildingName?.replace(/\s/g, "") ?? "";
+      
+      const isSameApartment =
+        normalizedTargetName.length > 0 &&
+        (
+          normalizedApiName.includes(normalizedTargetName) ||
+          normalizedTargetName.includes(normalizedApiName)
+        );
 
       let similarityScore = 50;
       let similarityReason = "동일 법정동";
@@ -144,8 +154,10 @@ if (
         similarityScore,
         similarityReason
       });
-
-    console.log("filtered_transaction_count", transactions.length);
+      
+      }
+      
+      console.log("filtered_transaction_count", transactions.length);
 
     return transactions;
 
