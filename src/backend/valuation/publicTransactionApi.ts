@@ -99,6 +99,10 @@ async function fetchApartmentTradeApi(
         itemXml.match(/<floor>(.*?)<\/floor>/)?.[1] ?? 0
       );
 
+      const buildYear = Number(
+        itemXml.match(/<buildYear>(.*?)<\/buildYear>/)?.[1] ?? 0
+      );
+
       if (!dealAmount || !area) continue;
 
       const isSimilarArea =
@@ -144,6 +148,17 @@ async function fetchApartmentTradeApi(
       } else if (floor <= 2) {
         similarityScore -= 5;
       }  
+
+      const currentYear = new Date().getFullYear();
+      const buildingAge = currentYear - buildYear;
+      
+      if (buildingAge <= 10) {
+        similarityScore += 10;
+      } else if (buildingAge <= 20) {
+        similarityScore += 5;
+      } else if (buildingAge >= 30) {
+        similarityScore -= 5;
+      }
       
       const transactionKey = [
         dealAmount,
