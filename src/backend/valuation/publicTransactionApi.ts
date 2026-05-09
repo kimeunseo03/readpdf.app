@@ -1,4 +1,8 @@
-import type { TransactionItem } from "./types";
+import type {
+  PublicTransactionApiParams,
+  TransactionItem
+} from "./types";
+
 import type { ExtractedRegion } from "./extractRegion";
 
 interface FetchParams {
@@ -8,17 +12,66 @@ interface FetchParams {
   legalDongCode?: string;
 }
 
-/**
- * 현재는 Mock.
- * 다음 단계에서 국토부 실거래가 API 연결 예정.
- */
+async function fetchApartmentTradeApi(
+  params: PublicTransactionApiParams
+): Promise<TransactionItem[]> {
+  if (!params.legalDongCode) {
+    return [];
+  }
+
+  const apiKey = process.env.PUBLIC_DATA_API_KEY;
+
+  if (!apiKey) {
+    console.warn("PUBLIC_DATA_API_KEY is missing.");
+    return [];
+  }
+
+  const lawdCd = params.legalDongCode.slice(0, 5);
+
+  const url = new URL(
+    "https://apis.data.go.kr/1613000/RTMSDataSvcAptTradeDev/getRTMSDataSvcAptTradeDev"
+  );
+
+  url.searchParams.set("serviceKey", apiKey);
+  url.searchParams.set("LAWD_CD", lawdCd);
+  url.searchParams.set("DEAL_YMD", params.dealYearMonth);
+  url.searchParams.set("pageNo", "1");
+  url.searchParams.set("numOfRows", "100");
+
+  const res = await fetch(url.toString(), {
+    method: "GET",
+    cache: "no-store"
+  });
+
+  if (!res.ok) {
+    console.warn("Public transaction API failed.", res.status);
+    return [];
+  }
+
+  const xml = await res.text();
+
+  console.log("public_transaction_api_response_preview", xml.slice(0, 300));
+
+  return [];
+}
+
 export async function fetchPublicTransactions(
   params: FetchParams
 ): Promise<TransactionItem[]> {
   console.log("valuation_region", params.region);
   console.log("valuation_legalDongCode", params.legalDongCode);
   const baseArea = params.exclusiveAreaM2 ?? 84;
+const apiTransactions = await fetchApartmentTradeApi({
+  legalDongCode: params.legalDongCode,
+  dealYearMonth: "202603",
+  buildingName: params.buildingName,
+  exclusiveAreaM2: params.exclusiveAreaM2
+});
 
+if (apiTransactions.length > 0) {
+  return apiTransactions;
+}
+  
   return [
     {
       dealAmount: 51000,
