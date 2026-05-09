@@ -86,5 +86,6 @@ export function ParseResultView({ response }: { response: ParseApiResponse }) {
           )}
         </section>
       )}
+  </div>
   );
 }
