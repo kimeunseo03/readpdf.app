@@ -68,7 +68,7 @@ export function ValuationReport({ input, result }: ValuationReportProps) {
         <div>
           <p className="text-gray-500">보정 평균가</p>
           <p className="font-medium">
-            {result.averagePrice?.toLocaleString() ?? "-"}만원
+            {formatKoreanPrice(result.averagePrice)}
           </p>
         </div>
 
@@ -100,7 +100,7 @@ export function ValuationReport({ input, result }: ValuationReportProps) {
                   {tx.dealYear}.{String(tx.dealMonth).padStart(2, "0")}.
                   {String(tx.dealDay).padStart(2, "0")}
                 </td>
-                <td className="py-2">{tx.dealAmount.toLocaleString()}만원</td>
+                <td className="py-2">{formatKoreanPrice(tx.dealAmount)}
                 <td className="py-2">{tx.area}㎡</td>
                 <td className="py-2">{tx.floor ?? "-"}층</td>
                 <td className="py-2">
