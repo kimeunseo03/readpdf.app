@@ -194,36 +194,6 @@ export async function fetchPublicTransactions(
     return apiTransactions;
   }
 
-  return [
-    {
-      dealAmount: 51000,
-      dealYear: 2026,
-      dealMonth: 3,
-      dealDay: 12,
-      area: baseArea,
-      floor: 15,
-      similarityScore: 0,
-      similarityReason: "mock fallback"
-    },
-    {
-      dealAmount: 53000,
-      dealYear: 2026,
-      dealMonth: 2,
-      dealDay: 2,
-      area: baseArea,
-      floor: 18,
-      similarityScore: 0,
-      similarityReason: "mock fallback"
-    },
-    {
-      dealAmount: 52000,
-      dealYear: 2026,
-      dealMonth: 1,
-      dealDay: 21,
-      area: baseArea,
-      floor: 11,
-      similarityScore: 0,
-      similarityReason: "mock fallback"
-    }
+  return [];
   ];
 }
