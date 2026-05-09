@@ -1,4 +1,4 @@
-import { formatKoreanPrice } from "@/backend/valuation/formatKoreanPrice";
+import { formatKoreanPrice } from "../../backend/valuation/formatKoreanPrice";
 
 interface ValuationReportProps {
   input: {
