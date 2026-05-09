@@ -1,3 +1,5 @@
+import { formatKoreanPrice } from "@/backend/valuation/formatKoreanPrice";
+
 interface ValuationReportProps {
   input: {
     addressRaw?: string;
