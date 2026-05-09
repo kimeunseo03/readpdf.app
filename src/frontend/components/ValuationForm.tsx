@@ -173,7 +173,7 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
               </p>
 
               <p className="mt-2 text-2xl font-bold">
-                {result.averagePrice?.toLocaleString() ?? "-"}만원
+                {formatKoreanPrice(result.averagePrice)}
               </p>
 
               <p className="mt-1 text-xs text-gray-400">
@@ -187,7 +187,7 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
               </p>
 
               <p className="mt-2 text-2xl font-bold">
-                {result.lowestPrice?.toLocaleString() ?? "-"}만원
+                {formatKoreanPrice(result.lowestPrice)}
               </p>
             </div>
 
@@ -197,7 +197,7 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
               </p>
 
               <p className="mt-2 text-2xl font-bold">
-                {result.highestPrice?.toLocaleString() ?? "-"}만원
+                {formatKoreanPrice(result.highestPrice)}
               </p>
             </div>
 
@@ -278,7 +278,7 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
                           </td>
 
                           <td className="py-2">
-                            {tx.dealAmount.toLocaleString()}만원
+                            {formatKoreanPrice(tx.dealAmount)}
                           </td>
 
                           <td className="py-2">
