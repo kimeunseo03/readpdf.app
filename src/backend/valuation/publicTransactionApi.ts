@@ -139,11 +139,11 @@ async function fetchApartmentTradeApi(
         (now.getFullYear() - dealDate.getFullYear()) * 12 +
         (now.getMonth() - dealDate.getMonth());
       
-      if (monthsAgo <= 3) {
-        similarityScore += 10;
-      } else if (monthsAgo <= 6) {
+      if (floor >= 10) {
         similarityScore += 5;
-      }
+      } else if (floor <= 2) {
+        similarityScore -= 5;
+      }  
       
       const transactionKey = [
         dealAmount,
