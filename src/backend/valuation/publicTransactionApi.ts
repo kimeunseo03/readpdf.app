@@ -12,6 +12,20 @@ interface FetchParams {
   legalDongCode?: string;
 }
 
+function getRecentDealYearMonths(monthCount = 12): string[] {
+  const result: string[] = [];
+  const now = new Date();
+
+  for (let i = 0; i < monthCount; i++) {
+    const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    result.push(`${year}${month}`);
+  }
+
+  return result;
+}
+
 async function fetchApartmentTradeApi(
   params: PublicTransactionApiParams
 ): Promise<TransactionItem[]> {
@@ -165,17 +179,27 @@ export async function fetchPublicTransactions(
 
   const baseArea = params.exclusiveAreaM2 ?? 84;
 
-  const apiTransactions = await fetchApartmentTradeApi({
+ const recentMonths = getRecentDealYearMonths(12);
+const apiTransactions: TransactionItem[] = [];
+
+for (const dealYearMonth of recentMonths) {
+  const monthlyTransactions = await fetchApartmentTradeApi({
     legalDongCode: params.legalDongCode,
-    dealYearMonth: "202603",
+    dealYearMonth,
     buildingName: params.buildingName,
     exclusiveAreaM2: params.exclusiveAreaM2
   });
 
-  if (apiTransactions.length > 0) {
-    return apiTransactions;
-  }
+  apiTransactions.push(...monthlyTransactions);
 
+  if (apiTransactions.length >= 5) {
+    break;
+  }
+}
+
+if (apiTransactions.length > 0) {
+  return apiTransactions;
+}
   return [
     {
       dealAmount: 51000,
