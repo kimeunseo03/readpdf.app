@@ -11,6 +11,8 @@ export interface TransactionItem {
   dealDay: number;
   area: number;
   floor?: number;
+  similarityScore?: number;
+  similarityReason?: string;
 }
 
 export interface PublicTransactionApiParams {
