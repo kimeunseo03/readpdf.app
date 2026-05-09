@@ -19,6 +19,14 @@ interface ValuationResult {
   highestPrice?: number;
   averagePrice?: number;
   valuationBasis: string[];
+  recentTransactions: {
+  dealAmount: number;
+  dealYear: number;
+  dealMonth: number;
+  dealDay: number;
+  area: number;
+  floor?: number;
+}[];
   warnings: string[];
 }
 
@@ -152,6 +160,84 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
                </ul>
             </div>
            )}
+
+          {result.recentTransactions.length > 0 && (
+  <div className="mt-4">
+    <p className="font-medium">비교 거래 내역</p>
+
+    <div className="mt-2 overflow-x-auto">
+      <table className="w-full text-left text-xs">
+        <thead className="border-b text-gray-500">
+          <tr>
+            <th className="py-2">거래일</th>
+            <th className="py-2">거래금액</th>
+            <th className="py-2">전용면적</th>
+            <th className="py-2">층</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          {result.recentTransactions.map((tx, index) => (
+            <tr
+              key={`${tx.dealYear}-${tx.dealMonth}-${tx.dealDay}-${tx.dealAmount}-${index}`}
+              className="border-b"
+            >
+              <td className="py-2">
+                {tx.dealYear}.
+                {String(tx.dealMonth).padStart(2, "0")}.
+                {String(tx.dealDay).padStart(2, "0")}
+              </td>
+
+              <td className="py-2">
+                {tx.dealAmount.toLocaleString()}만원
+              </td>
+
+              <td className="py-2">
+                {tx.area}㎡
+              </td>
+
+              <td className="py-2">
+                {tx.floor ?? "-"}층
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  </div>
+)}
+          
+          {result.recentTransactions.length > 0 && (
+  <div className="mt-4">
+    <p className="font-medium">비교 거래 내역</p>
+
+    <div className="mt-2 overflow-x-auto">
+      <table className="w-full text-left text-xs">
+        <thead className="border-b text-gray-500">
+          <tr>
+            <th className="py-2">거래일</th>
+            <th className="py-2">거래금액</th>
+            <th className="py-2">전용면적</th>
+            <th className="py-2">층</th>
+          </tr>
+        </thead>
+        <tbody>
+          {result.recentTransactions.map((tx, index) => (
+            <tr key={`${tx.dealYear}-${tx.dealMonth}-${tx.dealDay}-${tx.dealAmount}-${index}`} className="border-b">
+              <td className="py-2">
+                {tx.dealYear}.{String(tx.dealMonth).padStart(2, "0")}.
+                {String(tx.dealDay).padStart(2, "0")}
+              </td>
+              <td className="py-2">{tx.dealAmount.toLocaleString()}만원</td>
+              <td className="py-2">{tx.area}㎡</td>
+              <td className="py-2">{tx.floor ?? "-"}층</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  </div>
+)}
 
           {result.warnings.length > 0 && (
             <div className="mt-4">
