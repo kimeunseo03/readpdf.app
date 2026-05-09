@@ -53,12 +53,17 @@ console.log("public_transaction_api_response_preview", xml.slice(0, 300));
 const itemMatches = [...xml.matchAll(/<item>([\s\S]*?)<\/item>/g)];
 
 const transactions: TransactionItem[] = [];
+const allAptNames = new Set<string>();
 
 for (const match of itemMatches) {
   const itemXml = match[1];
 
   const aptNm =
     itemXml.match(/<aptNm>(.*?)<\/aptNm>/)?.[1]?.trim() ?? "";
+  
+  if (aptNm) {
+  allAptNames.add(aptNm);
+}
 
   const areaText =
     itemXml.match(/<excluUseAr>(.*?)<\/excluUseAr>/)?.[1] ?? "";
@@ -116,7 +121,33 @@ for (const match of itemMatches) {
     floor
   });
 }
+console.log(
+  "api_item_count",
+  itemMatches.length
+);
 
+console.log(
+  "valuation_filter_input",
+  JSON.stringify({
+    buildingName: params.buildingName,
+    exclusiveAreaM2: params.exclusiveAreaM2
+  })
+);
+
+console.log(
+  "api_apt_names_preview",
+  transactions.slice(0, 5)
+);
+    
+console.log("api_item_count", itemMatches.length);
+console.log("api_apt_names", Array.from(allAptNames).slice(0, 20).join(", "));
+console.log(
+  "valuation_filter_input",
+  JSON.stringify({
+    buildingName: params.buildingName,
+    exclusiveAreaM2: params.exclusiveAreaM2
+  })
+);    
 console.log("filtered_transaction_count", transactions.length);
 
 return transactions;
