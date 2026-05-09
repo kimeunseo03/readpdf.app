@@ -32,10 +32,11 @@ export async function estimateApartmentValue(
   }
 
   const transactions = await fetchPublicTransactions({
-    buildingName: normalized.buildingName,
-    exclusiveAreaM2: normalized.area
-  });
-
+  buildingName: normalized.buildingName,
+  exclusiveAreaM2: normalized.area,
+  region
+});
+  
   const prices = transactions.map((t) => t.dealAmount);
 
   return {
