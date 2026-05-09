@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { estimateApartmentValue } from "@/backend/valuation/estimateApartmentValue";
+import { estimateApartmentValue } from "../../../src/backend/valuation/estimateApartmentValue";
 
 export async function POST(req: NextRequest) {
   try {
