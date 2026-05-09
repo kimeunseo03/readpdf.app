@@ -33,6 +33,7 @@ export interface ValuationResult {
   averagePrice?: number;
 
   recentTransactions: TransactionItem[];
-
+  
+  valuationBasis: string[];
   warnings: string[];
 }
