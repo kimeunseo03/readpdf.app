@@ -48,9 +48,78 @@ async function fetchApartmentTradeApi(
 
     const xml = await res.text();
 
-    console.log("public_transaction_api_response_preview", xml.slice(0, 300));
+console.log("public_transaction_api_response_preview", xml.slice(0, 300));
 
-    return [];
+const itemMatches = [...xml.matchAll(/<item>([\s\S]*?)<\/item>/g)];
+
+const transactions: TransactionItem[] = [];
+
+for (const match of itemMatches) {
+  const itemXml = match[1];
+
+  const aptNm =
+    itemXml.match(/<aptNm>(.*?)<\/aptNm>/)?.[1]?.trim() ?? "";
+
+  const areaText =
+    itemXml.match(/<excluUseAr>(.*?)<\/excluUseAr>/)?.[1] ?? "";
+
+  const area = Number(areaText);
+
+  const dealAmountText =
+    itemXml.match(/<dealAmount>(.*?)<\/dealAmount>/)?.[1] ?? "";
+
+  const cleanedAmount = dealAmountText.replace(/,/g, "").trim();
+
+  const dealAmount = Number(cleanedAmount);
+
+  const dealYear = Number(
+    itemXml.match(/<dealYear>(.*?)<\/dealYear>/)?.[1] ?? 0
+  );
+
+  const dealMonth = Number(
+    itemXml.match(/<dealMonth>(.*?)<\/dealMonth>/)?.[1] ?? 0
+  );
+
+  const dealDay = Number(
+    itemXml.match(/<dealDay>(.*?)<\/dealDay>/)?.[1] ?? 0
+  );
+
+  const floor = Number(
+    itemXml.match(/<floor>(.*?)<\/floor>/)?.[1] ?? 0
+  );
+
+  if (!dealAmount || !area) {
+    continue;
+  }
+
+  if (
+    params.buildingName &&
+    aptNm &&
+    !aptNm.includes(params.buildingName.replace(/\s/g, ""))
+  ) {
+    continue;
+  }
+
+  if (
+    params.exclusiveAreaM2 &&
+    Math.abs(area - params.exclusiveAreaM2) > 3
+  ) {
+    continue;
+  }
+
+  transactions.push({
+    dealAmount,
+    dealYear,
+    dealMonth,
+    dealDay,
+    area,
+    floor
+  });
+}
+
+console.log("filtered_transaction_count", transactions.length);
+
+return transactions;
   } catch (error) {
     console.error("fetchApartmentTradeApi_error", error);
     return [];
