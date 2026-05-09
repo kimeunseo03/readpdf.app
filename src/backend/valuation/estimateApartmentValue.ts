@@ -71,17 +71,19 @@ export async function estimateApartmentValue(
   if (!legalDongCode) {
   warnings.push("법정동코드를 찾을 수 없습니다.");
 }
-  if (transactions.length < 3) {
-  warnings.push(
-    "비교 가능한 실거래 데이터가 부족합니다. 결과 신뢰도가 낮을 수 있습니다."
-  );
-}
+  
   const transactions = await fetchPublicTransactions({
   buildingName: normalized.buildingName,
   exclusiveAreaM2: normalized.area,
   region,
   legalDongCode
 });
+
+  if (transactions.length < 3) {
+  warnings.push(
+    "비교 가능한 실거래 데이터가 부족합니다. 결과 신뢰도가 낮을 수 있습니다."
+  );
+}
   
   const filteredTransactions = transactions.filter((tx) => {
   return removeOutliersByIqr(
