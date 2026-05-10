@@ -106,7 +106,7 @@ export function ValuationReport({ input, result }: ValuationReportProps) {
         </p>
       </div>
 
-      <div className="grid gap-x-8 gap-y-6 text-sm md:grid-cols-2">
+      <div className="grid gap-x-8 gap-y-5 text-sm md:grid-cols-3">
         <div>
           <p className="text-slate-500">주소</p>
           <p className="mt-1 font-medium text-slate-900">{input.addressRaw || "-"}</p>
@@ -128,27 +128,12 @@ export function ValuationReport({ input, result }: ValuationReportProps) {
         </div>
 
         <div>
-          <p className="text-slate-500">평가 신뢰도</p>
-          <p className="mt-1 font-medium text-slate-900">{result.overallConfidence ?? "-"}</p>
-        </div>
-
-        <div>
           <p className="text-slate-500">권리 위험도</p>
           <div className="mt-2">
             <span className={riskBadgeClass(input.rightsRisk?.riskLevel)}>
               {riskLabel(input.rightsRisk?.riskLevel)}
             </span>
           </div>
-        </div>
-
-        <div>
-          <p className="text-slate-500">보정 평균가</p>
-          <p className="mt-1 whitespace-pre-line text-lg font-bold leading-snug tracking-tight tabular-nums text-slate-900">
-            {formatKoreanPrice(result.averagePrice)}
-          </p>
-          <p className="mt-2 text-xs leading-5 text-slate-500">
-            실거래 비교군의 유사도, 거래 최근성, 층수, 준공연도, 이상치 제거 기준을 반영한 내부 참고가입니다.
-          </p>
         </div>
 
         <div>
