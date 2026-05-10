@@ -85,10 +85,10 @@ export function UploadForm() {
   </label>
          <button
             type="submit"
-            disabled={loading || !file}
+            disabled={isLoading || !file}
             className="mt-4 rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            {loading ? "판독 중..." : "PDF 판독 실행"}
+            {isLoading ? "판독 중..." : "PDF 판독 실행"}
           </button>
         </form>
 
