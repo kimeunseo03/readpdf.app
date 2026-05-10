@@ -2,6 +2,9 @@ export interface ValuationInput {
   addressRaw?: string;
   buildingName?: string;
   exclusiveAreaM2?: number;
+  rightsRisk?: {
+    riskLevel?: "SAFE" | "CAUTION" | "DANGER";
+  };
 }
 
 export interface TransactionItem {
