@@ -84,6 +84,11 @@ export function ParseResultView({ response }: { response: ParseApiResponse }) {
           {rightsRisk.riskLevel === "DANGER" && "위험"}
         </span>
       </div>
+
+        <p className="mt-3 text-sm text-slate-600">
+          {rightsRisk.summary}
+        </p>
+        
         <div className="mt-4 flex flex-wrap gap-2">
          {rightsRisk.riskFlags.length ? (
   rightsRisk.riskFlags.map((flag) => {
