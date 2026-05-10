@@ -38,7 +38,7 @@ export function ValuationReport({ input, result }: ValuationReportProps) {
   const generatedAt = new Date().toLocaleString("ko-KR");
   
   return (
-    <section className="mt-6 rounded-xl border border-gray-200 bg-white p-6 print:border-0 print:shadow-none">
+    <section className="print-report mt-6 rounded-xl border border-gray-200 bg-white p-6 print:border-0 print:shadow-none">
       <div className="mb-5 border-b pb-4">
         <h2 className="text-xl font-bold">아파트 가치평가 내부 검토 리포트</h2>
         <p className="mt-1 text-sm text-gray-500">
