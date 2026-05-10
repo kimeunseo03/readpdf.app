@@ -5,7 +5,15 @@ function ConfidenceBadge({ value }: { value: number }) {
   const label = value >= 0.9 ? "높음" : value >= 0.75 ? "보통" : "검토 필요";
 
   return (
-    <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">
+    <span
+      className={
+        value >= 0.9
+          ? "rounded-full bg-green-100 px-3 py-1 text-xs font-semibold text-green-700"
+          : value >= 0.75
+          ? "rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold text-blue-700"
+          : "rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-700"
+      }
+    >
       {label} · {(value * 100).toFixed(0)}%
     </span>
   );
@@ -19,7 +27,7 @@ function FieldRow({
   value?: string | number | boolean | null;
 }) {
   return (
-    <div className="grid grid-cols-[140px_1fr] gap-3 border-b border-slate-100 py-3 text-sm">
+    <div className="grid grid-cols-[140px_1fr] gap-4 border-b border-slate-100 py-3.5 text-sm last:border-b-0">
       <dt className="font-medium text-slate-500">{label}</dt>
       <dd className="text-slate-900">
         {value === undefined || value === null || value === ""
@@ -65,6 +73,9 @@ export function ParseResultView({ response }: { response: ParseApiResponse }) {
 
       <section className="rounded-3xl border bg-white p-6 shadow-sm">
         <h3 className="font-semibold text-slate-900">물건 정보</h3>
+        <p className="mt-1 text-sm text-slate-500">
+          등기부에서 추출한 기본 물건 정보입니다. 가치평가 전 수정이 필요하면 아래 입력값에서 조정하세요.
+        </p>
 
         <dl className="mt-4">
           <FieldRow label="주소" value={property.addressRaw} />
