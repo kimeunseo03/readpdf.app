@@ -133,8 +133,19 @@ export function ValuationReport({ input, result }: ValuationReportProps) {
                 <td className="py-2">
                   {tx.similarityScore ?? "-"}점
                   {tx.similarityReason ? ` · ${tx.similarityReason}` : ""}
+                <td className="py-2">
+                  <span
+                    className={
+                      tx.reliabilityGrade === "A"
+                        ? "rounded-full bg-green-100 px-2 py-1 text-xs font-semibold text-green-700"
+                        : tx.reliabilityGrade === "B"
+                        ? "rounded-full bg-yellow-100 px-2 py-1 text-xs font-semibold text-yellow-700"
+                        : "rounded-full bg-red-100 px-2 py-1 text-xs font-semibold text-red-700"
+                    }
+                  >
+                    {tx.reliabilityGrade ?? "-"}
+                  </span>
                 </td>
-                <td className="py-2">{tx.reliabilityGrade ?? "-"}</td>
               </tr>
             ))}
           </tbody>
