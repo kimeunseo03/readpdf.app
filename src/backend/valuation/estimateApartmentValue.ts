@@ -187,7 +187,23 @@ if (excludedRatio >= 0.4) {
 } else if (excludedRatio >= 0.2) {
   confidenceScore -= 8;
 }
+const hasSameApartmentTransaction = filteredTransactions.some(
+  (tx) => tx.isSameApartment
+);
 
+if (!hasSameApartmentTransaction) {
+  confidenceScore -= 10;
+}
+
+const expandedAreaFallbackUsed = filteredTransactions.some(
+  (tx) =>
+    tx.selectionReason?.includes("±5㎡") ||
+    tx.selectionReason?.includes("±8㎡")
+);
+
+if (expandedAreaFallbackUsed) {
+  confidenceScore -= 8;
+}
 if (input.rightsRisk?.riskLevel === "CAUTION") {
   confidenceScore -= 5;
 }
