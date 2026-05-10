@@ -33,6 +33,7 @@ export type RegistryParseResult = {
     hasTrust?: boolean;
     coOwnerCount?: number;
     riskFlags: string[];
+    riskLevel?: "SAFE" | "CAUTION" | "DANGER";
   };
   confidence: {
     overall: number;
