@@ -86,10 +86,11 @@ export function ValuationForm({ initialValue, rightsRisk}: ValuationFormProps) {
           "Content-Type": "application/json"
         },
         body: JSON.stringify({
-          addressRaw,
-          buildingName,
-          exclusiveAreaM2: Number(exclusiveAreaM2)
-        })
+        addressRaw,
+        buildingName,
+        exclusiveAreaM2: Number(exclusiveAreaM2),
+        rightsRisk: initialValue.rightsRisk
+      })
       });
 
       if (!res.ok) {
