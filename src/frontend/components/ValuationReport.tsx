@@ -278,12 +278,17 @@ export function ValuationReport({ input, result }: ValuationReportProps) {
 
                   <td className="px-4 py-3 text-slate-700">
                     {tx.similarityScore ?? "-"}점
-                    {tx.similarityReason ? ` · ${tx.similarityReason}` : ""}
                   </td>
-
+                  
+                  <td className="px-4 py-3 text-slate-700">
+                    {tx.selectionReason ?? "-"}
+                  </td>
+                  
                   <td className="px-4 py-3 text-slate-700">
                     <span className={reliabilityBadgeClass(tx.reliabilityGrade)}>
                       {tx.reliabilityGrade ?? "-"}
+                    </span>
+                  </td>
                     </span>
                   </td>
                 </tr>
