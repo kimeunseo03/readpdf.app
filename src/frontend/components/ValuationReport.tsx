@@ -107,7 +107,15 @@ export function ValuationReport({ input, result }: ValuationReportProps) {
       </div>
 
       <div className="mt-6">
-        <h3 className="mb-2 font-semibold">비교 거래 내역</h3>
+        <div className="mb-3">
+  <p className="text-xs font-semibold tracking-wide text-slate-500">
+    COMPARABLE SALES
+  </p>
+
+  <h3 className="mt-1 text-lg font-bold text-slate-900">
+    비교 거래 내역
+  </h3>
+</div>
 
         <table className="w-full text-left text-sm">
           <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
