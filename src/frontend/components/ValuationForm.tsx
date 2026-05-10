@@ -116,7 +116,7 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
         가치평가 입력값 확인
       </h2>
 
-      <div className="space-y-4">
+      <label className="block md:col-span-2">
         <label className="block">
           <span className="mb-1 block text-sm font-medium text-gray-700">
             주소
@@ -172,9 +172,9 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
           type="button"
           onClick={runValuation}
           disabled={loading}
-          className="rounded-lg bg-black px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+          className="w-fit rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 disabled:opacity-50"
         >
-          {loading ? "평가 중..." : "가치평가 실행"}
+          {loading ? "평가 중..." : "자동 평가 실행"}
         </button>
       </div>
 
@@ -186,73 +186,63 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
 
       {result && (
   <>
-    <div className="no-print mt-5 rounded-lg bg-gray-50 p-4 text-sm">
+    <div className="no-print mt-5 rounded-2xl border border-slate-200 bg-white p-5 text-sm shadow-sm">
       <h3 className="mb-3 font-semibold">
         가치평가 결과
       </h3>
 
-      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
-        <div className="rounded-xl border bg-white p-4">
-          <p className="text-xs text-gray-500">
-            보정 평균가
-          </p>
-
-          <p className="mt-2 whitespace-pre-line text-2xl font-bold">
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+        <div className="rounded-2xl border border-green-100 bg-green-50/50 p-4">
+          <p className="text-xs font-semibold text-green-700">보정 평균가</p>
+        
+          <p className="mt-3 whitespace-pre-line text-xl font-bold leading-snug text-green-700">
             {formatKoreanPrice(result.averagePrice)}
           </p>
-
-          <p className="mt-1 text-xs text-gray-400">
+        
+          <p className="mt-3 text-xs text-slate-500">
             유사도/이상치 보정 반영
           </p>
         </div>
-
-        <div className="rounded-xl border bg-white p-4">
-          <p className="text-xs text-gray-500">
-            최저 거래가
-          </p>
-
-          <p className="mt-2 whitespace-pre-line text-2xl font-bold">
+        
+        <div className="rounded-2xl border border-blue-100 bg-blue-50/50 p-4">
+          <p className="text-xs font-semibold text-blue-700">최저 거래가</p>
+        
+          <p className="mt-3 whitespace-pre-line text-xl font-bold leading-snug text-blue-700">
             {formatKoreanPrice(result.lowestPrice)}
           </p>
         </div>
-
-        <div className="rounded-xl border bg-white p-4">
-          <p className="text-xs text-gray-500">
-            최고 거래가
-          </p>
-
-          <p className="mt-2 whitespace-pre-line text-2xl font-bold">
+        
+        <div className="rounded-2xl border border-orange-100 bg-orange-50/50 p-4">
+          <p className="text-xs font-semibold text-orange-700">최고 거래가</p>
+        
+          <p className="mt-3 whitespace-pre-line text-xl font-bold leading-snug text-orange-700">
             {formatKoreanPrice(result.highestPrice)}
           </p>
         </div>
-
-        <div className="rounded-xl border bg-white p-4">
-          <p className="text-xs text-gray-500">
-            평가 신뢰도
+        
+        <div className="rounded-2xl border border-red-100 bg-red-50/50 p-4">
+          <p className="text-xs font-semibold text-red-700">권리 위험도</p>
+        
+          <p className="mt-3 text-2xl font-bold text-red-600">
+            {initialValue.rightsRisk?.riskLevel === "SAFE" && "안전"}
+            {initialValue.rightsRisk?.riskLevel === "CAUTION" && "주의"}
+            {initialValue.rightsRisk?.riskLevel === "DANGER" && "위험"}
+            {!initialValue.rightsRisk?.riskLevel && "-"}
           </p>
-
-          <div className="rounded-xl border bg-white p-4">
-            <p className="text-xs text-gray-500">
-              권리 위험도
-            </p>
-          
-            <p className="mt-2 text-2xl font-bold">
-              {initialValue.rightsRisk?.riskLevel === "SAFE" && "안전"}
-              {initialValue.rightsRisk?.riskLevel === "CAUTION" && "주의"}
-              {initialValue.rightsRisk?.riskLevel === "DANGER" && "위험"}
-              {!initialValue.rightsRisk?.riskLevel && "-"}
-            </p>
-          
-            <p className="mt-1 text-xs text-gray-400">
-              등기부 권리관계 기준
-            </p>
-          </div>
-
-          <p className="mt-2 text-2xl font-bold">
+        
+          <p className="mt-3 text-xs text-slate-500">
+            등기부 권리관계 기준
+          </p>
+        </div>
+        
+        <div className="rounded-2xl border border-blue-100 bg-white p-4">
+          <p className="text-xs font-semibold text-blue-700">평가 신뢰도</p>
+        
+          <p className="mt-3 text-3xl font-bold text-blue-700">
             {result.overallConfidence ?? "-"}
           </p>
-
-          <p className="mt-1 text-xs text-gray-400">
+        
+          <p className="mt-3 text-xs text-slate-500">
             비교 거래 {result.comparableCount}건
           </p>
         </div>
