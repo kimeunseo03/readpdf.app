@@ -122,36 +122,54 @@ async function fetchApartmentTradeApi(
           normalizedTargetName.includes(normalizedApiName)
         );
 
-      let similarityScore = 50;
-      let similarityReason = "동일 법정동";
-
-      if (isSameApartment) {
-        similarityScore += 40;
-        similarityReason = "동일 단지";
+     const areaDifferenceM2 = params.exclusiveAreaM2
+      ? Math.abs(area - params.exclusiveAreaM2)
+      : undefined;
+    
+    let similarityScore = 35;
+    let similarityReason = "동일 법정동 유사 면적";
+    
+    if (isSameApartment) {
+      similarityScore += 45;
+      similarityReason = "동일 단지";
+    }
+    
+    if (areaDifferenceM2 !== undefined) {
+      if (areaDifferenceM2 <= 1) {
+        similarityScore += 15;
+      } else if (areaDifferenceM2 <= 2) {
+        similarityScore += 8;
+      } else {
+        similarityScore += 3;
       }
-
-      if (
-        params.exclusiveAreaM2 &&
-        Math.abs(area - params.exclusiveAreaM2) <= 1
-      ) {
-        similarityScore += 10;
-      }
-
-      const now = new Date();
-      const dealDate = new Date(dealYear, dealMonth - 1, dealDay);
-      const monthsAgo =
-        (now.getFullYear() - dealDate.getFullYear()) * 12 +
-        (now.getMonth() - dealDate.getMonth());
-      
-      if (floor >= 10) {
-        similarityScore += 5;
-      } else if (floor <= 2) {
-        similarityScore -= 5;
-      }  
-
+    }
+    
+    const now = new Date();
+    const dealDate = new Date(dealYear, dealMonth - 1, dealDay);
+    const monthsAgo =
+      (now.getFullYear() - dealDate.getFullYear()) * 12 +
+      (now.getMonth() - dealDate.getMonth());
+    
+    if (monthsAgo <= 3) {
+      similarityScore += 15;
+    } else if (monthsAgo <= 6) {
+      similarityScore += 8;
+    } else if (monthsAgo <= 12) {
+      similarityScore += 3;
+    }
+    
+    if (floor >= 10) {
+      similarityScore += 8;
+    } else if (floor >= 6) {
+      similarityScore += 4;
+    } else if (floor <= 2) {
+      similarityScore -= 8;
+    }
+    
+    if (buildYear > 0) {
       const currentYear = new Date().getFullYear();
       const buildingAge = currentYear - buildYear;
-      
+    
       if (buildingAge <= 10) {
         similarityScore += 10;
       } else if (buildingAge <= 20) {
@@ -159,6 +177,9 @@ async function fetchApartmentTradeApi(
       } else if (buildingAge >= 30) {
         similarityScore -= 5;
       }
+    }
+    
+    similarityScore = Math.max(0, Math.min(100, similarityScore));
       
       const transactionKey = [
         dealAmount,
@@ -188,11 +209,14 @@ async function fetchApartmentTradeApi(
         dealDay,
         area,
         floor,
+        buildYear,
+        isSameApartment,
+        areaDifferenceM2,
+        monthsAgo,
         similarityScore,
         similarityReason,
         reliabilityGrade
       });
-    }
 
     console.log("filtered_transaction_count", transactions.length);
 
