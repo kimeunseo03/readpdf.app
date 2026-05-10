@@ -189,7 +189,7 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
 
       {result && (
         <>
-          <div className="no-print mt-5 rounded-2xl border border-slate-200 bg-white p-5 text-sm shadow-sm transition-all duration-300">
+          <div className="no-print mt-5 rounded-3xl border border-slate-200 bg-white p-7 text-sm shadow-sm transition-all duration-300">
             <div className="mb-5 flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-4">
               <h3 className="text-xl font-bold tracking-tight text-slate-900">
                 가치평가 결과
@@ -205,7 +205,7 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
             </div>
 
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
-              <div className="rounded-2xl border border-green-100 bg-green-50/50 p-4 transition hover:-translate-y-0.5 hover:shadow-md">
+              <div className="rounded-2xl border border-green-100 bg-green-50/50 p-5 transition hover:-translate-y-0.5 hover:shadow-md">
                 <p className="text-xs font-semibold text-green-700">
                   보정 평균가
                 </p>
@@ -219,7 +219,7 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
                 </p>
               </div>
 
-              <div className="rounded-2xl border border-blue-100 bg-blue-50/50 p-4 transition hover:-translate-y-0.5 hover:shadow-md">
+              <div className="rounded-2xl border border-blue-100 bg-blue-50/50 p-5 transition hover:-translate-y-0.5 hover:shadow-md">
                 <p className="text-xs font-semibold text-blue-700">
                   최저 거래가
                 </p>
@@ -229,7 +229,7 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
                 </p>
               </div>
 
-              <div className="rounded-2xl border border-orange-100 bg-orange-50/50 p-4 transition hover:-translate-y-0.5 hover:shadow-md">
+              <div className="rounded-2xl border border-orange-100 bg-orange-50/50 p-5 transition hover:-translate-y-0.5 hover:shadow-md">
                 <p className="text-xs font-semibold text-orange-700">
                   최고 거래가
                 </p>
@@ -242,10 +242,10 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
               <div
                 className={
                   initialValue.rightsRisk?.riskLevel === "SAFE"
-                    ? "rounded-2xl border border-green-100 bg-green-50/50 p-4 transition hover:-translate-y-0.5 hover:shadow-md"
+                    ? "rounded-2xl border border-green-100 bg-green-50/50 p-5 transition hover:-translate-y-0.5 hover:shadow-md"
                     : initialValue.rightsRisk?.riskLevel === "CAUTION"
-                      ? "rounded-2xl border border-yellow-100 bg-yellow-50/50 p-4 transition hover:-translate-y-0.5 hover:shadow-md"
-                      : "rounded-2xl border border-red-100 bg-red-50/50 p-4 transition hover:-translate-y-0.5 hover:shadow-md"
+                      ? "rounded-2xl border border-yellow-100 bg-yellow-50/50 p-5 transition hover:-translate-y-0.5 hover:shadow-md"
+                      : "rounded-2xl border border-red-100 bg-red-50/50 p-5 transition hover:-translate-y-0.5 hover:shadow-md"
                 }
               >
                 <p
@@ -280,7 +280,7 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
                 </p>
               </div>
 
-              <div className="rounded-2xl border border-blue-100 bg-white p-4 transition hover:-translate-y-0.5 hover:shadow-md">
+              <div className="rounded-2xl border border-blue-100 bg-white p-5 transition hover:-translate-y-0.5 hover:shadow-md">
                 <p className="text-xs font-semibold text-blue-700">
                   평가 신뢰도
                 </p>
