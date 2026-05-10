@@ -279,7 +279,7 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
         </div>
       )}
 
-      <button
+       <button
         type="button"
         onClick={() => window.print()}
         className="no-print mt-5 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium"
