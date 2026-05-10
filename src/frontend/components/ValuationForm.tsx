@@ -49,9 +49,23 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
   const [exclusiveAreaM2, setExclusiveAreaM2] = useState(
     initialValue.exclusiveAreaM2?.toString() ?? ""
   );
+
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<ValuationResult | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  function printReport() {
+    const originalTitle = document.title;
+    const safeAddress = addressRaw?.split(" ")[0] || "valuation";
+    const today = new Date().toISOString().slice(0, 10);
+
+    document.title = `${safeAddress}_가치평가리포트_${today}`;
+    window.print();
+
+    setTimeout(() => {
+      document.title = originalTitle;
+    }, 500);
+  }
 
   async function runValuation() {
     setLoading(true);
@@ -70,12 +84,18 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
         })
       });
 
-      if (!res.ok) throw new Error("가치평가 API 호출에 실패했습니다.");
+      if (!res.ok) {
+        throw new Error("가치평가 API 호출에 실패했습니다.");
+      }
 
       const data = await res.json();
       setResult(data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "알 수 없는 오류가 발생했습니다.");
+      setError(
+        err instanceof Error
+          ? err.message
+          : "알 수 없는 오류가 발생했습니다."
+      );
     } finally {
       setLoading(false);
     }
@@ -87,9 +107,11 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
         <p className="text-sm font-semibold tracking-wide text-blue-600">
           VALUATION INPUT
         </p>
+
         <h2 className="mt-1 text-xl font-bold text-slate-900">
           가치평가 입력값 확인
         </h2>
+
         <p className="mt-2 text-sm text-slate-500">
           등기부에서 추출한 값을 기준으로 평가를 실행합니다. 필요하면 주소, 단지명, 면적, 담당자명을 수정하세요.
         </p>
@@ -97,7 +119,10 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
 
       <div className="grid gap-4 md:grid-cols-2">
         <label className="block md:col-span-2">
-          <span className="mb-1 block text-sm font-medium text-slate-700">주소</span>
+          <span className="mb-1 block text-sm font-medium text-slate-700">
+            주소
+          </span>
+
           <textarea
             value={addressRaw}
             onChange={(e) => setAddressRaw(e.target.value)}
@@ -107,7 +132,10 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
         </label>
 
         <label className="block">
-          <span className="mb-1 block text-sm font-medium text-slate-700">단지명</span>
+          <span className="mb-1 block text-sm font-medium text-slate-700">
+            단지명
+          </span>
+
           <input
             value={buildingName}
             onChange={(e) => setBuildingName(e.target.value)}
@@ -116,7 +144,10 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
         </label>
 
         <label className="block">
-          <span className="mb-1 block text-sm font-medium text-slate-700">전용면적㎡</span>
+          <span className="mb-1 block text-sm font-medium text-slate-700">
+            전용면적㎡
+          </span>
+
           <input
             type="number"
             value={exclusiveAreaM2}
@@ -126,7 +157,10 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
         </label>
 
         <label className="block">
-          <span className="mb-1 block text-sm font-medium text-slate-700">담당자명</span>
+          <span className="mb-1 block text-sm font-medium text-slate-700">
+            담당자명
+          </span>
+
           <input
             value={managerName}
             onChange={(e) => setManagerName(e.target.value)}
@@ -156,27 +190,51 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
       {result && (
         <>
           <div className="no-print mt-5 rounded-2xl border border-slate-200 bg-white p-5 text-sm shadow-sm transition-all duration-300">
-            <h3 className="mb-4 text-lg font-bold text-slate-900">가치평가 결과</h3>
+            <div className="mb-4 flex items-center justify-between gap-4">
+              <h3 className="text-lg font-bold text-slate-900">
+                가치평가 결과
+              </h3>
+
+              <button
+                type="button"
+                onClick={printReport}
+                className="no-print rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:bg-slate-50 hover:shadow-md"
+              >
+                PDF 저장
+              </button>
+            </div>
 
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
               <div className="rounded-2xl border border-green-100 bg-green-50/50 p-4 transition hover:-translate-y-0.5 hover:shadow-md">
-                <p className="text-xs font-semibold text-green-700">보정 평균가</p>
-                <p className="mt-3 whitespace-pre-line text-xl font-bold leading-snug tracking-tight tabular-nums text-green-700"
+                <p className="text-xs font-semibold text-green-700">
+                  보정 평균가
+                </p>
+
+                <p className="mt-3 whitespace-pre-line text-xl font-bold leading-snug tracking-tight tabular-nums text-green-700">
                   {formatKoreanPrice(result.averagePrice)}
                 </p>
-                <p className="mt-3 text-xs text-slate-500">유사도/이상치 보정 반영</p>
+
+                <p className="mt-3 text-xs text-slate-500">
+                  유사도/이상치 보정 반영
+                </p>
               </div>
 
               <div className="rounded-2xl border border-blue-100 bg-blue-50/50 p-4 transition hover:-translate-y-0.5 hover:shadow-md">
-                <p className="text-xs font-semibold text-blue-700">최저 거래가</p>
-                <p className="mt-3 whitespace-pre-line text-xl font-bold leading-snug text-blue-700">
+                <p className="text-xs font-semibold text-blue-700">
+                  최저 거래가
+                </p>
+
+                <p className="mt-3 whitespace-pre-line text-xl font-bold leading-snug tracking-tight tabular-nums text-blue-700">
                   {formatKoreanPrice(result.lowestPrice)}
                 </p>
               </div>
 
               <div className="rounded-2xl border border-orange-100 bg-orange-50/50 p-4 transition hover:-translate-y-0.5 hover:shadow-md">
-                <p className="text-xs font-semibold text-orange-700">최고 거래가</p>
-                <p className="mt-3 whitespace-pre-line text-xl font-bold leading-snug text-orange-700">
+                <p className="text-xs font-semibold text-orange-700">
+                  최고 거래가
+                </p>
+
+                <p className="mt-3 whitespace-pre-line text-xl font-bold leading-snug tracking-tight tabular-nums text-orange-700">
                   {formatKoreanPrice(result.highestPrice)}
                 </p>
               </div>
@@ -186,8 +244,8 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
                   initialValue.rightsRisk?.riskLevel === "SAFE"
                     ? "rounded-2xl border border-green-100 bg-green-50/50 p-4 transition hover:-translate-y-0.5 hover:shadow-md"
                     : initialValue.rightsRisk?.riskLevel === "CAUTION"
-                    ? "rounded-2xl border border-yellow-100 bg-yellow-50/50 p-4 transition hover:-translate-y-0.5 hover:shadow-md"
-                    : "rounded-2xl border border-red-100 bg-red-50/50 p-4 transition hover:-translate-y-0.5 hover:shadow-md"
+                      ? "rounded-2xl border border-yellow-100 bg-yellow-50/50 p-4 transition hover:-translate-y-0.5 hover:shadow-md"
+                      : "rounded-2xl border border-red-100 bg-red-50/50 p-4 transition hover:-translate-y-0.5 hover:shadow-md"
                 }
               >
                 <p
@@ -195,19 +253,20 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
                     initialValue.rightsRisk?.riskLevel === "SAFE"
                       ? "text-xs font-semibold text-green-700"
                       : initialValue.rightsRisk?.riskLevel === "CAUTION"
-                      ? "text-xs font-semibold text-yellow-700"
-                      : "text-xs font-semibold text-red-700"
+                        ? "text-xs font-semibold text-yellow-700"
+                        : "text-xs font-semibold text-red-700"
                   }
                 >
                   권리 위험도
                 </p>
+
                 <p
                   className={
                     initialValue.rightsRisk?.riskLevel === "SAFE"
                       ? "mt-3 text-2xl font-bold text-green-700"
                       : initialValue.rightsRisk?.riskLevel === "CAUTION"
-                      ? "mt-3 text-2xl font-bold text-yellow-700"
-                      : "mt-3 text-2xl font-bold text-red-700"
+                        ? "mt-3 text-2xl font-bold text-yellow-700"
+                        : "mt-3 text-2xl font-bold text-red-700"
                   }
                 >
                   {initialValue.rightsRisk?.riskLevel === "SAFE" && "안전"}
@@ -215,14 +274,21 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
                   {initialValue.rightsRisk?.riskLevel === "DANGER" && "위험"}
                   {!initialValue.rightsRisk?.riskLevel && "-"}
                 </p>
-                <p className="mt-3 text-xs text-slate-500">등기부 권리관계 기준</p>
+
+                <p className="mt-3 text-xs text-slate-500">
+                  등기부 권리관계 기준
+                </p>
               </div>
 
               <div className="rounded-2xl border border-blue-100 bg-white p-4 transition hover:-translate-y-0.5 hover:shadow-md">
-                <p className="text-xs font-semibold text-blue-700">평가 신뢰도</p>
-                <p className="mt-3 text-3xl font-bold tracking-tight tabular-nums text-blue-700"
+                <p className="text-xs font-semibold text-blue-700">
+                  평가 신뢰도
+                </p>
+
+                <p className="mt-3 text-3xl font-bold tracking-tight tabular-nums text-blue-700">
                   {result.overallConfidence ?? "-"}
                 </p>
+
                 <p className="mt-3 text-xs text-slate-500">
                   비교 거래 {result.comparableCount}건
                 </p>
@@ -234,7 +300,11 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
                 <p className="text-xs font-semibold tracking-wide text-slate-500">
                   FINAL COMMENT
                 </p>
-                <h3 className="mt-1 text-lg font-bold text-slate-900">종합 의견</h3>
+
+                <h3 className="mt-1 text-lg font-bold text-slate-900">
+                  종합 의견
+                </h3>
+
                 <p className="mt-3 text-sm leading-6 text-slate-700">
                   {result.finalComment}
                 </p>
@@ -247,7 +317,10 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
                   <p className="text-xs font-semibold tracking-wide text-slate-500">
                     VALUATION BASIS
                   </p>
-                  <h3 className="mt-1 text-lg font-bold text-slate-900">평가 기준</h3>
+
+                  <h3 className="mt-1 text-lg font-bold text-slate-900">
+                    평가 기준
+                  </h3>
                 </div>
 
                 <ul className="space-y-2 text-sm text-slate-700">
@@ -261,25 +334,6 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
               </div>
             )}
 
-            <button
-              type="button"
-              onClick={() => {
-                const originalTitle = document.title;
-                const safeAddress = addressRaw?.split(" ")[0] || "valuation";
-                const today = new Date().toISOString().slice(0, 10);
-
-                document.title = `${safeAddress}_가치평가리포트_${today}`;
-                window.print();
-
-                setTimeout(() => {
-                  document.title = originalTitle;
-                }, 500);
-              }}
-              className="no-print mt-5 rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:bg-slate-50 hover:shadow-md"
-            >
-              PDF 저장
-            </button>
-
             {result.recentTransactions.length > 0 && (
               <div className="mt-6">
                 <div className="mb-3 flex items-center justify-between">
@@ -287,6 +341,7 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
                     <p className="text-sm font-semibold tracking-wide text-slate-500">
                       COMPARABLE SALES
                     </p>
+
                     <h3 className="mt-1 text-lg font-bold text-slate-900">
                       비교 거래 내역
                     </h3>
@@ -324,6 +379,7 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
                             {tx.dealYear}.
                             {String(tx.dealMonth).padStart(2, "0")}.
                             {String(tx.dealDay).padStart(2, "0")}
+
                             {index === 0 && (
                               <span className="ml-2 rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-semibold text-green-700">
                                 최우선 비교군
@@ -335,12 +391,19 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
                             {formatKoreanPrice(tx.dealAmount)}
                           </td>
 
-                          <td className="px-4 py-3 text-slate-700">{tx.area}㎡</td>
-                          <td className="px-4 py-3 text-slate-700">{tx.floor ?? "-"}층</td>
+                          <td className="px-4 py-3 text-slate-700">
+                            {tx.area}㎡
+                          </td>
+
+                          <td className="px-4 py-3 text-slate-700">
+                            {tx.floor ?? "-"}층
+                          </td>
 
                           <td className="px-4 py-3 text-slate-700">
                             {tx.similarityScore ?? "-"}점
-                            {tx.similarityReason ? ` · ${tx.similarityReason}` : ""}
+                            {tx.similarityReason
+                              ? ` · ${tx.similarityReason}`
+                              : ""}
                           </td>
 
                           <td className="px-4 py-3 text-slate-700">
@@ -349,8 +412,8 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
                                 tx.reliabilityGrade === "A"
                                   ? "rounded-full bg-green-100 px-2 py-1 text-xs font-semibold text-green-700"
                                   : tx.reliabilityGrade === "B"
-                                  ? "rounded-full bg-yellow-100 px-2 py-1 text-xs font-semibold text-yellow-700"
-                                  : "rounded-full bg-red-100 px-2 py-1 text-xs font-semibold text-red-700"
+                                    ? "rounded-full bg-yellow-100 px-2 py-1 text-xs font-semibold text-yellow-700"
+                                    : "rounded-full bg-red-100 px-2 py-1 text-xs font-semibold text-red-700"
                               }
                             >
                               {tx.reliabilityGrade ?? "-"}
@@ -370,6 +433,7 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
                   <p className="text-xs font-semibold tracking-wide text-amber-700">
                     WARNINGS
                   </p>
+
                   <h3 className="mt-1 text-lg font-bold text-amber-900">
                     주의사항
                   </h3>
