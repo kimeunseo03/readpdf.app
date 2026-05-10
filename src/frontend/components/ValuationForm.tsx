@@ -191,7 +191,7 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
         가치평가 결과
       </h3>
 
-      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
         <div className="rounded-xl border bg-white p-4">
           <p className="text-xs text-gray-500">
             보정 평균가
@@ -230,6 +230,23 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
           <p className="text-xs text-gray-500">
             평가 신뢰도
           </p>
+
+          <div className="rounded-xl border bg-white p-4">
+            <p className="text-xs text-gray-500">
+              권리 위험도
+            </p>
+          
+            <p className="mt-2 text-2xl font-bold">
+              {initialValue.rightsRisk?.riskLevel === "SAFE" && "안전"}
+              {initialValue.rightsRisk?.riskLevel === "CAUTION" && "주의"}
+              {initialValue.rightsRisk?.riskLevel === "DANGER" && "위험"}
+              {!initialValue.rightsRisk?.riskLevel && "-"}
+            </p>
+          
+            <p className="mt-1 text-xs text-gray-400">
+              등기부 권리관계 기준
+            </p>
+          </div>
 
           <p className="mt-2 text-2xl font-bold">
             {result.overallConfidence ?? "-"}
