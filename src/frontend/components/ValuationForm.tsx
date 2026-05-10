@@ -10,7 +10,12 @@ interface ValuationFormProps {
     addressRaw?: string;
     buildingName?: string;
     exclusiveAreaM2?: number;
+
+    rightsRisk?: {
+      riskLevel?: "SAFE" | "CAUTION" | "DANGER";
+    };
   };
+}
 
   rightsRisk?: {
     riskLevel?: "SAFE" | "CAUTION" | "DANGER";
