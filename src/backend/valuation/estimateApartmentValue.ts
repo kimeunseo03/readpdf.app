@@ -100,7 +100,20 @@ export async function estimateApartmentValue(
   const excludedTransactions = transactions.filter(
     (tx) => !filteredPriceSet.includes(tx.dealAmount)
   );
-
+  
+  const averagePriceBeforeOutlier =
+    originalPrices.length > 0 ? average(originalPrices) : 0;
+  
+  const abnormalPriceTransactions = transactions.filter((tx) => {
+    if (!averagePriceBeforeOutlier) return false;
+  
+    const diffRatio =
+      Math.abs(tx.dealAmount - averagePriceBeforeOutlier) /
+      averagePriceBeforeOutlier;
+  
+    return diffRatio >= 0.4;
+  });
+  
   const excludedReasons: string[] = [];
 
   excludedTransactions.forEach((tx) => {
@@ -122,7 +135,13 @@ export async function estimateApartmentValue(
       warnings.push(reason);
     });
   }
-    
+
+  if (abnormalPriceTransactions.length > 0) {
+  warnings.push(
+    `${abnormalPriceTransactions.length}건의 평균 대비 40% 이상 차이 거래가 감지되었습니다.`
+  );
+}
+  
   const filteredPrices = filteredTransactions.map(
     (t) => t.dealAmount
   );
@@ -233,6 +252,8 @@ if (input.rightsRisk?.riskLevel === "CAUTION") {
       "동일 단지 거래는 높은 가중치로 반영",
       "최근 3개월 및 6개월 이내 거래는 추가 가중치 반영",
       "층수와 준공연도를 유사도 점수에 반영",
+      "거래 부족 시 전용면적 허용 범위를 ±3㎡ → ±5㎡ → ±8㎡ 순서로 자동 확장",
+      "평균 대비 40% 이상 차이 거래는 추가 검토 대상으로 표시",
       "IQR 방식으로 극단 거래가 제거된 보정 평균가 사용",
       "동일 단지 거래가 없는 경우 동일 법정동 유사 면적 거래를 fallback으로 사용"
     ],
