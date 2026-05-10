@@ -285,16 +285,16 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
             비교 거래 내역
           </p>
 
-          <div className="mt-2 overflow-x-auto">
-            <table className="w-full text-left text-xs">
-              <thead className="border-b text-gray-500">
+          <div className="mt-3 overflow-hidden rounded-2xl border border-slate-200">
+            <table className="w-full text-left text-sm">
+              <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
                 <tr>
-                  <th className="py-2">거래일</th>
-                  <th className="py-2">거래금액</th>
-                  <th className="py-2">전용면적</th>
-                  <th className="py-2">층</th>
-                  <th className="py-2">유사도</th>
-                  <th className="py-2">신뢰도</th>
+                  <th className="px-4 py-3 font-semibold">거래일</th>
+                  <th className="px-4 py-3 font-semibold">거래금액</th>
+                  <th className="px-4 py-3 font-semibold">전용면적</th>
+                  <th className="px-4 py-3 font-semibold">층</th>
+                  <th className="px-4 py-3 font-semibold">유사도</th>
+                  <th className="px-4 py-3 font-semibold">신뢰도</th>
                 </tr>
               </thead>
 
@@ -305,8 +305,8 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
                       key={`${tx.dealYear}-${tx.dealMonth}-${tx.dealDay}-${tx.dealAmount}-${index}`}
                       className={
                         index === 0
-                          ? "border-b bg-green-50"
-                          : "border-b"
+                          ? "border-b bg-green-50 hover:bg-green-100"
+                          : "border-b hover:bg-slate-50"
                       }
                     >
                       <td className="py-2">
@@ -324,22 +324,22 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
                         {formatKoreanPrice(tx.dealAmount)}
                       </td>
 
-                      <td className="py-2">
+                      <td className="px-4 py-3 text-slate-700">
                         {tx.area}㎡
                       </td>
 
-                      <td className="py-2">
+                      <td className="px-4 py-3 text-slate-700">
                         {tx.floor ?? "-"}층
                       </td>
 
-                      <td className="py-2">
+                      <td className="px-4 py-3 text-slate-700">
                         {tx.similarityScore ?? "-"}점
                         {tx.similarityReason
                           ? ` · ${tx.similarityReason}`
                           : ""}
                       </td>
 
-                      <td className="py-2">
+                      <td className="px-4 py-3 text-slate-700">
                         <span
                           className={
                             tx.reliabilityGrade === "A"
