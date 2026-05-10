@@ -219,6 +219,20 @@ export function ValuationReport({ input, result }: ValuationReportProps) {
           </ul>
         </div>
       )}
+      <div className="mt-10 border-t pt-4 text-[11px] leading-5 text-gray-400">
+        <p>
+          본 자료는 내부 검토 및 참고 목적의 자동 분석 결과입니다.
+        </p>
+      
+        <p>
+          감정평가서, 법률 의견서 또는 금융기관의 공식 심사자료가 아니며,
+          실제 거래가격 및 권리관계 판단은 별도 검토가 필요합니다.
+        </p>
+      
+        <p>
+          실거래 데이터, OCR 결과 및 주소 정규화 과정에서 일부 오차가 발생할 수 있습니다.
+        </p>
+      </div>
     </section>
   );
 }
