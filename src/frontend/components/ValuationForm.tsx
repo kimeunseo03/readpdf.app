@@ -11,6 +11,12 @@ interface ValuationFormProps {
     buildingName?: string;
     exclusiveAreaM2?: number;
   };
+
+  rightsRisk?: {
+    riskLevel?: "SAFE" | "CAUTION" | "DANGER";
+    summary?: string;
+    riskFlags?: string[];
+  };
 }
 
 interface ValuationResult {
