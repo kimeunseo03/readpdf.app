@@ -146,6 +146,56 @@ export function ValuationReport({ input, result }: ValuationReportProps) {
           </p>
         </div>
       )}
+      {input.rightsRisk?.riskFlags &&
+  input.rightsRisk.riskFlags.length > 0 && (
+    <div className="mt-4">
+      <h3 className="mb-2 font-semibold">
+        권리 리스크 상세
+      </h3>
+
+      <table className="w-full text-left text-xs">
+        <thead className="border-b text-gray-500">
+          <tr>
+            <th className="py-2">항목</th>
+            <th className="py-2">상태</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          {input.rightsRisk.riskFlags.map((flag) => {
+            const label =
+              flag === "mortgage_detected"
+                ? "근저당"
+                : flag === "seizure_detected"
+                ? "압류"
+                : flag === "provisional_seizure_detected"
+                ? "가압류"
+                : flag === "leasehold_or_tenant_right_detected"
+                ? "임차권/전세권"
+                : flag === "trust_detected"
+                ? "신탁"
+                : flag;
+
+            return (
+              <tr
+                key={flag}
+                className="border-b"
+              >
+                <td className="py-2">
+                  {label}
+                </td>
+
+                <td className="py-2 text-red-600">
+                  감지됨
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+)}
+      
 
       <div className="mt-6">
         <h3 className="mb-2 font-semibold">평가 기준</h3>
