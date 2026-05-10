@@ -160,102 +160,114 @@ export async function estimateApartmentValue(
     (t) => t.similarityScore ?? 50
   );
 
+  const weightedAveragePrice = filteredPrices.length
+  ? weightedAverage(filteredPrices, weights)
+  : undefined;
+
+  const conservativePrice = filteredPrices.length
+    ? Math.round(Math.min(...filteredPrices) * 0.98)
+    : undefined;
+  
+  const upperReferencePrice = filteredPrices.length
+    ? Math.round(Math.max(...filteredPrices) * 1.02)
+    : undefined;
+
   const averageSimilarity = weights.length > 0 ? average(weights) : 0;
 
-const sameApartmentCount = filteredTransactions.filter(
-  (tx) => tx.isSameApartment
-).length;
-
-const recentTransactionCount = filteredTransactions.filter(
-  (tx) => (tx.monthsAgo ?? 999) <= 6
-).length;
-
-const excludedRatio =
-  transactions.length > 0
-    ? excludedTransactions.length / transactions.length
-    : 0;
-
-let confidenceScore = 0;
-
-confidenceScore += Math.min(filteredTransactions.length, 5) * 12;
-confidenceScore += averageSimilarity * 0.35;
-confidenceScore += sameApartmentCount > 0 ? 15 : 0;
-confidenceScore += recentTransactionCount >= 3 ? 10 : recentTransactionCount * 3;
-
-if (excludedRatio >= 0.4) {
-  confidenceScore -= 15;
-} else if (excludedRatio >= 0.2) {
-  confidenceScore -= 8;
-}
-const hasSameApartmentTransaction = filteredTransactions.some(
-  (tx) => tx.isSameApartment
-);
-
-if (!hasSameApartmentTransaction) {
-  confidenceScore -= 10;
-}
-
-const expandedAreaFallbackUsed = filteredTransactions.some(
-  (tx) =>
-    tx.selectionReason?.includes("±5㎡") ||
-    tx.selectionReason?.includes("±8㎡")
-);
-
-if (expandedAreaFallbackUsed) {
-  confidenceScore -= 8;
-}
-if (input.rightsRisk?.riskLevel === "CAUTION") {
-  confidenceScore -= 5;
-}
-
-if (input.rightsRisk?.riskLevel === "DANGER") {
-  confidenceScore -= 15;
-}
-
-confidenceScore = Math.max(0, Math.min(100, confidenceScore));
-
-let overallConfidence: "A" | "B" | "C" = "C";
-
-if (confidenceScore >= 80) {
-  overallConfidence = "A";
-} else if (confidenceScore >= 60) {
-  overallConfidence = "B";
-}
-
-if (
-  input.rightsRisk?.riskLevel === "DANGER" &&
-  overallConfidence === "A"
-) {
-  overallConfidence = "B";
-}
-  let finalComment = "";
-
-if (overallConfidence === "A") {
-  finalComment =
-    "비교 가능한 실거래 데이터가 충분하고 유사도가 높아 내부 참고가 신뢰도가 높은 편입니다.";
-} else if (overallConfidence === "B") {
-  finalComment =
-    "비교 가능한 실거래 데이터는 확보되었으나 일부 보정 요소가 있어 추가 검토가 권장됩니다.";
-} else {
-  finalComment =
-    "비교 가능한 실거래 데이터가 부족하거나 유사도가 낮아 보수적인 검토가 필요합니다.";
-}
-
-if (input.rightsRisk?.riskLevel === "DANGER") {
-  finalComment +=
-    " 또한 고위험 권리관계가 감지되어 가격 검토와 별도로 권리분석 확인이 필요합니다.";
-} else if (input.rightsRisk?.riskLevel === "CAUTION") {
-  finalComment +=
-    " 권리관계상 주의 요소가 있어 관련 서류 확인이 필요합니다.";
-}
+  const sameApartmentCount = filteredTransactions.filter(
+    (tx) => tx.isSameApartment
+  ).length;
   
-if (input.rightsRisk?.riskLevel === "DANGER") {
-  warnings.push("압류/가압류/신탁 등 고위험 권리관계가 감지되었습니다.");
-}
-
-if (input.rightsRisk?.riskLevel === "CAUTION") {
-  warnings.push("근저당 또는 임차권/전세권 관련 권리관계 검토가 필요합니다.");
-}
+  const recentTransactionCount = filteredTransactions.filter(
+    (tx) => (tx.monthsAgo ?? 999) <= 6
+  ).length;
+  
+  const excludedRatio =
+    transactions.length > 0
+      ? excludedTransactions.length / transactions.length
+      : 0;
+  
+  let confidenceScore = 0;
+  
+  confidenceScore += Math.min(filteredTransactions.length, 5) * 12;
+  confidenceScore += averageSimilarity * 0.35;
+  confidenceScore += sameApartmentCount > 0 ? 15 : 0;
+  confidenceScore += recentTransactionCount >= 3 ? 10 : recentTransactionCount * 3;
+  
+  if (excludedRatio >= 0.4) {
+    confidenceScore -= 15;
+  } else if (excludedRatio >= 0.2) {
+    confidenceScore -= 8;
+  }
+  const hasSameApartmentTransaction = filteredTransactions.some(
+    (tx) => tx.isSameApartment
+  );
+  
+  if (!hasSameApartmentTransaction) {
+    confidenceScore -= 10;
+  }
+  
+  const expandedAreaFallbackUsed = filteredTransactions.some(
+    (tx) =>
+      tx.selectionReason?.includes("±5㎡") ||
+      tx.selectionReason?.includes("±8㎡")
+  );
+  
+  if (expandedAreaFallbackUsed) {
+    confidenceScore -= 8;
+  }
+  if (input.rightsRisk?.riskLevel === "CAUTION") {
+    confidenceScore -= 5;
+  }
+  
+  if (input.rightsRisk?.riskLevel === "DANGER") {
+    confidenceScore -= 15;
+  }
+  
+  confidenceScore = Math.max(0, Math.min(100, confidenceScore));
+  
+  let overallConfidence: "A" | "B" | "C" = "C";
+  
+  if (confidenceScore >= 80) {
+    overallConfidence = "A";
+  } else if (confidenceScore >= 60) {
+    overallConfidence = "B";
+  }
+  
+  if (
+    input.rightsRisk?.riskLevel === "DANGER" &&
+    overallConfidence === "A"
+  ) {
+    overallConfidence = "B";
+  }
+    let finalComment = "";
+  
+  if (overallConfidence === "A") {
+    finalComment =
+      "비교 가능한 실거래 데이터가 충분하고 유사도가 높아 내부 참고가 신뢰도가 높은 편입니다.";
+  } else if (overallConfidence === "B") {
+    finalComment =
+      "비교 가능한 실거래 데이터는 확보되었으나 일부 보정 요소가 있어 추가 검토가 권장됩니다.";
+  } else {
+    finalComment =
+      "비교 가능한 실거래 데이터가 부족하거나 유사도가 낮아 보수적인 검토가 필요합니다.";
+  }
+  
+  if (input.rightsRisk?.riskLevel === "DANGER") {
+    finalComment +=
+      " 또한 고위험 권리관계가 감지되어 가격 검토와 별도로 권리분석 확인이 필요합니다.";
+  } else if (input.rightsRisk?.riskLevel === "CAUTION") {
+    finalComment +=
+      " 권리관계상 주의 요소가 있어 관련 서류 확인이 필요합니다.";
+  }
+    
+  if (input.rightsRisk?.riskLevel === "DANGER") {
+    warnings.push("압류/가압류/신탁 등 고위험 권리관계가 감지되었습니다.");
+  }
+  
+  if (input.rightsRisk?.riskLevel === "CAUTION") {
+    warnings.push("근저당 또는 임차권/전세권 관련 권리관계 검토가 필요합니다.");
+  }
   
   return {
     success: true,
@@ -267,8 +279,9 @@ if (input.rightsRisk?.riskLevel === "CAUTION") {
 
     lowestPrice: filteredPrices.length ? Math.min(...filteredPrices) : undefined,
     highestPrice: filteredPrices.length ? Math.max(...filteredPrices) : undefined,
-    averagePrice: filteredPrices.length ? weightedAverage(filteredPrices, weights) : undefined,
-
+    averagePrice: weightedAveragePrice,
+    conservativePrice,
+    upperReferencePrice,
     recentTransactions: transactions,
     valuationBasis: [
       "국토교통부 아파트 매매 실거래가 자료 사용",
@@ -282,6 +295,7 @@ if (input.rightsRisk?.riskLevel === "CAUTION") {
       "평균 대비 40% 이상 차이 거래는 추가 검토 대상으로 표시",
       "IQR 방식으로 극단 거래가 제거된 보정 평균가 사용",
       "동일 단지 거래가 없는 경우 동일 법정동 유사 면적 거래를 fallback으로 사용"
+      "보수 기준가는 최저 비교가의 98%, 상단 참고가는 최고 비교가의 102%로 산정",
     ],
     overallConfidence,
     finalComment,
