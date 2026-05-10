@@ -19,6 +19,8 @@ interface ValuationReportProps {
     averagePrice?: number;
     lowestPrice?: number;
     highestPrice?: number;
+    conservativePrice?: number;
+    upperReferencePrice?: number;
     overallConfidence?: "A" | "B" | "C";
     valuationBasis: string[];
     finalComment?: string;
@@ -166,16 +168,16 @@ export function ValuationReport({ input, result }: ValuationReportProps) {
         </div>
 
         <div className="rounded-2xl border border-blue-100 bg-blue-50/50 p-4">
-          <p className="text-xs font-semibold text-blue-700">최저 거래가</p>
+          <p className="text-xs font-semibold text-blue-700">보수 기준가</p>
           <p className="mt-3 whitespace-pre-line text-lg font-bold leading-snug tracking-tight tabular-nums text-blue-700">
-            {formatKoreanPrice(result.lowestPrice)}
+            {formatKoreanPrice(result.conservativePrice)}
           </p>
         </div>
 
         <div className="rounded-2xl border border-orange-100 bg-orange-50/50 p-4">
-          <p className="text-xs font-semibold text-orange-700">최고 거래가</p>
+          <p className="text-xs font-semibold text-orange-700">상단 참고가</p>
           <p className="mt-3 whitespace-pre-line text-lg font-bold leading-snug tracking-tight tabular-nums text-orange-700">
-            {formatKoreanPrice(result.highestPrice)}
+            {formatKoreanPrice(result.upperReferencePrice)}
           </p>
         </div>
 
