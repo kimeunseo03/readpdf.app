@@ -217,6 +217,7 @@ async function fetchApartmentTradeApi(
         similarityReason,
         reliabilityGrade
       });
+    }
 
     console.log("filtered_transaction_count", transactions.length);
 
@@ -233,7 +234,6 @@ export async function fetchPublicTransactions(
   console.log("valuation_region_json", JSON.stringify(params.region));
   console.log("valuation_legalDongCode", params.legalDongCode ?? "undefined");
 
-  const baseArea = params.exclusiveAreaM2 ?? 84;
   const recentMonths = getRecentDealYearMonths(12);
   const apiTransactions: TransactionItem[] = [];
 
