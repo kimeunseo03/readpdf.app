@@ -248,7 +248,8 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
             input={{
               addressRaw,
               buildingName,
-              exclusiveAreaM2
+              exclusiveAreaM2,
+              rightsRisk: initialValue.rightsRisk
             }}
             result={result}
           />
