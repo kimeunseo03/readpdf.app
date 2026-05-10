@@ -214,7 +214,8 @@ export function parseRegistryText(params: {
   hasTrust: /신탁/.test(compactText),
   coOwnerCount: undefined as number | undefined,
   riskFlags: [] as string[],
-  riskLevel: "SAFE" as "SAFE" | "CAUTION" | "DANGER"
+  riskLevel: "SAFE" as "SAFE" | "CAUTION" | "DANGER",
+  summary: ""
 };
 
   if (rightsRisk.hasMortgage) rightsRisk.riskFlags.push("mortgage_detected");
@@ -236,6 +237,36 @@ export function parseRegistryText(params: {
   rightsRisk.riskLevel = "CAUTION";
 }
 
+  const summaryParts: string[] = [];
+
+  if (rightsRisk.hasMortgage) {
+    summaryParts.push("근저당");
+  }
+  
+  if (rightsRisk.hasSeizure) {
+    summaryParts.push("압류");
+  }
+  
+  if (rightsRisk.hasProvisionalSeizure) {
+    summaryParts.push("가압류");
+  }
+  
+  if (rightsRisk.hasLeaseholdRight) {
+    summaryParts.push("임차권/전세권");
+  }
+  
+  if (rightsRisk.hasTrust) {
+    summaryParts.push("신탁");
+  }
+  
+  if (summaryParts.length === 0) {
+    rightsRisk.summary =
+      "특이 권리관계는 발견되지 않았습니다.";
+  } else {
+    rightsRisk.summary =
+      `${summaryParts.join(", ")} 관련 권리관계가 확인되어 추가 검토가 필요합니다.`;
+  }
+  
   addEvidence(evidence, "rightsRisk", findSnippet(compactText, /(근저당권|가압류|압류|전세권|임차권|신탁).{0,100}/), rightsRisk.riskFlags.length ? 0.74 : 0.65);
 
   const missingRequiredFields: string[] = [];
