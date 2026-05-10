@@ -12,22 +12,21 @@ body {
 
 @media print {
   body {
-    background: white;
+    background: white !important;
   }
 
-  button,
-  input,
-  textarea,
   .no-print {
     display: none !important;
   }
 
-  .print-only {
+  .print-report {
     display: block !important;
   }
 
-  main,
-  section {
+  .print-report {
+    margin: 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
     box-shadow: none !important;
   }
 }
