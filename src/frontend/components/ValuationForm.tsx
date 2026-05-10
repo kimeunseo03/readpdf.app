@@ -296,7 +296,7 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
             </div>
 
             {result.finalComment && (
-              <div className="mt-6 rounded-2xl border border-slate-200 bg-slate-50/60 p-5">
+              <div className="mt-6 rounded-2xl border border-slate-200 bg-slate-50/60 p-6">
                 <p className="text-xs font-semibold tracking-wide text-slate-500">
                   FINAL COMMENT
                 </p>
@@ -312,7 +312,7 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
             )}
 
             {result.valuationBasis.length > 0 && (
-              <div className="mt-6 rounded-2xl border border-slate-200 bg-slate-50/60 p-5">
+              <div className="mt-6 rounded-2xl border border-slate-200 bg-slate-50/60 p-6">
                 <div className="mb-3">
                   <p className="text-xs font-semibold tracking-wide text-slate-500">
                     VALUATION BASIS
@@ -352,7 +352,7 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
                   </span>
                 </div>
 
-                <div className="mt-3 overflow-hidden rounded-2xl border border-slate-200">
+                <div className="mt-4 overflow-hidden rounded-3xl border border-slate-200">
                   <table className="w-full text-left text-sm">
                     <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
                       <tr>
@@ -428,7 +428,7 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
             )}
 
             {result.warnings.length > 0 && (
-              <div className="mt-6 rounded-2xl border border-amber-200 bg-amber-50/70 p-5">
+              <div className="mt-6 rounded-2xl border border-amber-200 bg-amber-50/70 p-6">
                 <div className="mb-3">
                   <p className="text-xs font-semibold tracking-wide text-amber-700">
                     WARNINGS
