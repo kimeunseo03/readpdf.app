@@ -14,7 +14,12 @@ export interface TransactionItem {
   dealDay: number;
   area: number;
   floor?: number;
-  
+  buildYear?: number;
+
+  isSameApartment?: boolean;
+  areaDifferenceM2?: number;
+  monthsAgo?: number;
+
   similarityScore?: number;
   similarityReason?: string;
   reliabilityGrade?: "A" | "B" | "C";
@@ -40,7 +45,7 @@ export interface ValuationResult {
   averagePrice?: number;
 
   recentTransactions: TransactionItem[];
-  
+
   valuationBasis: string[];
   overallConfidence?: "A" | "B" | "C";
   warnings: string[];
