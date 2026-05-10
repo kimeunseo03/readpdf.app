@@ -91,8 +91,11 @@ export function ValuationReport({ input, result }: ValuationReportProps) {
 
         <div>
           <p className="text-gray-500">보정 평균가</p>
-          <p className="font-medium">
+          <p className="whitespace-pre-line font-medium">
             {formatKoreanPrice(result.averagePrice)}
+          </p>
+          <p className="mt-1 text-xs text-gray-500">
+            실거래 비교군의 유사도, 거래 최근성, 층수, 준공연도, 이상치 제거 기준을 반영한 내부 참고가입니다.
           </p>
         </div>
 
