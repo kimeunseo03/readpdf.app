@@ -123,7 +123,14 @@ export function ValuationReport({ input, result }: ValuationReportProps) {
 
           <tbody>
             {result.recentTransactions.map((tx, index) => (
-              <tr key={index} className="border-b">
+              <tr
+                key={index}
+                className={
+                  index === 0
+                    ? "border-b bg-green-50"
+                    : "border-b"
+                }
+              >
                 <td className="py-2">
                   {tx.dealYear}.
                   {String(tx.dealMonth).padStart(2, "0")}.
