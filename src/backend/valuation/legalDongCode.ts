@@ -12,6 +12,22 @@ export function findLegalDongCode(region?: ExtractedRegion): string | undefined 
     return undefined;
   }
 
-  const key = `${region.sido} ${region.sigungu} ${region.eupmyeondong}`;
-  return LEGAL_DONG_CODES[key];
+  const key = getLegalDongCodeKey(region);
+
+if (!key) {
+  return undefined;
+}
+
+return LEGAL_DONG_CODES[key];
+
+export function getLegalDongCodeKey(region: {
+  sido?: string;
+  sigungu?: string;
+  eupmyeondong?: string;
+}) {
+  if (!region.sido || !region.sigungu || !region.eupmyeondong) {
+    return undefined;
+  }
+
+  return `${region.sido} ${region.sigungu} ${region.eupmyeondong}`;
 }
