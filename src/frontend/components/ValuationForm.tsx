@@ -116,68 +116,69 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
         가치평가 입력값 확인
       </h2>
 
-      <label className="block md:col-span-2">
-        <label className="block">
+      <div className="grid gap-4 md:grid-cols-2">
+        <label className="block md:col-span-2">
           <span className="mb-1 block text-sm font-medium text-gray-700">
             주소
           </span>
-
+      
           <textarea
             value={addressRaw}
             onChange={(e) => setAddressRaw(e.target.value)}
-            className="w-full rounded-lg border border-gray-300 p-3 text-sm"
+            className="w-full rounded-xl border border-slate-200 bg-white p-3 text-sm shadow-sm"
             rows={3}
           />
         </label>
-
+      
         <label className="block">
           <span className="mb-1 block text-sm font-medium text-gray-700">
             단지명
           </span>
-
+      
           <input
             value={buildingName}
             onChange={(e) => setBuildingName(e.target.value)}
-            className="w-full rounded-lg border border-gray-300 p-3 text-sm"
+            className="w-full rounded-xl border border-slate-200 bg-white p-3 text-sm shadow-sm"
           />
         </label>
-
+      
         <label className="block">
           <span className="mb-1 block text-sm font-medium text-gray-700">
             전용면적㎡
           </span>
-
+      
           <input
             type="number"
             value={exclusiveAreaM2}
             onChange={(e) => setExclusiveAreaM2(e.target.value)}
-            className="w-full rounded-lg border border-gray-300 p-3 text-sm"
+            className="w-full rounded-xl border border-slate-200 bg-white p-3 text-sm shadow-sm"
           />
         </label>
-
+      
         <label className="block">
           <span className="mb-1 block text-sm font-medium text-gray-700">
             담당자명
           </span>
-        
+      
           <input
             value={managerName}
             onChange={(e) => setManagerName(e.target.value)}
-            className="w-full rounded-lg border border-gray-300 p-3 text-sm"
+            className="w-full rounded-xl border border-slate-200 bg-white p-3 text-sm shadow-sm"
             placeholder="예: 홍길동"
           />
         </label>
-                
-        <button
-          type="button"
-          onClick={runValuation}
-          disabled={loading}
-          className="w-fit rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 disabled:opacity-50"
-        >
-          {loading ? "평가 중..." : "자동 평가 실행"}
-        </button>
+      
+        <div className="flex items-end">
+          <button
+            type="button"
+            onClick={runValuation}
+            disabled={loading}
+            className="w-fit rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 disabled:opacity-50"
+          >
+            {loading ? "평가 중..." : "자동 평가 실행"}
+          </button>
+        </div>
       </div>
-    </div>
 
       {error && (
         <p className="mt-4 rounded-lg bg-red-50 p-3 text-sm text-red-700">
