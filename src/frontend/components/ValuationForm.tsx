@@ -365,8 +365,8 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
                         <th className="px-4 py-3 font-semibold">거래금액</th>
                         <th className="px-4 py-3 font-semibold">전용면적</th>
                         <th className="px-4 py-3 font-semibold">층</th>
-                        <th className="px-4 py-3 font-semibold">유사도</th>
                         <th className="px-4 py-3 font-semibold">비교군</th>
+                        <th className="px-4 py-3 font-semibold">유사도</th>
                         <th className="px-4 py-3 font-semibold">선정 기준</th>
                         <th className="px-4 py-3 font-semibold"></th>
                       </tr>
