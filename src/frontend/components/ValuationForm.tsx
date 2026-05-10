@@ -140,7 +140,7 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
             type="button"
             onClick={runValuation}
             disabled={loading}
-            className="w-fit rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 disabled:opacity-50"
+            className="w-fit rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-blue-700 hover:shadow-md disabled:opacity-50"
           >
             {loading ? "평가 중..." : "자동 평가 실행"}
           </button>
@@ -275,7 +275,7 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
                   document.title = originalTitle;
                 }, 500);
               }}
-              className="no-print mt-5 rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+              className="no-print mt-5 rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:bg-slate-50 hover:shadow-md"
             >
               PDF 저장
             </button>
