@@ -1,17 +1,19 @@
 import { formatKoreanPrice } from "../../backend/valuation/formatKoreanPrice";
 
 interface ValuationReportProps {
- input: {
-  addressRaw?: string;
-  buildingName?: string;
-  exclusiveAreaM2?: string;
-  managerName?: string;
+  input: {
+    addressRaw?: string;
+    buildingName?: string;
+    exclusiveAreaM2?: string;
+    managerName?: string;
 
-rightsRisk?: {
-  riskLevel?: "SAFE" | "CAUTION" | "DANGER";
-  summary?: string;
-  riskFlags?: string[];
-};
+    rightsRisk?: {
+      riskLevel?: "SAFE" | "CAUTION" | "DANGER";
+      summary?: string;
+      riskFlags?: string[];
+    };
+  };
+
   result: {
     comparableCount: number;
     averagePrice?: number;
@@ -19,6 +21,7 @@ rightsRisk?: {
     highestPrice?: number;
     overallConfidence?: "A" | "B" | "C";
     valuationBasis: string[];
+
     recentTransactions: {
       dealAmount: number;
       dealYear: number;
@@ -30,6 +33,7 @@ rightsRisk?: {
       similarityReason?: string;
       reliabilityGrade?: "A" | "B" | "C";
     }[];
+
     warnings: string[];
   };
 }
