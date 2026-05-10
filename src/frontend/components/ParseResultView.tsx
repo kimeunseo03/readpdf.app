@@ -36,7 +36,7 @@ export function ParseResultView({ response }: { response: ParseApiResponse }) {
 
   return (
     <div className="space-y-6">
-      <section className="rounded-3xl border bg-white p-6 shadow-sm">
+      <section className="card-surface p-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h2 className="text-lg font-semibold text-slate-900">판독 요약</h2>
