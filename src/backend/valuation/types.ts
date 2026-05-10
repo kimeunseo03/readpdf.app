@@ -15,6 +15,8 @@ export interface TransactionItem {
   area: number;
   floor?: number;
   buildYear?: number;
+  selectionReason?: string;
+  isPriceOutlier?: boolean;
 
   isSameApartment?: boolean;
   areaDifferenceM2?: number;
@@ -30,6 +32,7 @@ export interface PublicTransactionApiParams {
   dealYearMonth: string;
   buildingName?: string;
   exclusiveAreaM2?: number;
+  areaToleranceM2?: number;
 }
 
 export interface ValuationResult {
