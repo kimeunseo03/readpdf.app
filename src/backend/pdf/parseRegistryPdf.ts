@@ -207,20 +207,34 @@ export function parseRegistryText(params: {
   addEvidence(evidence, "property.landRightRatio", findSnippet(compactText, /소유권대지권.{0,180}/), landRightRatio ? 0.82 : 0.2);
 
   const rightsRisk = {
-    hasMortgage: /근저당권/.test(compactText),
-    hasSeizure: /(^|[^가])압류/.test(compactText),
-    hasProvisionalSeizure: /가압류/.test(compactText),
-    hasLeaseholdRight: /전세권|임차권/.test(compactText),
-    hasTrust: /신탁/.test(compactText),
-    coOwnerCount: undefined as number | undefined,
-    riskFlags: [] as string[]
-  };
+  hasMortgage: /근저당권/.test(compactText),
+  hasSeizure: /(^|[^가])압류/.test(compactText),
+  hasProvisionalSeizure: /가압류/.test(compactText),
+  hasLeaseholdRight: /전세권|임차권/.test(compactText),
+  hasTrust: /신탁/.test(compactText),
+  coOwnerCount: undefined as number | undefined,
+  riskFlags: [] as string[],
+  riskLevel: "SAFE" as "SAFE" | "CAUTION" | "DANGER"
+};
 
   if (rightsRisk.hasMortgage) rightsRisk.riskFlags.push("mortgage_detected");
   if (rightsRisk.hasSeizure) rightsRisk.riskFlags.push("seizure_detected");
   if (rightsRisk.hasProvisionalSeizure) rightsRisk.riskFlags.push("provisional_seizure_detected");
   if (rightsRisk.hasLeaseholdRight) rightsRisk.riskFlags.push("leasehold_or_tenant_right_detected");
   if (rightsRisk.hasTrust) rightsRisk.riskFlags.push("trust_detected");
+
+  if (
+  rightsRisk.hasSeizure ||
+  rightsRisk.hasProvisionalSeizure ||
+  rightsRisk.hasTrust
+) {
+  rightsRisk.riskLevel = "DANGER";
+} else if (
+  rightsRisk.hasMortgage ||
+  rightsRisk.hasLeaseholdRight
+) {
+  rightsRisk.riskLevel = "CAUTION";
+}
 
   addEvidence(evidence, "rightsRisk", findSnippet(compactText, /(근저당권|가압류|압류|전세권|임차권|신탁).{0,100}/), rightsRisk.riskFlags.length ? 0.74 : 0.65);
 
