@@ -224,8 +224,8 @@ export function ValuationReport({ input, result }: ValuationReportProps) {
                 <th className="px-4 py-3 font-semibold">금액</th>
                 <th className="px-4 py-3 font-semibold">면적</th>
                 <th className="px-4 py-3 font-semibold">층</th>
-                <th className="px-4 py-3 font-semibold">유사도</th>
                 <th className="px-4 py-3 font-semibold">비교군</th>
+                <th className="px-4 py-3 font-semibold">유사도</th>
                 <th className="px-4 py-3 font-semibold">선정 기준</th>
                 <th className="px-4 py-3 font-semibold">신뢰도</th>
               </tr>
@@ -252,9 +252,7 @@ export function ValuationReport({ input, result }: ValuationReportProps) {
                     {formatKoreanPrice(tx.dealAmount)}
                   </td>
 
-                  <td className="px-4 py-3 text-slate-700">
-                    {tx.area}㎡
-                  </td>
+                  <td className="px-4 py-3 text-slate-700">{tx.area}㎡</td>
 
                   <td className="px-4 py-3 text-slate-700">
                     {tx.floor ?? "-"}층
@@ -267,7 +265,7 @@ export function ValuationReport({ input, result }: ValuationReportProps) {
                           동일단지
                         </span>
                       )}
-                  
+
                       {(tx.monthsAgo ?? 999) <= 3 && (
                         <span className="rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-semibold text-green-700">
                           최근거래
@@ -279,16 +277,14 @@ export function ValuationReport({ input, result }: ValuationReportProps) {
                   <td className="px-4 py-3 text-slate-700">
                     {tx.similarityScore ?? "-"}점
                   </td>
-                  
+
                   <td className="px-4 py-3 text-slate-700">
                     {tx.selectionReason ?? "-"}
                   </td>
-                  
+
                   <td className="px-4 py-3 text-slate-700">
                     <span className={reliabilityBadgeClass(tx.reliabilityGrade)}>
                       {tx.reliabilityGrade ?? "-"}
-                    </span>
-                  </td>
                     </span>
                   </td>
                 </tr>
