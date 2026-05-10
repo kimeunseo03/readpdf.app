@@ -174,22 +174,34 @@ export function ParseResultView({ response }: { response: ParseApiResponse }) {
 </section>
 
       {review.manualReviewRequired && (
-        <section className="rounded-3xl border border-amber-200 bg-amber-50 p-6 shadow-sm">
-          <h3 className="font-semibold text-amber-900">수동 검토 사유</h3>
+  <section className="rounded-2xl border border-amber-200 bg-amber-50/70 p-6">
+    <div className="flex items-start gap-3">
+      <div className="mt-1 h-2.5 w-2.5 rounded-full bg-amber-500" />
 
-          <ul className="mt-3 list-disc space-y-1 pl-5 text-sm text-amber-900">
-            {review.reasons.map((reason) => (
-              <li key={reason}>{reason}</li>
-            ))}
-          </ul>
+      <div>
+        <h3 className="font-semibold text-amber-900">
+          수동 검토 필요
+        </h3>
 
-          {review.missingRequiredFields.length > 0 && (
-            <p className="mt-3 text-sm text-amber-900">
-              누락 필드: {review.missingRequiredFields.join(", ")}
-            </p>
-          )}
-        </section>
-      )}
+        <p className="mt-1 text-sm text-amber-800">
+          자동 판독 결과 중 일부 항목은 담당자 확인이 필요합니다.
+        </p>
+
+        <ul className="mt-4 list-disc space-y-1 pl-5 text-sm text-amber-900">
+          {review.reasons.map((reason) => (
+            <li key={reason}>{reason}</li>
+          ))}
+        </ul>
+
+        {review.missingRequiredFields.length > 0 && (
+          <p className="mt-3 text-sm font-medium text-amber-900">
+            누락 필드: {review.missingRequiredFields.join(", ")}
+          </p>
+        )}
+      </div>
+    </div>
+  </section>
+)}
     </div>
   );
 }
