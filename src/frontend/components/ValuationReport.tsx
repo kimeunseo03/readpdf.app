@@ -219,7 +219,15 @@ export function ValuationReport({ input, result }: ValuationReportProps) {
     </div>
 )}
       
-
+      {result.finalComment && (
+        <div className="mt-4 rounded-lg border border-slate-200 bg-white p-4">
+          <p className="font-medium">종합 의견</p>
+          <p className="mt-2 text-sm text-slate-700">
+            {result.finalComment}
+          </p>
+        </div>
+      )}
+      
       <div className="mt-6">
         <h3 className="mb-2 font-semibold">평가 기준</h3>
         <ul className="list-disc pl-5 text-sm text-gray-700">
