@@ -169,167 +169,169 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
       )}
 
       {result && (
-        <div className="mt-5 rounded-lg bg-gray-50 p-4 text-sm">
-          <h3 className="mb-3 font-semibold">
-            가치평가 결과
-          </h3>
+  <>
+    <div className="no-print mt-5 rounded-lg bg-gray-50 p-4 text-sm">
+      <h3 className="mb-3 font-semibold">
+        가치평가 결과
+      </h3>
 
-          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-            <div className="rounded-xl border bg-white p-4">
-              <p className="text-xs text-gray-500">
-                보정 평균가
-              </p>
+      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+        <div className="rounded-xl border bg-white p-4">
+          <p className="text-xs text-gray-500">
+            보정 평균가
+          </p>
 
-              <p className="mt-2 text-2xl font-bold">
-                {formatKoreanPrice(result.averagePrice)}
-              </p>
+          <p className="mt-2 whitespace-pre-line text-2xl font-bold">
+            {formatKoreanPrice(result.averagePrice)}
+          </p>
 
-              <p className="mt-1 text-xs text-gray-400">
-                유사도/이상치 보정 반영
-              </p>
-            </div>
+          <p className="mt-1 text-xs text-gray-400">
+            유사도/이상치 보정 반영
+          </p>
+        </div>
 
-            <div className="rounded-xl border bg-white p-4">
-              <p className="text-xs text-gray-500">
-                최저 거래가
-              </p>
+        <div className="rounded-xl border bg-white p-4">
+          <p className="text-xs text-gray-500">
+            최저 거래가
+          </p>
 
-              <p className="mt-2 text-2xl font-bold">
-                {formatKoreanPrice(result.lowestPrice)}
-              </p>
-            </div>
+          <p className="mt-2 whitespace-pre-line text-2xl font-bold">
+            {formatKoreanPrice(result.lowestPrice)}
+          </p>
+        </div>
 
-            <div className="rounded-xl border bg-white p-4">
-              <p className="text-xs text-gray-500">
-                최고 거래가
-              </p>
+        <div className="rounded-xl border bg-white p-4">
+          <p className="text-xs text-gray-500">
+            최고 거래가
+          </p>
 
-              <p className="mt-2 text-2xl font-bold">
-                {formatKoreanPrice(result.highestPrice)}
-              </p>
-            </div>
+          <p className="mt-2 whitespace-pre-line text-2xl font-bold">
+            {formatKoreanPrice(result.highestPrice)}
+          </p>
+        </div>
 
-            <div className="rounded-xl border bg-white p-4">
-              <p className="text-xs text-gray-500">
-                평가 신뢰도
-              </p>
+        <div className="rounded-xl border bg-white p-4">
+          <p className="text-xs text-gray-500">
+            평가 신뢰도
+          </p>
 
-              <p className="mt-2 text-2xl font-bold">
-                {result.overallConfidence ?? "-"}
-              </p>
+          <p className="mt-2 text-2xl font-bold">
+            {result.overallConfidence ?? "-"}
+          </p>
 
-              <p className="mt-1 text-xs text-gray-400">
-                비교 거래 {result.comparableCount}건
-              </p>
-            </div>
-          </div>
+          <p className="mt-1 text-xs text-gray-400">
+            비교 거래 {result.comparableCount}건
+          </p>
+        </div>
+      </div>
 
-          {result.valuationBasis.length > 0 && (
-            <div className="mt-4">
-              <p className="font-medium">평가 기준</p>
+      {result.valuationBasis.length > 0 && (
+        <div className="mt-4">
+          <p className="font-medium">평가 기준</p>
 
-              <ul className="mt-1 list-disc pl-5 text-gray-700">
-                {result.valuationBasis.map((basis) => (
-                  <li key={basis}>{basis}</li>
-                ))}
-              </ul>
-            </div>
-          )}
-
-          <button
-            type="button"
-            onClick={() => window.print()}
-            className="no-print mt-5 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium"
-          >
-            PDF 저장
-          </button>
-
-          <ValuationReport
-            input={{
-              addressRaw,
-              buildingName,
-              exclusiveAreaM2,
-              rightsRisk: initialValue.rightsRisk
-            }}
-            result={result}
-          />
-
-          {result.recentTransactions.length > 0 && (
-            <div className="mt-4">
-              <p className="font-medium">
-                비교 거래 내역
-              </p>
-
-              <div className="mt-2 overflow-x-auto">
-                <table className="w-full text-left text-xs">
-                  <thead className="border-b text-gray-500">
-                    <tr>
-                      <th className="py-2">거래일</th>
-                      <th className="py-2">거래금액</th>
-                      <th className="py-2">전용면적</th>
-                      <th className="py-2">층</th>
-                      <th className="py-2">유사도</th>
-                      <th className="py-2">신뢰도</th>
-                    </tr>
-                  </thead>
-
-                  <tbody>
-                    {result.recentTransactions.map(
-                      (tx, index) => (
-                        <tr
-                          key={`${tx.dealYear}-${tx.dealMonth}-${tx.dealDay}-${tx.dealAmount}-${index}`}
-                          className="border-b"
-                        >
-                          <td className="py-2">
-                            {tx.dealYear}.
-                            {String(tx.dealMonth).padStart(2, "0")}.
-                            {String(tx.dealDay).padStart(2, "0")}
-                          </td>
-
-                          <td className="py-2">
-                            {formatKoreanPrice(tx.dealAmount)}
-                          </td>
-
-                          <td className="py-2">
-                            {tx.area}㎡
-                          </td>
-
-                          <td className="py-2">
-                            {tx.floor ?? "-"}층
-                          </td>
-
-                          <td className="py-2">
-                            {tx.similarityScore ?? "-"}점
-                            {tx.similarityReason
-                              ? ` · ${tx.similarityReason}`
-                              : ""}
-                          </td>
-
-                          <td className="py-2">
-                            {tx.reliabilityGrade ?? "-"}
-                          </td>
-                        </tr>
-                      )
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
-
-          {result.warnings.length > 0 && (
-            <div className="mt-4">
-              <p className="font-medium">주의사항</p>
-
-              <ul className="mt-1 list-disc pl-5 text-gray-700">
-                {result.warnings.map((warning) => (
-                  <li key={warning}>{warning}</li>
-                ))}
-              </ul>
-            </div>
-          )}
+          <ul className="mt-1 list-disc pl-5 text-gray-700">
+            {result.valuationBasis.map((basis) => (
+              <li key={basis}>{basis}</li>
+            ))}
+          </ul>
         </div>
       )}
+
+      <button
+        type="button"
+        onClick={() => window.print()}
+        className="no-print mt-5 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium"
+      >
+        PDF 저장
+      </button>
+
+      {result.recentTransactions.length > 0 && (
+        <div className="mt-4">
+          <p className="font-medium">
+            비교 거래 내역
+          </p>
+
+          <div className="mt-2 overflow-x-auto">
+            <table className="w-full text-left text-xs">
+              <thead className="border-b text-gray-500">
+                <tr>
+                  <th className="py-2">거래일</th>
+                  <th className="py-2">거래금액</th>
+                  <th className="py-2">전용면적</th>
+                  <th className="py-2">층</th>
+                  <th className="py-2">유사도</th>
+                  <th className="py-2">신뢰도</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                {result.recentTransactions.map(
+                  (tx, index) => (
+                    <tr
+                      key={`${tx.dealYear}-${tx.dealMonth}-${tx.dealDay}-${tx.dealAmount}-${index}`}
+                      className="border-b"
+                    >
+                      <td className="py-2">
+                        {tx.dealYear}.
+                        {String(tx.dealMonth).padStart(2, "0")}.
+                        {String(tx.dealDay).padStart(2, "0")}
+                      </td>
+
+                      <td className="whitespace-pre-line py-2">
+                        {formatKoreanPrice(tx.dealAmount)}
+                      </td>
+
+                      <td className="py-2">
+                        {tx.area}㎡
+                      </td>
+
+                      <td className="py-2">
+                        {tx.floor ?? "-"}층
+                      </td>
+
+                      <td className="py-2">
+                        {tx.similarityScore ?? "-"}점
+                        {tx.similarityReason
+                          ? ` · ${tx.similarityReason}`
+                          : ""}
+                      </td>
+
+                      <td className="py-2">
+                        {tx.reliabilityGrade ?? "-"}
+                      </td>
+                    </tr>
+                  )
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {result.warnings.length > 0 && (
+        <div className="mt-4">
+          <p className="font-medium">주의사항</p>
+
+          <ul className="mt-1 list-disc pl-5 text-gray-700">
+            {result.warnings.map((warning) => (
+              <li key={warning}>{warning}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
+
+    <ValuationReport
+      input={{
+        addressRaw,
+        buildingName,
+        exclusiveAreaM2,
+        rightsRisk: initialValue.rightsRisk
+      }}
+      result={result}
+    />
+  </>
+)}    
     </section>
   );
 }
