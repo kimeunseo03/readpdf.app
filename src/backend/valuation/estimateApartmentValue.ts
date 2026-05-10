@@ -100,7 +100,15 @@ export async function estimateApartmentValue(
   const excludedTransactions = transactions.filter(
     (tx) => !filteredPriceSet.includes(tx.dealAmount)
   );
-  
+
+  const excludedReasons: string[] = [];
+
+  excludedTransactions.forEach((tx) => {
+    excludedReasons.push(
+      `${tx.dealYear}.${String(tx.dealMonth).padStart(2, "0")}.${String(tx.dealDay).padStart(2, "0")} 거래 (${tx.dealAmount.toLocaleString()}만원) 이상치 제외`
+    );
+  });
+    
   const filteredTransactions = transactions.filter(
     (tx) => filteredPriceSet.includes(tx.dealAmount)
   );
@@ -109,8 +117,12 @@ export async function estimateApartmentValue(
     warnings.push(
       `${excludedTransactions.length}건의 이상 거래가가 자동 제외되었습니다.`
     );
-  }
   
+    excludedReasons.forEach((reason) => {
+      warnings.push(reason);
+    });
+  }
+    
   const filteredPrices = filteredTransactions.map(
     (t) => t.dealAmount
   );
