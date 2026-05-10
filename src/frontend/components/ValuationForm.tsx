@@ -311,14 +311,23 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
                   (tx, index) => (
                     <tr
                       key={`${tx.dealYear}-${tx.dealMonth}-${tx.dealDay}-${tx.dealAmount}-${index}`}
-                      className="border-b"
+                      className={
+                        index === 0
+                          ? "border-b bg-green-50"
+                          : "border-b"
+                      }
                     >
                       <td className="py-2">
                         {tx.dealYear}.
                         {String(tx.dealMonth).padStart(2, "0")}.
                         {String(tx.dealDay).padStart(2, "0")}
+                      
+                        {index === 0 && (
+                          <span className="ml-2 rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-semibold text-green-700">
+                            최우선 비교군
+                          </span>
+                        )}
                       </td>
-
                       <td className="whitespace-pre-line py-2">
                         {formatKoreanPrice(tx.dealAmount)}
                       </td>
