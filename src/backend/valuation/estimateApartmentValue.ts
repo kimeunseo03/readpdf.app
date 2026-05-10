@@ -79,6 +79,16 @@ export async function estimateApartmentValue(
   legalDongCode
 });
 
+  const usedExpandedAreaRange = transactions.some((tx) =>
+    tx.selectionReason?.includes("±5㎡") ||
+    tx.selectionReason?.includes("±8㎡")
+  );
+  
+  if (usedExpandedAreaRange) {
+    warnings.push(
+      "동일 조건 거래가 부족하여 전용면적 비교 범위를 자동 확장했습니다."
+    );
+  }
   if (transactions.length === 0) {
   warnings.push(
     "조건에 맞는 실거래 비교군을 찾지 못했습니다. 단지명, 전용면적, 법정동코드 매핑을 확인하세요."
