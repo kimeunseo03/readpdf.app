@@ -317,9 +317,21 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
 
       {result.recentTransactions.length > 0 && (
         <div className="mt-4">
-          <p className="font-medium">
-            비교 거래 내역
-          </p>
+          <div className="mb-3 flex items-center justify-between">
+            <div>
+              <p className="text-sm font-semibold tracking-wide text-slate-500">
+                COMPARABLE SALES
+              </p>
+          
+              <h3 className="mt-1 text-lg font-bold text-slate-900">
+                비교 거래 내역
+              </h3>
+            </div>
+          
+            <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
+              최근 거래 우선
+            </span>
+          </div>
 
           <div className="mt-3 overflow-hidden rounded-2xl border border-slate-200">
             <table className="w-full text-left text-sm">
