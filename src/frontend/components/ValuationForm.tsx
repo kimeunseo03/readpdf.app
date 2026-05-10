@@ -111,10 +111,20 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
   }
 
   return (
-    <section className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
-      <h2 className="mb-4 text-lg font-semibold">
-        가치평가 입력값 확인
-      </h2>
+    <section className="card-surface p-6">
+      <div className="mb-5">
+        <p className="text-sm font-semibold tracking-wide text-blue-600">
+          VALUATION INPUT
+        </p>
+      
+        <h2 className="mt-1 text-xl font-bold text-slate-900">
+          가치평가 입력값 확인
+        </h2>
+      
+        <p className="mt-2 text-sm text-slate-500">
+          등기부에서 추출한 값을 기준으로 평가를 실행합니다. 필요하면 주소, 단지명, 면적, 담당자명을 수정하세요.
+        </p>
+      </div>
 
       <div className="grid gap-4 md:grid-cols-2">
         <label className="block md:col-span-2">
