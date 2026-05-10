@@ -9,6 +9,7 @@ interface ValuationReportProps {
     riskLevel?: "SAFE" | "CAUTION" | "DANGER";
     summary?: string;
     riskFlags?: string[];
+    managerName?: string;
   };
   };
   result: {
@@ -65,6 +66,10 @@ export function ValuationReport({ input, result }: ValuationReportProps) {
           <p className="font-medium">{input.exclusiveAreaM2 || "-"}㎡</p>
         </div>
 
+        <div>
+          <p className="text-gray-500">담당자</p>
+          <p className="font-medium">{input.managerName || "-"}</p>
+        </div>
         <div>
           <p className="text-gray-500">평가 신뢰도</p>
           <p className="font-medium">{result.overallConfidence ?? "-"}</p>
