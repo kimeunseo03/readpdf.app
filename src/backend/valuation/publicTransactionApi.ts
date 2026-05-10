@@ -236,6 +236,24 @@ export async function fetchPublicTransactions(
         return scoreB - scoreA;
       }
 
+      const gradeRank = {
+        A: 3,
+        B: 2,
+        C: 1
+      };
+
+      const gradeA = a.reliabilityGrade
+        ? gradeRank[a.reliabilityGrade]
+        : 0;
+
+      const gradeB = b.reliabilityGrade
+        ? gradeRank[b.reliabilityGrade]
+        : 0;
+
+      if (gradeB !== gradeA) {
+        return gradeB - gradeA;
+      }
+
       const dateA = a.dealYear * 10000 + a.dealMonth * 100 + a.dealDay;
       const dateB = b.dealYear * 10000 + b.dealMonth * 100 + b.dealDay;
 
