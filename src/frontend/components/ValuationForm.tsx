@@ -101,7 +101,7 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
           <textarea
             value={addressRaw}
             onChange={(e) => setAddressRaw(e.target.value)}
-            className="w-full rounded-xl border border-slate-200 bg-white p-3 text-sm shadow-sm"
+            className="w-full rounded-xl border border-slate-200 bg-white p-3 text-sm shadow-sm transition focus:border-blue-500 focus:outline-none focus:ring-4 focus:ring-blue-100"
             rows={3}
           />
         </label>
@@ -111,7 +111,7 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
           <input
             value={buildingName}
             onChange={(e) => setBuildingName(e.target.value)}
-            className="w-full rounded-xl border border-slate-200 bg-white p-3 text-sm shadow-sm"
+            className="w-full rounded-xl border border-slate-200 bg-white p-3 text-sm shadow-sm transition focus:border-blue-500 focus:outline-none focus:ring-4 focus:ring-blue-100"
           />
         </label>
 
@@ -121,7 +121,7 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
             type="number"
             value={exclusiveAreaM2}
             onChange={(e) => setExclusiveAreaM2(e.target.value)}
-            className="w-full rounded-xl border border-slate-200 bg-white p-3 text-sm shadow-sm"
+            className="w-full rounded-xl border border-slate-200 bg-white p-3 text-sm shadow-sm transition focus:border-blue-500 focus:outline-none focus:ring-4 focus:ring-blue-100"
           />
         </label>
 
@@ -130,7 +130,7 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
           <input
             value={managerName}
             onChange={(e) => setManagerName(e.target.value)}
-            className="w-full rounded-xl border border-slate-200 bg-white p-3 text-sm shadow-sm"
+            className="w-full rounded-xl border border-slate-200 bg-white p-3 text-sm shadow-sm transition focus:border-blue-500 focus:outline-none focus:ring-4 focus:ring-blue-100"
             placeholder="예: 홍길동"
           />
         </label>
