@@ -109,15 +109,15 @@ export function ValuationReport({ input, result }: ValuationReportProps) {
       <div className="mt-6">
         <h3 className="mb-2 font-semibold">비교 거래 내역</h3>
 
-        <table className="w-full text-left text-xs">
-          <thead className="border-b text-gray-500">
+        <table className="w-full text-left text-sm">
+          <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
             <tr>
-              <th className="py-2">거래일</th>
-              <th className="py-2">금액</th>
-              <th className="py-2">면적</th>
-              <th className="py-2">층</th>
-              <th className="py-2">유사도</th>
-              <th className="py-2">신뢰도</th>
+              <th className="px-4 py-3 font-semibold">거래일</th>
+              <th className="px-4 py-3 font-semibold">금액</th>
+              <th className="px-4 py-3 font-semibold">면적</th>
+              <th className="px-4 py-3 font-semibold">층</th>
+              <th className="px-4 py-3 font-semibold">유사도</th>
+              <th className="px-4 py-3 font-semibold">신뢰도</th>
             </tr>
           </thead>
 
@@ -127,11 +127,11 @@ export function ValuationReport({ input, result }: ValuationReportProps) {
                 key={index}
                 className={
                   index === 0
-                    ? "border-b bg-green-50"
-                    : "border-b"
+                    ? "border-b bg-green-50 hover:bg-green-100"
+                    : "border-b hover:bg-slate-50"
                 }
               >
-                <td className="py-2">
+                <td className="px-4 py-3 text-slate-700">
                   {tx.dealYear}.
                   {String(tx.dealMonth).padStart(2, "0")}.
                   {String(tx.dealDay).padStart(2, "0")}
@@ -147,16 +147,16 @@ export function ValuationReport({ input, result }: ValuationReportProps) {
                   {formatKoreanPrice(tx.dealAmount)}
                 </td>
               
-                <td className="py-2">{tx.area}㎡</td>
+                <td className="px-4 py-3 text-slate-700">{tx.area}㎡</td>
               
-                <td className="py-2">{tx.floor ?? "-"}층</td>
+                <td className="px-4 py-3 text-slate-700">{tx.floor ?? "-"}층</td>
               
-                <td className="py-2">
+                <td className="px-4 py-3 text-slate-700">
                   {tx.similarityScore ?? "-"}점
                   {tx.similarityReason ? ` · ${tx.similarityReason}` : ""}
                 </td>
               
-                <td className="py-2">
+                <td className="px-4 py-3 text-slate-700">
                   <span
                     className={
                       tx.reliabilityGrade === "A"
@@ -191,10 +191,10 @@ export function ValuationReport({ input, result }: ValuationReportProps) {
       </h3>
 
       <table className="w-full text-left text-xs">
-        <thead className="border-b text-gray-500">
+        <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
           <tr>
-            <th className="py-2">항목</th>
-            <th className="py-2">상태</th>
+            <th className="px-4 py-3 font-semibold">항목</th>
+            <th className="px-4 py-3 font-semibold">상태</th>
           </tr>
         </thead>
 
@@ -218,7 +218,7 @@ export function ValuationReport({ input, result }: ValuationReportProps) {
                 key={flag}
                 className="border-b"
               >
-                <td className="py-2">
+                <td className="px-4 py-3 text-slate-700">
                   {label}
                 </td>
 
