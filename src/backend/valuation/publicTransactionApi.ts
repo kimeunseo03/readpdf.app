@@ -217,7 +217,7 @@ async function fetchApartmentTradeApi(
         similarityReason,
         reliabilityGrade
       });
-    }
+      }
 
     console.log("filtered_transaction_count", transactions.length);
 
