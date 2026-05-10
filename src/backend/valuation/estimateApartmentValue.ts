@@ -69,7 +69,7 @@ export async function estimateApartmentValue(
   }
 
   if (!legalDongCode) {
-  warnings.push("법정동코드를 찾을 수 없습니다.");
+  warnings.push("법정동코드를 찾을 수 없어 실거래가 조회 정확도가 낮습니다. 주소 또는 법정동코드 매핑을 확인하세요.");
 }
   
   const transactions = await fetchPublicTransactions({
@@ -79,9 +79,13 @@ export async function estimateApartmentValue(
   legalDongCode
 });
 
-  if (transactions.length < 3) {
+  if (transactions.length === 0) {
   warnings.push(
-    "비교 가능한 실거래 데이터가 부족합니다. 결과 신뢰도가 낮을 수 있습니다."
+    "조건에 맞는 실거래 비교군을 찾지 못했습니다. 단지명, 전용면적, 법정동코드 매핑을 확인하세요."
+  );
+} else if (transactions.length < 3) {
+  warnings.push(
+    "비교 가능한 실거래 데이터가 3건 미만입니다. 결과 신뢰도가 낮을 수 있습니다."
   );
 }
   
