@@ -89,11 +89,27 @@ export async function estimateApartmentValue(
   );
 }
   
-  const filteredTransactions = transactions.filter((tx) => {
-  return removeOutliersByIqr(
-    transactions.map((t) => t.dealAmount)
-  ).includes(tx.dealAmount);
-});
+  const originalPrices = transactions.map(
+  (t) => t.dealAmount
+);
+
+  const filteredPriceSet = removeOutliersByIqr(
+    originalPrices
+  );
+  
+  const excludedTransactions = transactions.filter(
+    (tx) => !filteredPriceSet.includes(tx.dealAmount)
+  );
+  
+  const filteredTransactions = transactions.filter(
+    (tx) => filteredPriceSet.includes(tx.dealAmount)
+  );
+  
+  if (excludedTransactions.length > 0) {
+    warnings.push(
+      `${excludedTransactions.length}건의 이상 거래가가 자동 제외되었습니다.`
+    );
+  }
   
   const filteredPrices = filteredTransactions.map(
     (t) => t.dealAmount
