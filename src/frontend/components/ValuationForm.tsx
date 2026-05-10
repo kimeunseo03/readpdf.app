@@ -50,7 +50,7 @@ interface ValuationResult {
   warnings: string[];
 }
 
-export function ValuationForm({ initialValue, rightsRisk}: ValuationFormProps) {
+export function ValuationForm({ initialValue }: ValuationFormProps) {
   const [addressRaw, setAddressRaw] = useState(
     initialValue.addressRaw ?? ""
   );
