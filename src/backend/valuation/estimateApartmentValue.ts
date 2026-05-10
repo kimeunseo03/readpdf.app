@@ -157,6 +157,27 @@ if (
   overallConfidence = "B";
 }
 
+  let finalComment = "";
+
+if (overallConfidence === "A") {
+  finalComment =
+    "비교 가능한 실거래 데이터가 충분하고 유사도가 높아 내부 참고가 신뢰도가 높은 편입니다.";
+} else if (overallConfidence === "B") {
+  finalComment =
+    "비교 가능한 실거래 데이터는 확보되었으나 일부 보정 요소가 있어 추가 검토가 권장됩니다.";
+} else {
+  finalComment =
+    "비교 가능한 실거래 데이터가 부족하거나 유사도가 낮아 보수적인 검토가 필요합니다.";
+}
+
+if (input.rightsRisk?.riskLevel === "DANGER") {
+  finalComment +=
+    " 또한 고위험 권리관계가 감지되어 가격 검토와 별도로 권리분석 확인이 필요합니다.";
+} else if (input.rightsRisk?.riskLevel === "CAUTION") {
+  finalComment +=
+    " 권리관계상 주의 요소가 있어 관련 서류 확인이 필요합니다.";
+}
+  
 if (input.rightsRisk?.riskLevel === "DANGER") {
   warnings.push("압류/가압류/신탁 등 고위험 권리관계가 감지되었습니다.");
 }
@@ -188,6 +209,7 @@ if (input.rightsRisk?.riskLevel === "CAUTION") {
   "동일 단지 거래가 없는 경우 동일 법정동 유사 면적 거래를 fallback으로 사용"
 ],
     overallConfidence,
+    finalComment,
     warnings
   };
 }
