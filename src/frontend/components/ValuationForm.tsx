@@ -177,6 +177,7 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
           {loading ? "평가 중..." : "자동 평가 실행"}
         </button>
       </div>
+    </div>
 
       {error && (
         <p className="mt-4 rounded-lg bg-red-50 p-3 text-sm text-red-700">
