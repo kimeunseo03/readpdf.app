@@ -51,6 +51,8 @@ interface ValuationResult {
 }
 
 export function ValuationForm({ initialValue }: ValuationFormProps) {
+  const [managerName, setManagerName] = useState("");
+  
   const [addressRaw, setAddressRaw] = useState(
     initialValue.addressRaw ?? ""
   );
@@ -152,6 +154,19 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
           />
         </label>
 
+        <label className="block">
+          <span className="mb-1 block text-sm font-medium text-gray-700">
+            담당자명
+          </span>
+        
+          <input
+            value={managerName}
+            onChange={(e) => setManagerName(e.target.value)}
+            className="w-full rounded-lg border border-gray-300 p-3 text-sm"
+            placeholder="예: 홍길동"
+          />
+        </label>
+                
         <button
           type="button"
           onClick={runValuation}
@@ -326,6 +341,7 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
         addressRaw,
         buildingName,
         exclusiveAreaM2,
+        managerName,
         rightsRisk: initialValue.rightsRisk
       }}
       result={result}
