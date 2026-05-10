@@ -143,7 +143,7 @@ export function ValuationReport({ input, result }: ValuationReportProps) {
 
         <div>
           <p className="text-slate-500">보정 평균가</p>
-          <p className="mt-1 whitespace-pre-line text-lg font-bold leading-snug text-slate-900">
+          <p className="mt-1 whitespace-pre-line text-lg font-bold leading-snug tracking-tight tabular-nums text-slate-900">
             {formatKoreanPrice(result.averagePrice)}
           </p>
           <p className="mt-2 text-xs leading-5 text-slate-500">
@@ -185,7 +185,7 @@ export function ValuationReport({ input, result }: ValuationReportProps) {
                 보정 평균가
               </p>
           
-              <p className="mt-3 whitespace-pre-line text-lg font-bold leading-snug text-green-700">
+              <p className="mt-3 whitespace-pre-line text-lg font-bold leading-snug tracking-tight tabular-nums text-green-700">
                 {formatKoreanPrice(result.averagePrice)}
               </p>
             </div>
@@ -195,7 +195,7 @@ export function ValuationReport({ input, result }: ValuationReportProps) {
                 최저 거래가
               </p>
           
-              <p className="mt-3 whitespace-pre-line text-lg font-bold leading-snug text-blue-700">
+              <p className="mt-3 whitespace-pre-line text-lg font-bold leading-snug tracking-tight tabular-nums text-blue-700">
                 {formatKoreanPrice(result.lowestPrice)}
               </p>
             </div>
@@ -205,7 +205,7 @@ export function ValuationReport({ input, result }: ValuationReportProps) {
                 최고 거래가
               </p>
           
-              <p className="mt-3 whitespace-pre-line text-lg font-bold leading-snug text-orange-700">
+              <p className="mt-3 whitespace-pre-line text-lg font-bold leading-snug tracking-tight tabular-nums text-orange-700">
                 {formatKoreanPrice(result.highestPrice)}
               </p>
             </div>
@@ -215,7 +215,7 @@ export function ValuationReport({ input, result }: ValuationReportProps) {
                 평가 신뢰도
               </p>
           
-              <p className="mt-3 text-3xl font-bold text-slate-900">
+              <p className="mt-3 text-3xl font-bold tracking-tight tabular-nums text-slate-900">
                 {result.overallConfidence ?? "-"}
               </p>
           
@@ -264,7 +264,7 @@ export function ValuationReport({ input, result }: ValuationReportProps) {
                     )}
                   </td>
 
-                  <td className="whitespace-pre-line px-4 py-3 text-slate-700">
+                  <td className="whitespace-pre-line px-4 py-3 font-medium tabular-nums text-slate-700">
                     {formatKoreanPrice(tx.dealAmount)}
                   </td>
 
