@@ -131,32 +131,58 @@ export async function estimateApartmentValue(
     (t) => t.similarityScore ?? 50
   );
 
-  const averageSimilarity =
-  weights.length > 0
-    ? average(weights)
+  const averageSimilarity = weights.length > 0 ? average(weights) : 0;
+
+const sameApartmentCount = filteredTransactions.filter(
+  (tx) => tx.isSameApartment
+).length;
+
+const recentTransactionCount = filteredTransactions.filter(
+  (tx) => (tx.monthsAgo ?? 999) <= 6
+).length;
+
+const excludedRatio =
+  transactions.length > 0
+    ? excludedTransactions.length / transactions.length
     : 0;
+
+let confidenceScore = 0;
+
+confidenceScore += Math.min(filteredTransactions.length, 5) * 12;
+confidenceScore += averageSimilarity * 0.35;
+confidenceScore += sameApartmentCount > 0 ? 15 : 0;
+confidenceScore += recentTransactionCount >= 3 ? 10 : recentTransactionCount * 3;
+
+if (excludedRatio >= 0.4) {
+  confidenceScore -= 15;
+} else if (excludedRatio >= 0.2) {
+  confidenceScore -= 8;
+}
+
+if (input.rightsRisk?.riskLevel === "CAUTION") {
+  confidenceScore -= 5;
+}
+
+if (input.rightsRisk?.riskLevel === "DANGER") {
+  confidenceScore -= 15;
+}
+
+confidenceScore = Math.max(0, Math.min(100, confidenceScore));
 
 let overallConfidence: "A" | "B" | "C" = "C";
 
-if (
-  filteredTransactions.length >= 5 &&
-  averageSimilarity >= 85
-) {
+if (confidenceScore >= 80) {
   overallConfidence = "A";
-} else if (
-  filteredTransactions.length >= 3 &&
-  averageSimilarity >= 70
-) {
+} else if (confidenceScore >= 60) {
   overallConfidence = "B";
 }
 
-  if (
+if (
   input.rightsRisk?.riskLevel === "DANGER" &&
   overallConfidence === "A"
 ) {
   overallConfidence = "B";
 }
-
   let finalComment = "";
 
 if (overallConfidence === "A") {
@@ -200,14 +226,16 @@ if (input.rightsRisk?.riskLevel === "CAUTION") {
 
     recentTransactions: transactions,
     valuationBasis: [
-  "국토교통부 아파트 매매 실거래가 자료 사용",
-  "동일 법정동 기준 조회",
-  "전용면적 ±3㎡ 비교군 사용",
-  "최근 12개월 거래 우선 사용",
-  "최근 3개월 거래는 가중치를 높게 반영",
-  "IQR 방식으로 극단 거래가 제거된 보정 평균가 사용",
-  "동일 단지 거래가 없는 경우 동일 법정동 유사 면적 거래를 fallback으로 사용"
-],
+      "국토교통부 아파트 매매 실거래가 자료 사용",
+      "동일 법정동 기준 조회",
+      "전용면적 ±3㎡ 비교군 사용",
+      "최근 12개월 거래 우선 사용",
+      "동일 단지 거래는 높은 가중치로 반영",
+      "최근 3개월 및 6개월 이내 거래는 추가 가중치 반영",
+      "층수와 준공연도를 유사도 점수에 반영",
+      "IQR 방식으로 극단 거래가 제거된 보정 평균가 사용",
+      "동일 단지 거래가 없는 경우 동일 법정동 유사 면적 거래를 fallback으로 사용"
+    ],
     overallConfidence,
     finalComment,
     warnings
