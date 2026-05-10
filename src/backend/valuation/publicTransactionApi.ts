@@ -105,9 +105,11 @@ async function fetchApartmentTradeApi(
 
       if (!dealAmount || !area) continue;
 
+      const areaToleranceM2 = params.areaToleranceM2 ?? 3;
+
       const isSimilarArea =
         !params.exclusiveAreaM2 ||
-        Math.abs(area - params.exclusiveAreaM2) <= 3;
+        Math.abs(area - params.exclusiveAreaM2) <= areaToleranceM2;
 
       if (!isSimilarArea) continue;
 
@@ -215,7 +217,10 @@ async function fetchApartmentTradeApi(
         monthsAgo,
         similarityScore,
         similarityReason,
-        reliabilityGrade
+        reliabilityGrade,
+        selectionReason: isSameApartment
+          ? "동일 단지 거래"
+          : `동일 법정동 유사 면적 거래(±${areaToleranceM2}㎡)`
       });
       }
 
@@ -235,56 +240,75 @@ export async function fetchPublicTransactions(
   console.log("valuation_legalDongCode", params.legalDongCode ?? "undefined");
 
   const recentMonths = getRecentDealYearMonths(12);
-  const apiTransactions: TransactionItem[] = [];
-
-  for (const dealYearMonth of recentMonths) {
-    const monthlyTransactions = await fetchApartmentTradeApi({
-      legalDongCode: params.legalDongCode,
-      dealYearMonth,
-      buildingName: params.buildingName,
-      exclusiveAreaM2: params.exclusiveAreaM2
-    });
-
-    apiTransactions.push(...monthlyTransactions);
-
-    if (apiTransactions.length >= 5) break;
+  const areaTolerances = [3, 5, 8];
+  
+  for (const areaToleranceM2 of areaTolerances) {
+    const apiTransactions: TransactionItem[] = [];
+  
+    for (const dealYearMonth of recentMonths) {
+      const monthlyTransactions = await fetchApartmentTradeApi({
+        legalDongCode: params.legalDongCode,
+        dealYearMonth,
+        buildingName: params.buildingName,
+        exclusiveAreaM2: params.exclusiveAreaM2,
+        areaToleranceM2
+      });
+  
+      apiTransactions.push(...monthlyTransactions);
+  
+      const sameApartmentCount = apiTransactions.filter(
+        (tx) => tx.isSameApartment
+      ).length;
+  
+      if (sameApartmentCount >= 3 || apiTransactions.length >= 5) {
+        break;
+      }
+    }
+  
+    if (apiTransactions.length > 0) {
+      return apiTransactions
+        .filter((tx) => (tx.monthsAgo ?? 999) <= 12)
+        .sort((a, b) => {
+          const sameA = a.isSameApartment ? 1 : 0;
+          const sameB = b.isSameApartment ? 1 : 0;
+  
+          if (sameB !== sameA) {
+            return sameB - sameA;
+          }
+  
+          const scoreA = a.similarityScore ?? 0;
+          const scoreB = b.similarityScore ?? 0;
+  
+          if (scoreB !== scoreA) {
+            return scoreB - scoreA;
+          }
+  
+          const gradeRank = {
+            A: 3,
+            B: 2,
+            C: 1
+          };
+  
+          const gradeA = a.reliabilityGrade
+            ? gradeRank[a.reliabilityGrade]
+            : 0;
+  
+          const gradeB = b.reliabilityGrade
+            ? gradeRank[b.reliabilityGrade]
+            : 0;
+  
+          if (gradeB !== gradeA) {
+            return gradeB - gradeA;
+          }
+  
+          const dateA = a.dealYear * 10000 + a.dealMonth * 100 + a.dealDay;
+          const dateB = b.dealYear * 10000 + b.dealMonth * 100 + b.dealDay;
+  
+          return dateB - dateA;
+        })
+        .slice(0, 5);
+    }
   }
-
-  if (apiTransactions.length > 0) {
-  return apiTransactions
-    .sort((a, b) => {
-      const scoreA = a.similarityScore ?? 0;
-      const scoreB = b.similarityScore ?? 0;
-
-      if (scoreB !== scoreA) {
-        return scoreB - scoreA;
-      }
-
-      const gradeRank = {
-        A: 3,
-        B: 2,
-        C: 1
-      };
-
-      const gradeA = a.reliabilityGrade
-        ? gradeRank[a.reliabilityGrade]
-        : 0;
-
-      const gradeB = b.reliabilityGrade
-        ? gradeRank[b.reliabilityGrade]
-        : 0;
-
-      if (gradeB !== gradeA) {
-        return gradeB - gradeA;
-      }
-
-      const dateA = a.dealYear * 10000 + a.dealMonth * 100 + a.dealDay;
-      const dateB = b.dealYear * 10000 + b.dealMonth * 100 + b.dealDay;
-
-      return dateB - dateA;
-    })
-    .slice(0, 5);
-}
-
+  
   return [];
 }
