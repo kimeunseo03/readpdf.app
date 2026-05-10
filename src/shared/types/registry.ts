@@ -34,6 +34,7 @@ export type RegistryParseResult = {
     coOwnerCount?: number;
     riskFlags: string[];
     riskLevel?: "SAFE" | "CAUTION" | "DANGER";
+    summary?: string;
   };
   confidence: {
     overall: number;
