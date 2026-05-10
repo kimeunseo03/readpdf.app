@@ -19,6 +19,7 @@ if (!key) {
 }
 
 return LEGAL_DONG_CODES[key];
+}
 
 export function getLegalDongCodeKey(region: {
   sido?: string;
