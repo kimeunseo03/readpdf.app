@@ -33,6 +33,10 @@ interface ValuationResult {
     dealDay: number;
     area: number;
     floor?: number;
+    buildYear?: number;
+    isSameApartment?: boolean;
+    areaDifferenceM2?: number;
+    monthsAgo?: number;
     similarityScore?: number;
     similarityReason?: string;
     reliabilityGrade?: "A" | "B" | "C";
