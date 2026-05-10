@@ -42,3 +42,22 @@ body {
   border-radius: 1.25rem;
   box-shadow: 0 10px 30px rgba(15, 23, 42, 0.04);
 }
+@media print {
+  .print-report table {
+    page-break-inside: auto;
+  }
+
+  .print-report tr {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  .print-report section,
+  .print-report div {
+    break-inside: avoid;
+  }
+
+  .print-report {
+    font-size: 12px;
+  }
+}
