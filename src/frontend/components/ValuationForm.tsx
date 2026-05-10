@@ -222,20 +222,46 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
           </p>
         </div>
         
-        <div className="rounded-2xl border border-red-100 bg-red-50/50 p-4">
-          <p className="text-xs font-semibold text-red-700">권리 위험도</p>
-        
-          <p className="mt-3 text-2xl font-bold text-red-600">
-            {initialValue.rightsRisk?.riskLevel === "SAFE" && "안전"}
-            {initialValue.rightsRisk?.riskLevel === "CAUTION" && "주의"}
-            {initialValue.rightsRisk?.riskLevel === "DANGER" && "위험"}
-            {!initialValue.rightsRisk?.riskLevel && "-"}
-          </p>
-        
-          <p className="mt-3 text-xs text-slate-500">
-            등기부 권리관계 기준
-          </p>
-        </div>
+        <div
+  className={
+    initialValue.rightsRisk?.riskLevel === "SAFE"
+      ? "rounded-2xl border border-green-100 bg-green-50/50 p-4"
+      : initialValue.rightsRisk?.riskLevel === "CAUTION"
+      ? "rounded-2xl border border-yellow-100 bg-yellow-50/50 p-4"
+      : "rounded-2xl border border-red-100 bg-red-50/50 p-4"
+    }
+  >
+    <p
+      className={
+        initialValue.rightsRisk?.riskLevel === "SAFE"
+          ? "text-xs font-semibold text-green-700"
+          : initialValue.rightsRisk?.riskLevel === "CAUTION"
+          ? "text-xs font-semibold text-yellow-700"
+          : "text-xs font-semibold text-red-700"
+      }
+    >
+      권리 위험도
+    </p>
+  
+    <p
+      className={
+        initialValue.rightsRisk?.riskLevel === "SAFE"
+          ? "mt-3 text-2xl font-bold text-green-700"
+          : initialValue.rightsRisk?.riskLevel === "CAUTION"
+          ? "mt-3 text-2xl font-bold text-yellow-700"
+          : "mt-3 text-2xl font-bold text-red-700"
+      }
+    >
+      {initialValue.rightsRisk?.riskLevel === "SAFE" && "안전"}
+      {initialValue.rightsRisk?.riskLevel === "CAUTION" && "주의"}
+      {initialValue.rightsRisk?.riskLevel === "DANGER" && "위험"}
+      {!initialValue.rightsRisk?.riskLevel && "-"}
+    </p>
+  
+    <p className="mt-3 text-xs text-slate-500">
+      등기부 권리관계 기준
+    </p>
+  </div>
         
         <div className="rounded-2xl border border-blue-100 bg-white p-4">
           <p className="text-xs font-semibold text-blue-700">평가 신뢰도</p>
