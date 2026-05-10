@@ -4,13 +4,11 @@ import { useState } from "react";
 import { ValuationReport } from "./ValuationReport";
 import { formatKoreanPrice } from "../../backend/valuation/formatKoreanPrice";
 
-
 interface ValuationFormProps {
   initialValue: {
     addressRaw?: string;
     buildingName?: string;
     exclusiveAreaM2?: number;
-
     rightsRisk?: {
       riskLevel?: "SAFE" | "CAUTION" | "DANGER";
       summary?: string;
@@ -18,7 +16,6 @@ interface ValuationFormProps {
     };
   };
 }
-
 
 interface ValuationResult {
   success: boolean;
@@ -29,7 +26,6 @@ interface ValuationResult {
   highestPrice?: number;
   averagePrice?: number;
   finalComment?: string;
-
   recentTransactions: {
     dealAmount: number;
     dealYear: number;
@@ -37,40 +33,24 @@ interface ValuationResult {
     dealDay: number;
     area: number;
     floor?: number;
-
     similarityScore?: number;
     similarityReason?: string;
-
     reliabilityGrade?: "A" | "B" | "C";
   }[];
-
   valuationBasis: string[];
-
   overallConfidence?: "A" | "B" | "C";
-
   warnings: string[];
 }
 
 export function ValuationForm({ initialValue }: ValuationFormProps) {
   const [managerName, setManagerName] = useState("");
-  
-  const [addressRaw, setAddressRaw] = useState(
-    initialValue.addressRaw ?? ""
-  );
-
-  const [buildingName, setBuildingName] = useState(
-    initialValue.buildingName ?? ""
-  );
-
+  const [addressRaw, setAddressRaw] = useState(initialValue.addressRaw ?? "");
+  const [buildingName, setBuildingName] = useState(initialValue.buildingName ?? "");
   const [exclusiveAreaM2, setExclusiveAreaM2] = useState(
     initialValue.exclusiveAreaM2?.toString() ?? ""
   );
-
   const [loading, setLoading] = useState(false);
-
-  const [result, setResult] =
-    useState<ValuationResult | null>(null);
-
+  const [result, setResult] = useState<ValuationResult | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   async function runValuation() {
@@ -81,30 +61,21 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
     try {
       const res = await fetch("/api/valuation", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-        addressRaw,
-        buildingName,
-        exclusiveAreaM2: Number(exclusiveAreaM2),
-        rightsRisk: initialValue.rightsRisk
-      })
+          addressRaw,
+          buildingName,
+          exclusiveAreaM2: Number(exclusiveAreaM2),
+          rightsRisk: initialValue.rightsRisk
+        })
       });
 
-      if (!res.ok) {
-        throw new Error("가치평가 API 호출에 실패했습니다.");
-      }
+      if (!res.ok) throw new Error("가치평가 API 호출에 실패했습니다.");
 
       const data = await res.json();
-
       setResult(data);
     } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : "알 수 없는 오류가 발생했습니다."
-      );
+      setError(err instanceof Error ? err.message : "알 수 없는 오류가 발생했습니다.");
     } finally {
       setLoading(false);
     }
@@ -116,11 +87,9 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
         <p className="text-sm font-semibold tracking-wide text-blue-600">
           VALUATION INPUT
         </p>
-      
         <h2 className="mt-1 text-xl font-bold text-slate-900">
           가치평가 입력값 확인
         </h2>
-      
         <p className="mt-2 text-sm text-slate-500">
           등기부에서 추출한 값을 기준으로 평가를 실행합니다. 필요하면 주소, 단지명, 면적, 담당자명을 수정하세요.
         </p>
@@ -128,10 +97,7 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
 
       <div className="grid gap-4 md:grid-cols-2">
         <label className="block md:col-span-2">
-          <span className="mb-1 block text-sm font-medium text-gray-700">
-            주소
-          </span>
-      
+          <span className="mb-1 block text-sm font-medium text-slate-700">주소</span>
           <textarea
             value={addressRaw}
             onChange={(e) => setAddressRaw(e.target.value)}
@@ -139,24 +105,18 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
             rows={3}
           />
         </label>
-      
+
         <label className="block">
-          <span className="mb-1 block text-sm font-medium text-gray-700">
-            단지명
-          </span>
-      
+          <span className="mb-1 block text-sm font-medium text-slate-700">단지명</span>
           <input
             value={buildingName}
             onChange={(e) => setBuildingName(e.target.value)}
             className="w-full rounded-xl border border-slate-200 bg-white p-3 text-sm shadow-sm"
           />
         </label>
-      
+
         <label className="block">
-          <span className="mb-1 block text-sm font-medium text-gray-700">
-            전용면적㎡
-          </span>
-      
+          <span className="mb-1 block text-sm font-medium text-slate-700">전용면적㎡</span>
           <input
             type="number"
             value={exclusiveAreaM2}
@@ -164,12 +124,9 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
             className="w-full rounded-xl border border-slate-200 bg-white p-3 text-sm shadow-sm"
           />
         </label>
-      
+
         <label className="block">
-          <span className="mb-1 block text-sm font-medium text-gray-700">
-            담당자명
-          </span>
-      
+          <span className="mb-1 block text-sm font-medium text-slate-700">담당자명</span>
           <input
             value={managerName}
             onChange={(e) => setManagerName(e.target.value)}
@@ -177,7 +134,7 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
             placeholder="예: 홍길동"
           />
         </label>
-      
+
         <div className="flex items-end">
           <button
             type="button"
@@ -197,258 +154,251 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
       )}
 
       {result && (
-  <>
-    <div className="no-print mt-5 rounded-2xl border border-slate-200 bg-white p-5 text-sm shadow-sm">
-      <h3 className="mb-3 font-semibold">
-        가치평가 결과
-      </h3>
+        <>
+          <div className="no-print mt-5 rounded-2xl border border-slate-200 bg-white p-5 text-sm shadow-sm">
+            <h3 className="mb-4 text-lg font-bold text-slate-900">가치평가 결과</h3>
 
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
-        <div className="rounded-2xl border border-green-100 bg-green-50/50 p-4">
-          <p className="text-xs font-semibold text-green-700">보정 평균가</p>
-        
-          <p className="mt-3 whitespace-pre-line text-xl font-bold leading-snug text-green-700">
-            {formatKoreanPrice(result.averagePrice)}
-          </p>
-        
-          <p className="mt-3 text-xs text-slate-500">
-            유사도/이상치 보정 반영
-          </p>
-        </div>
-        
-        <div className="rounded-2xl border border-blue-100 bg-blue-50/50 p-4">
-          <p className="text-xs font-semibold text-blue-700">최저 거래가</p>
-        
-          <p className="mt-3 whitespace-pre-line text-xl font-bold leading-snug text-blue-700">
-            {formatKoreanPrice(result.lowestPrice)}
-          </p>
-        </div>
-        
-        <div className="rounded-2xl border border-orange-100 bg-orange-50/50 p-4">
-          <p className="text-xs font-semibold text-orange-700">최고 거래가</p>
-        
-          <p className="mt-3 whitespace-pre-line text-xl font-bold leading-snug text-orange-700">
-            {formatKoreanPrice(result.highestPrice)}
-          </p>
-        </div>
-        
-        <div
-  className={
-    initialValue.rightsRisk?.riskLevel === "SAFE"
-      ? "rounded-2xl border border-green-100 bg-green-50/50 p-4"
-      : initialValue.rightsRisk?.riskLevel === "CAUTION"
-      ? "rounded-2xl border border-yellow-100 bg-yellow-50/50 p-4"
-      : "rounded-2xl border border-red-100 bg-red-50/50 p-4"
-    }
-  >
-    <p
-      className={
-        initialValue.rightsRisk?.riskLevel === "SAFE"
-          ? "text-xs font-semibold text-green-700"
-          : initialValue.rightsRisk?.riskLevel === "CAUTION"
-          ? "text-xs font-semibold text-yellow-700"
-          : "text-xs font-semibold text-red-700"
-      }
-    >
-      권리 위험도
-    </p>
-  
-    <p
-      className={
-        initialValue.rightsRisk?.riskLevel === "SAFE"
-          ? "mt-3 text-2xl font-bold text-green-700"
-          : initialValue.rightsRisk?.riskLevel === "CAUTION"
-          ? "mt-3 text-2xl font-bold text-yellow-700"
-          : "mt-3 text-2xl font-bold text-red-700"
-      }
-    >
-      {initialValue.rightsRisk?.riskLevel === "SAFE" && "안전"}
-      {initialValue.rightsRisk?.riskLevel === "CAUTION" && "주의"}
-      {initialValue.rightsRisk?.riskLevel === "DANGER" && "위험"}
-      {!initialValue.rightsRisk?.riskLevel && "-"}
-    </p>
-  
-    <p className="mt-3 text-xs text-slate-500">
-      등기부 권리관계 기준
-    </p>
-  </div>
-        
-        <div className="rounded-2xl border border-blue-100 bg-white p-4">
-          <p className="text-xs font-semibold text-blue-700">평가 신뢰도</p>
-        
-          <p className="mt-3 text-3xl font-bold text-blue-700">
-            {result.overallConfidence ?? "-"}
-          </p>
-        
-          <p className="mt-3 text-xs text-slate-500">
-            비교 거래 {result.comparableCount}건
-          </p>
-        </div>
-      </div>
+            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+              <div className="rounded-2xl border border-green-100 bg-green-50/50 p-4">
+                <p className="text-xs font-semibold text-green-700">보정 평균가</p>
+                <p className="mt-3 whitespace-pre-line text-xl font-bold leading-snug text-green-700">
+                  {formatKoreanPrice(result.averagePrice)}
+                </p>
+                <p className="mt-3 text-xs text-slate-500">유사도/이상치 보정 반영</p>
+              </div>
 
-      {result.finalComment && (
-        <div className="mt-4 rounded-lg border border-slate-200 bg-white p-4">
-          <p className="font-medium">종합 의견</p>
-          <p className="mt-2 text-sm text-slate-700">
-            {result.finalComment}
-          </p>
-        </div>
-      )}
-      
-      {result.valuationBasis.length > 0 && (
-  <div className="mt-6 rounded-2xl border border-slate-200 bg-slate-50/60 p-5">
-    <div className="mb-3">
-      <p className="text-xs font-semibold tracking-wide text-slate-500">
-        VALUATION BASIS
-      </p>
+              <div className="rounded-2xl border border-blue-100 bg-blue-50/50 p-4">
+                <p className="text-xs font-semibold text-blue-700">최저 거래가</p>
+                <p className="mt-3 whitespace-pre-line text-xl font-bold leading-snug text-blue-700">
+                  {formatKoreanPrice(result.lowestPrice)}
+                </p>
+              </div>
 
-      <h3 className="mt-1 text-lg font-bold text-slate-900">
-        평가 기준
-      </h3>
-    </div>
+              <div className="rounded-2xl border border-orange-100 bg-orange-50/50 p-4">
+                <p className="text-xs font-semibold text-orange-700">최고 거래가</p>
+                <p className="mt-3 whitespace-pre-line text-xl font-bold leading-snug text-orange-700">
+                  {formatKoreanPrice(result.highestPrice)}
+                </p>
+              </div>
 
-    <ul className="space-y-2 text-sm text-slate-700">
-      {result.valuationBasis.map((basis) => (
-        <li
-          key={basis}
-          className="flex items-start gap-2"
-        >
-          <span className="mt-1.5 h-1.5 w-1.5 rounded-full bg-blue-500" />
+              <div
+                className={
+                  initialValue.rightsRisk?.riskLevel === "SAFE"
+                    ? "rounded-2xl border border-green-100 bg-green-50/50 p-4"
+                    : initialValue.rightsRisk?.riskLevel === "CAUTION"
+                    ? "rounded-2xl border border-yellow-100 bg-yellow-50/50 p-4"
+                    : "rounded-2xl border border-red-100 bg-red-50/50 p-4"
+                }
+              >
+                <p
+                  className={
+                    initialValue.rightsRisk?.riskLevel === "SAFE"
+                      ? "text-xs font-semibold text-green-700"
+                      : initialValue.rightsRisk?.riskLevel === "CAUTION"
+                      ? "text-xs font-semibold text-yellow-700"
+                      : "text-xs font-semibold text-red-700"
+                  }
+                >
+                  권리 위험도
+                </p>
+                <p
+                  className={
+                    initialValue.rightsRisk?.riskLevel === "SAFE"
+                      ? "mt-3 text-2xl font-bold text-green-700"
+                      : initialValue.rightsRisk?.riskLevel === "CAUTION"
+                      ? "mt-3 text-2xl font-bold text-yellow-700"
+                      : "mt-3 text-2xl font-bold text-red-700"
+                  }
+                >
+                  {initialValue.rightsRisk?.riskLevel === "SAFE" && "안전"}
+                  {initialValue.rightsRisk?.riskLevel === "CAUTION" && "주의"}
+                  {initialValue.rightsRisk?.riskLevel === "DANGER" && "위험"}
+                  {!initialValue.rightsRisk?.riskLevel && "-"}
+                </p>
+                <p className="mt-3 text-xs text-slate-500">등기부 권리관계 기준</p>
+              </div>
 
-          <span>{basis}</span>
-        </li>
-      ))}
-    </ul>
-  </div>
-)}
-
-       <button
-        type="button"
-        onClick={() => window.print()}
-        className="no-print mt-5 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium"
-      >
-        PDF 저장
-      </button>
-
-      {result.recentTransactions.length > 0 && (
-        <div className="mt-4">
-          <div className="mb-3 flex items-center justify-between">
-            <div>
-              <p className="text-sm font-semibold tracking-wide text-slate-500">
-                COMPARABLE SALES
-              </p>
-          
-              <h3 className="mt-1 text-lg font-bold text-slate-900">
-                비교 거래 내역
-              </h3>
+              <div className="rounded-2xl border border-blue-100 bg-white p-4">
+                <p className="text-xs font-semibold text-blue-700">평가 신뢰도</p>
+                <p className="mt-3 text-3xl font-bold text-blue-700">
+                  {result.overallConfidence ?? "-"}
+                </p>
+                <p className="mt-3 text-xs text-slate-500">
+                  비교 거래 {result.comparableCount}건
+                </p>
+              </div>
             </div>
-          
-            <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
-              최근 거래 우선
-            </span>
-          </div>
 
-          <div className="mt-3 overflow-hidden rounded-2xl border border-slate-200">
-            <table className="w-full text-left text-sm">
-              <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
-                <tr>
-                  <th className="px-4 py-3 font-semibold">거래일</th>
-                  <th className="px-4 py-3 font-semibold">거래금액</th>
-                  <th className="px-4 py-3 font-semibold">전용면적</th>
-                  <th className="px-4 py-3 font-semibold">층</th>
-                  <th className="px-4 py-3 font-semibold">유사도</th>
-                  <th className="px-4 py-3 font-semibold">신뢰도</th>
-                </tr>
-              </thead>
+            {result.finalComment && (
+              <div className="mt-6 rounded-2xl border border-slate-200 bg-slate-50/60 p-5">
+                <p className="text-xs font-semibold tracking-wide text-slate-500">
+                  FINAL COMMENT
+                </p>
+                <h3 className="mt-1 text-lg font-bold text-slate-900">종합 의견</h3>
+                <p className="mt-3 text-sm leading-6 text-slate-700">
+                  {result.finalComment}
+                </p>
+              </div>
+            )}
 
-              <tbody>
-                {result.recentTransactions.map(
-                  (tx, index) => (
-                    <tr
-                      key={`${tx.dealYear}-${tx.dealMonth}-${tx.dealDay}-${tx.dealAmount}-${index}`}
-                      className={
-                        index === 0
-                          ? "border-b bg-green-50 hover:bg-green-100"
-                          : "border-b hover:bg-slate-50"
-                      }
-                    >
-                      <td className="py-2">
-                        {tx.dealYear}.
-                        {String(tx.dealMonth).padStart(2, "0")}.
-                        {String(tx.dealDay).padStart(2, "0")}
-                      
-                        {index === 0 && (
-                          <span className="ml-2 rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-semibold text-green-700">
-                            최우선 비교군
-                          </span>
-                        )}
-                      </td>
-                      <td className="whitespace-pre-line py-2">
-                        {formatKoreanPrice(tx.dealAmount)}
-                      </td>
+            {result.valuationBasis.length > 0 && (
+              <div className="mt-6 rounded-2xl border border-slate-200 bg-slate-50/60 p-5">
+                <div className="mb-3">
+                  <p className="text-xs font-semibold tracking-wide text-slate-500">
+                    VALUATION BASIS
+                  </p>
+                  <h3 className="mt-1 text-lg font-bold text-slate-900">평가 기준</h3>
+                </div>
 
-                      <td className="px-4 py-3 text-slate-700">
-                        {tx.area}㎡
-                      </td>
+                <ul className="space-y-2 text-sm text-slate-700">
+                  {result.valuationBasis.map((basis) => (
+                    <li key={basis} className="flex items-start gap-2">
+                      <span className="mt-1.5 h-1.5 w-1.5 rounded-full bg-blue-500" />
+                      <span>{basis}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
 
-                      <td className="px-4 py-3 text-slate-700">
-                        {tx.floor ?? "-"}층
-                      </td>
+            <button
+              type="button"
+              onClick={() => {
+                const originalTitle = document.title;
+                const safeAddress = addressRaw?.split(" ")[0] || "valuation";
+                const today = new Date().toISOString().slice(0, 10);
 
-                      <td className="px-4 py-3 text-slate-700">
-                        {tx.similarityScore ?? "-"}점
-                        {tx.similarityReason
-                          ? ` · ${tx.similarityReason}`
-                          : ""}
-                      </td>
+                document.title = `${safeAddress}_가치평가리포트_${today}`;
+                window.print();
 
-                      <td className="px-4 py-3 text-slate-700">
-                        <span
+                setTimeout(() => {
+                  document.title = originalTitle;
+                }, 500);
+              }}
+              className="no-print mt-5 rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+            >
+              PDF 저장
+            </button>
+
+            {result.recentTransactions.length > 0 && (
+              <div className="mt-6">
+                <div className="mb-3 flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-semibold tracking-wide text-slate-500">
+                      COMPARABLE SALES
+                    </p>
+                    <h3 className="mt-1 text-lg font-bold text-slate-900">
+                      비교 거래 내역
+                    </h3>
+                  </div>
+
+                  <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
+                    최근 거래 우선
+                  </span>
+                </div>
+
+                <div className="mt-3 overflow-hidden rounded-2xl border border-slate-200">
+                  <table className="w-full text-left text-sm">
+                    <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
+                      <tr>
+                        <th className="px-4 py-3 font-semibold">거래일</th>
+                        <th className="px-4 py-3 font-semibold">거래금액</th>
+                        <th className="px-4 py-3 font-semibold">전용면적</th>
+                        <th className="px-4 py-3 font-semibold">층</th>
+                        <th className="px-4 py-3 font-semibold">유사도</th>
+                        <th className="px-4 py-3 font-semibold">신뢰도</th>
+                      </tr>
+                    </thead>
+
+                    <tbody>
+                      {result.recentTransactions.map((tx, index) => (
+                        <tr
+                          key={`${tx.dealYear}-${tx.dealMonth}-${tx.dealDay}-${tx.dealAmount}-${index}`}
                           className={
-                            tx.reliabilityGrade === "A"
-                              ? "rounded-full bg-green-100 px-2 py-1 text-xs font-semibold text-green-700"
-                              : tx.reliabilityGrade === "B"
-                              ? "rounded-full bg-yellow-100 px-2 py-1 text-xs font-semibold text-yellow-700"
-                              : "rounded-full bg-red-100 px-2 py-1 text-xs font-semibold text-red-700"
+                            index === 0
+                              ? "border-b bg-green-50 hover:bg-green-100"
+                              : "border-b hover:bg-slate-50"
                           }
                         >
-                          {tx.reliabilityGrade ?? "-"}
-                        </span>
-                      </td>
-                    </tr>
-                  )
-                )}
-              </tbody>
-            </table>
+                          <td className="px-4 py-3 text-slate-700">
+                            {tx.dealYear}.
+                            {String(tx.dealMonth).padStart(2, "0")}.
+                            {String(tx.dealDay).padStart(2, "0")}
+                            {index === 0 && (
+                              <span className="ml-2 rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-semibold text-green-700">
+                                최우선 비교군
+                              </span>
+                            )}
+                          </td>
+
+                          <td className="whitespace-pre-line px-4 py-3 text-slate-700">
+                            {formatKoreanPrice(tx.dealAmount)}
+                          </td>
+
+                          <td className="px-4 py-3 text-slate-700">{tx.area}㎡</td>
+                          <td className="px-4 py-3 text-slate-700">{tx.floor ?? "-"}층</td>
+
+                          <td className="px-4 py-3 text-slate-700">
+                            {tx.similarityScore ?? "-"}점
+                            {tx.similarityReason ? ` · ${tx.similarityReason}` : ""}
+                          </td>
+
+                          <td className="px-4 py-3 text-slate-700">
+                            <span
+                              className={
+                                tx.reliabilityGrade === "A"
+                                  ? "rounded-full bg-green-100 px-2 py-1 text-xs font-semibold text-green-700"
+                                  : tx.reliabilityGrade === "B"
+                                  ? "rounded-full bg-yellow-100 px-2 py-1 text-xs font-semibold text-yellow-700"
+                                  : "rounded-full bg-red-100 px-2 py-1 text-xs font-semibold text-red-700"
+                              }
+                            >
+                              {tx.reliabilityGrade ?? "-"}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
+            {result.warnings.length > 0 && (
+              <div className="mt-6 rounded-2xl border border-amber-200 bg-amber-50/70 p-5">
+                <div className="mb-3">
+                  <p className="text-xs font-semibold tracking-wide text-amber-700">
+                    WARNINGS
+                  </p>
+                  <h3 className="mt-1 text-lg font-bold text-amber-900">
+                    주의사항
+                  </h3>
+                </div>
+
+                <ul className="space-y-2 text-sm text-amber-900">
+                  {result.warnings.map((warning) => (
+                    <li key={warning} className="flex items-start gap-2">
+                      <span className="mt-1.5 h-1.5 w-1.5 rounded-full bg-amber-500" />
+                      <span>{warning}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </div>
-        </div>
+
+          <ValuationReport
+            input={{
+              addressRaw,
+              buildingName,
+              exclusiveAreaM2,
+              managerName,
+              rightsRisk: initialValue.rightsRisk
+            }}
+            result={result}
+          />
+        </>
       )}
-
-      {result.warnings.length > 0 && (
-        <div className="mt-4">
-          <p className="font-medium">주의사항</p>
-
-          <ul className="mt-1 list-disc pl-5 text-gray-700">
-            {result.warnings.map((warning) => (
-              <li key={warning}>{warning}</li>
-            ))}
-          </ul>
-        </div>
-      )}
-    </div>
-
-    <ValuationReport
-      input={{
-        addressRaw,
-        buildingName,
-        exclusiveAreaM2,
-        managerName,
-        rightsRisk: initialValue.rightsRisk
-      }}
-      result={result}
-    />
-  </>
-)}    
     </section>
   );
 }
