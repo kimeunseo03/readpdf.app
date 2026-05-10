@@ -5,6 +5,11 @@ interface ValuationReportProps {
     addressRaw?: string;
     buildingName?: string;
     exclusiveAreaM2?: string;
+    rightsRisk?: {
+    riskLevel?: "SAFE" | "CAUTION" | "DANGER";
+    summary?: string;
+    riskFlags?: string[];
+  };
   };
   result: {
     comparableCount: number;
@@ -66,6 +71,16 @@ export function ValuationReport({ input, result }: ValuationReportProps) {
         </div>
 
         <div>
+          <p className="text-gray-500">권리 위험도</p>
+          <p className="font-medium">
+            {input.rightsRisk?.riskLevel === "SAFE" && "안전"}
+            {input.rightsRisk?.riskLevel === "CAUTION" && "주의"}
+            {input.rightsRisk?.riskLevel === "DANGER" && "위험"}
+            {!input.rightsRisk?.riskLevel && "-"}
+          </p>
+        </div>
+
+        <div>
           <p className="text-gray-500">보정 평균가</p>
           <p className="font-medium">
             {formatKoreanPrice(result.averagePrice)}
@@ -113,6 +128,15 @@ export function ValuationReport({ input, result }: ValuationReportProps) {
           </tbody>
         </table>
       </div>
+
+      {input.rightsRisk?.summary && (
+        <div className="mt-6 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm">
+          <h3 className="font-semibold text-amber-900">권리 리스크 요약</h3>
+          <p className="mt-2 text-amber-900">
+            {input.rightsRisk.summary}
+          </p>
+        </div>
+      )}
 
       <div className="mt-6">
         <h3 className="mb-2 font-semibold">평가 기준</h3>
