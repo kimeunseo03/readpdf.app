@@ -117,6 +117,21 @@ if (
 ) {
   overallConfidence = "B";
 }
+
+  if (
+  input.rightsRisk?.riskLevel === "DANGER" &&
+  overallConfidence === "A"
+) {
+  overallConfidence = "B";
+}
+
+if (input.rightsRisk?.riskLevel === "DANGER") {
+  warnings.push("압류/가압류/신탁 등 고위험 권리관계가 감지되었습니다.");
+}
+
+if (input.rightsRisk?.riskLevel === "CAUTION") {
+  warnings.push("근저당 또는 임차권/전세권 관련 권리관계 검토가 필요합니다.");
+}
   
   return {
     success: true,
