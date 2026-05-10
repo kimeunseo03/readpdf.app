@@ -13,6 +13,8 @@ interface ValuationFormProps {
 
     rightsRisk?: {
       riskLevel?: "SAFE" | "CAUTION" | "DANGER";
+      summary?: string;
+      riskFlags?: string[];
     };
   };
 }
