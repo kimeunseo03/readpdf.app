@@ -34,6 +34,7 @@ interface ValuationReportProps {
       isSameApartment?: boolean;
       areaDifferenceM2?: number;
       monthsAgo?: number;
+      selectionReason?: string;
       similarityScore?: number;
       similarityReason?: string;
       reliabilityGrade?: "A" | "B" | "C";
@@ -225,6 +226,7 @@ export function ValuationReport({ input, result }: ValuationReportProps) {
                 <th className="px-4 py-3 font-semibold">층</th>
                 <th className="px-4 py-3 font-semibold">유사도</th>
                 <th className="px-4 py-3 font-semibold">비교군</th>
+                <th className="px-4 py-3 font-semibold">선정 기준</th>
                 <th className="px-4 py-3 font-semibold">신뢰도</th>
               </tr>
             </thead>
