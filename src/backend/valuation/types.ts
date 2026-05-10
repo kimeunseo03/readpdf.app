@@ -46,6 +46,8 @@ export interface ValuationResult {
   lowestPrice?: number;
   highestPrice?: number;
   averagePrice?: number;
+  conservativePrice?: number;
+  upperReferencePrice?: number;
 
   recentTransactions: TransactionItem[];
 
