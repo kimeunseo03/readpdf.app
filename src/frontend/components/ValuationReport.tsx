@@ -6,11 +6,11 @@ interface ValuationReportProps {
   buildingName?: string;
   exclusiveAreaM2?: string;
   managerName?: string;
-  rightsRisk?: {
-    riskLevel?: "SAFE" | "CAUTION" | "DANGER";
-    summary?: string;
-    riskFlags?: string[];
-  };
+
+rightsRisk?: {
+  riskLevel?: "SAFE" | "CAUTION" | "DANGER";
+  summary?: string;
+  riskFlags?: string[];
 };
   result: {
     comparableCount: number;
