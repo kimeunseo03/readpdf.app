@@ -44,4 +44,5 @@ export interface ValuationResult {
   valuationBasis: string[];
   overallConfidence?: "A" | "B" | "C";
   warnings: string[];
+  finalComment?: string;
 }
