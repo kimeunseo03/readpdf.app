@@ -127,12 +127,20 @@ export function ValuationReport({ input, result }: ValuationReportProps) {
                   {tx.dealYear}.{String(tx.dealMonth).padStart(2, "0")}.
                   {String(tx.dealDay).padStart(2, "0")}
                 </td>
-                <td className="py-2">{formatKoreanPrice(tx.dealAmount)}</td>
+              
+                <td className="whitespace-pre-line py-2">
+                  {formatKoreanPrice(tx.dealAmount)}
+                </td>
+              
                 <td className="py-2">{tx.area}㎡</td>
+              
                 <td className="py-2">{tx.floor ?? "-"}층</td>
+              
                 <td className="py-2">
                   {tx.similarityScore ?? "-"}점
                   {tx.similarityReason ? ` · ${tx.similarityReason}` : ""}
+                </td>
+              
                 <td className="py-2">
                   <span
                     className={
