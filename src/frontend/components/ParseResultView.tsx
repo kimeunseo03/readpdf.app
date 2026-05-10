@@ -68,6 +68,22 @@ export function ParseResultView({ response }: { response: ParseApiResponse }) {
 
       <section className="rounded-3xl border bg-white p-6 shadow-sm">
         <h3 className="font-semibold text-slate-900">권리관계 리스크 플래그</h3>
+        <div className="mt-3">
+        <span
+          className={
+            rightsRisk.riskLevel === "SAFE"
+              ? "rounded-full bg-green-100 px-3 py-1 text-xs font-semibold text-green-800"
+              : rightsRisk.riskLevel === "CAUTION"
+              ? "rounded-full bg-yellow-100 px-3 py-1 text-xs font-semibold text-yellow-800"
+              : "rounded-full bg-red-100 px-3 py-1 text-xs font-semibold text-red-800"
+          }
+        >
+          위험도:{" "}
+          {rightsRisk.riskLevel === "SAFE" && "안전"}
+          {rightsRisk.riskLevel === "CAUTION" && "주의"}
+          {rightsRisk.riskLevel === "DANGER" && "위험"}
+        </span>
+      </div>
         <div className="mt-4 flex flex-wrap gap-2">
           {rightsRisk.riskFlags.length ? rightsRisk.riskFlags.map((flag) => (
             <span key={flag} className="rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-800">{flag}</span>
