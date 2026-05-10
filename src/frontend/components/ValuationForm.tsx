@@ -155,11 +155,11 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
 
       {result && (
         <>
-          <div className="no-print mt-5 rounded-2xl border border-slate-200 bg-white p-5 text-sm shadow-sm">
+          <div className="no-print mt-5 rounded-2xl border border-slate-200 bg-white p-5 text-sm shadow-sm transition-all duration-300">
             <h3 className="mb-4 text-lg font-bold text-slate-900">가치평가 결과</h3>
 
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
-              <div className="rounded-2xl border border-green-100 bg-green-50/50 p-4">
+              <div className="rounded-2xl border border-green-100 bg-green-50/50 p-4 transition hover:-translate-y-0.5 hover:shadow-md">
                 <p className="text-xs font-semibold text-green-700">보정 평균가</p>
                 <p className="mt-3 whitespace-pre-line text-xl font-bold leading-snug text-green-700">
                   {formatKoreanPrice(result.averagePrice)}
@@ -167,14 +167,14 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
                 <p className="mt-3 text-xs text-slate-500">유사도/이상치 보정 반영</p>
               </div>
 
-              <div className="rounded-2xl border border-blue-100 bg-blue-50/50 p-4">
+              <div className="rounded-2xl border border-blue-100 bg-blue-50/50 p-4 transition hover:-translate-y-0.5 hover:shadow-md">
                 <p className="text-xs font-semibold text-blue-700">최저 거래가</p>
                 <p className="mt-3 whitespace-pre-line text-xl font-bold leading-snug text-blue-700">
                   {formatKoreanPrice(result.lowestPrice)}
                 </p>
               </div>
 
-              <div className="rounded-2xl border border-orange-100 bg-orange-50/50 p-4">
+              <div className="rounded-2xl border border-orange-100 bg-orange-50/50 p-4 transition hover:-translate-y-0.5 hover:shadow-md">
                 <p className="text-xs font-semibold text-orange-700">최고 거래가</p>
                 <p className="mt-3 whitespace-pre-line text-xl font-bold leading-snug text-orange-700">
                   {formatKoreanPrice(result.highestPrice)}
@@ -184,10 +184,10 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
               <div
                 className={
                   initialValue.rightsRisk?.riskLevel === "SAFE"
-                    ? "rounded-2xl border border-green-100 bg-green-50/50 p-4"
+                    ? "rounded-2xl border border-green-100 bg-green-50/50 p-4 transition hover:-translate-y-0.5 hover:shadow-md"
                     : initialValue.rightsRisk?.riskLevel === "CAUTION"
-                    ? "rounded-2xl border border-yellow-100 bg-yellow-50/50 p-4"
-                    : "rounded-2xl border border-red-100 bg-red-50/50 p-4"
+                    ? "rounded-2xl border border-yellow-100 bg-yellow-50/50 p-4 transition hover:-translate-y-0.5 hover:shadow-md"
+                    : "rounded-2xl border border-red-100 bg-red-50/50 p-4 transition hover:-translate-y-0.5 hover:shadow-md"
                 }
               >
                 <p
@@ -218,7 +218,7 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
                 <p className="mt-3 text-xs text-slate-500">등기부 권리관계 기준</p>
               </div>
 
-              <div className="rounded-2xl border border-blue-100 bg-white p-4">
+              <div className="rounded-2xl border border-blue-100 bg-white p-4 transition hover:-translate-y-0.5 hover:shadow-md">
                 <p className="text-xs font-semibold text-blue-700">평가 신뢰도</p>
                 <p className="mt-3 text-3xl font-bold text-blue-700">
                   {result.overallConfidence ?? "-"}
