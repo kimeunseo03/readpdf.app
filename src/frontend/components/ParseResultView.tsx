@@ -90,9 +90,9 @@ export function ParseResultView({ response }: { response: ParseApiResponse }) {
         initialValue={{
           addressRaw: property.addressRaw,
           buildingName: property.buildingName,
-          exclusiveAreaM2: property.exclusiveAreaM2
+          exclusiveAreaM2: property.exclusiveAreaM2,
+          rightsRisk
         }}
-        rightsRisk={rightsRisk}
       />
 
       <section className="rounded-3xl border bg-white p-6 shadow-sm">
