@@ -191,7 +191,7 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
         <>
           <div className="no-print mt-5 rounded-2xl border border-slate-200 bg-white p-5 text-sm shadow-sm transition-all duration-300">
             <div className="mb-5 flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-4">
-              <h3 className="text-lg font-bold text-slate-900">
+              <h3 className="text-xl font-bold tracking-tight text-slate-900">
                 가치평가 결과
               </h3>
 
@@ -301,7 +301,7 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
                   FINAL COMMENT
                 </p>
 
-                <h3 className="mt-1 text-lg font-bold text-slate-900">
+                <h3 className="mt-1 text-2xl font-bold tracking-tight text-slate-900">
                   종합 의견
                 </h3>
 
@@ -318,7 +318,7 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
                     VALUATION BASIS
                   </p>
 
-                  <h3 className="mt-1 text-lg font-bold text-slate-900">
+                  <h3 className="mt-1 text-2xl font-bold tracking-tight text-slate-900">
                     평가 기준
                   </h3>
                 </div>
@@ -342,7 +342,7 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
                       COMPARABLE SALES
                     </p>
 
-                    <h3 className="mt-1 text-lg font-bold text-slate-900">
+                    <h3 className="mt-1 text-2xl font-bold tracking-tight text-slate-900">
                       비교 거래 내역
                     </h3>
                   </div>
@@ -434,7 +434,7 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
                     WARNINGS
                   </p>
 
-                  <h3 className="mt-1 text-lg font-bold text-amber-900">
+                  <h3 className="mt-1 text-xl font-bold tracking-tight text-amber-900">
                     주의사항
                   </h3>
                 </div>
