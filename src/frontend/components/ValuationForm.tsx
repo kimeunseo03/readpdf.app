@@ -190,7 +190,7 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
       {result && (
         <>
           <div className="no-print mt-5 rounded-2xl border border-slate-200 bg-white p-5 text-sm shadow-sm transition-all duration-300">
-            <div className="mb-4 flex items-center justify-between gap-4">
+            <div className="mb-5 flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-4">
               <h3 className="text-lg font-bold text-slate-900">
                 가치평가 결과
               </h3>
