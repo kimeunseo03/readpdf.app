@@ -161,7 +161,7 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
               <div className="rounded-2xl border border-green-100 bg-green-50/50 p-4 transition hover:-translate-y-0.5 hover:shadow-md">
                 <p className="text-xs font-semibold text-green-700">보정 평균가</p>
-                <p className="mt-3 whitespace-pre-line text-xl font-bold leading-snug text-green-700">
+                <p className="mt-3 whitespace-pre-line text-xl font-bold leading-snug tracking-tight tabular-nums text-green-700"
                   {formatKoreanPrice(result.averagePrice)}
                 </p>
                 <p className="mt-3 text-xs text-slate-500">유사도/이상치 보정 반영</p>
@@ -220,7 +220,7 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
 
               <div className="rounded-2xl border border-blue-100 bg-white p-4 transition hover:-translate-y-0.5 hover:shadow-md">
                 <p className="text-xs font-semibold text-blue-700">평가 신뢰도</p>
-                <p className="mt-3 text-3xl font-bold text-blue-700">
+                <p className="mt-3 text-3xl font-bold tracking-tight tabular-nums text-blue-700"
                   {result.overallConfidence ?? "-"}
                 </p>
                 <p className="mt-3 text-xs text-slate-500">
@@ -331,7 +331,7 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
                             )}
                           </td>
 
-                          <td className="whitespace-pre-line px-4 py-3 text-slate-700">
+                          <td className="whitespace-pre-line px-4 py-3 font-medium tabular-nums text-slate-700">
                             {formatKoreanPrice(tx.dealAmount)}
                           </td>
 
