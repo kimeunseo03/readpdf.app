@@ -296,16 +296,31 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
       )}
       
       {result.valuationBasis.length > 0 && (
-        <div className="mt-4">
-          <p className="font-medium">평가 기준</p>
+  <div className="mt-6 rounded-2xl border border-slate-200 bg-slate-50/60 p-5">
+    <div className="mb-3">
+      <p className="text-xs font-semibold tracking-wide text-slate-500">
+        VALUATION BASIS
+      </p>
 
-          <ul className="mt-1 list-disc pl-5 text-gray-700">
-            {result.valuationBasis.map((basis) => (
-              <li key={basis}>{basis}</li>
-            ))}
-          </ul>
-        </div>
-      )}
+      <h3 className="mt-1 text-lg font-bold text-slate-900">
+        평가 기준
+      </h3>
+    </div>
+
+    <ul className="space-y-2 text-sm text-slate-700">
+      {result.valuationBasis.map((basis) => (
+        <li
+          key={basis}
+          className="flex items-start gap-2"
+        >
+          <span className="mt-1.5 h-1.5 w-1.5 rounded-full bg-blue-500" />
+
+          <span>{basis}</span>
+        </li>
+      ))}
+    </ul>
+  </div>
+)}
 
        <button
         type="button"
