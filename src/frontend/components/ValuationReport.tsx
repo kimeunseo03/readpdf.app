@@ -1,17 +1,17 @@
 import { formatKoreanPrice } from "../../backend/valuation/formatKoreanPrice";
 
 interface ValuationReportProps {
-  input: {
-    addressRaw?: string;
-    buildingName?: string;
-    exclusiveAreaM2?: string;
-    rightsRisk?: {
+ input: {
+  addressRaw?: string;
+  buildingName?: string;
+  exclusiveAreaM2?: string;
+  managerName?: string;
+  rightsRisk?: {
     riskLevel?: "SAFE" | "CAUTION" | "DANGER";
     summary?: string;
     riskFlags?: string[];
-    managerName?: string;
   };
-  };
+};
   result: {
     comparableCount: number;
     averagePrice?: number;
