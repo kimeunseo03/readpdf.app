@@ -21,6 +21,7 @@ interface ValuationReportProps {
     highestPrice?: number;
     overallConfidence?: "A" | "B" | "C";
     valuationBasis: string[];
+    finalComment?: string;
 
     recentTransactions: {
       dealAmount: number;
