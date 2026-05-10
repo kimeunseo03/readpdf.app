@@ -227,26 +227,24 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
               </div>
 
               <div className="rounded-2xl border border-blue-100 bg-blue-50/50 p-5 transition hover:-translate-y-0.5 hover:shadow-md">
-                <p className="text-xs font-semibold text-blue-700">
-                  보수 기준가
-                </p>
-
-                <p className="mt-3 whitespace-pre-line text-xl font-bold leading-snug tracking-tight tabular-nums text-blue-700">
-                  보수 기준가
-                  {formatKoreanPrice(result.conservativePrice)}
-                </p>
-              </div>
-
-              <div className="rounded-2xl border border-orange-100 bg-orange-50/50 p-5 transition hover:-translate-y-0.5 hover:shadow-md">
-                <p className="text-xs font-semibold text-orange-700">
-                  상단 참고가
-                </p>
-
-                <p className="mt-3 whitespace-pre-line text-xl font-bold leading-snug tracking-tight tabular-nums text-orange-700">
-                  상단 참고가
-                  {formatKoreanPrice(result.upperReferencePrice)}
-                </p>
-              </div>
+              <p className="text-xs font-semibold text-blue-700">
+                보수 기준가
+              </p>
+            
+              <p className="mt-3 whitespace-pre-line text-xl font-bold leading-snug tracking-tight tabular-nums text-blue-700">
+                {formatKoreanPrice(result.conservativePrice)}
+              </p>
+            </div>
+            
+            <div className="rounded-2xl border border-orange-100 bg-orange-50/50 p-5 transition hover:-translate-y-0.5 hover:shadow-md">
+              <p className="text-xs font-semibold text-orange-700">
+                상단 참고가
+              </p>
+            
+              <p className="mt-3 whitespace-pre-line text-xl font-bold leading-snug tracking-tight tabular-nums text-orange-700">
+                {formatKoreanPrice(result.upperReferencePrice)}
+              </p>
+            </div>
 
               <div
                 className={
