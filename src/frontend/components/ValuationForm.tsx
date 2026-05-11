@@ -477,17 +477,6 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
               </div>
             )}
           </div>
-
-          <ValuationReport
-            input={{
-              addressRaw,
-              buildingName,
-              exclusiveAreaM2,
-              managerName,
-              rightsRisk: initialValue.rightsRisk
-            }}
-            result={result}
-          />
         </>
       )}
     </section>
