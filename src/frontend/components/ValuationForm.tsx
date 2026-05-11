@@ -250,47 +250,9 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
 
             {result && (
         <>
-          <div className="no-print mt-6 grid gap-5 xl:grid-cols-[280px_minmax(0,1fr)]">
-            <aside className="space-y-4">
-              {result.valuationBasis.length > 0 && (
-                <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-5">
-                  <p className="text-xs font-semibold tracking-wide text-slate-500">
-                    VALUATION BASIS
-                  </p>
+          <div className="no-print mt-6">
 
-                  <h3 className="mt-1 text-lg font-bold tracking-tight text-slate-900">
-                    평가 기준
-                  </h3>
-
-                  <ul className="mt-4 space-y-2 text-xs leading-5 text-slate-700">
-                    {result.valuationBasis.map((basis) => (
-                      <li key={basis} className="flex items-start gap-2">
-                        <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-blue-500" />
-                        <span>{basis}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-
-              <div className="rounded-2xl border border-blue-100 bg-blue-50/60 p-5">
-                <p className="text-xs font-semibold tracking-wide text-blue-700">
-                  INTERNAL NOTE
-                </p>
-
-                <h3 className="mt-1 text-lg font-bold tracking-tight text-blue-900">
-                  내부 검토 기준
-                </h3>
-
-                <p className="mt-3 text-xs leading-5 text-blue-900">
-                  본 결과는 등기부 추출값과 국토교통부 실거래가를 기반으로 한
-                  MVP 자동 산정값입니다. 실제 감정평가, 대출심사, 권리분석의
-                  확정 의견이 아닙니다.
-                </p>
-              </div>
-            </aside>
-
-            <div className="rounded-3xl border border-slate-200 bg-white p-6 text-sm shadow-sm">
+          <div className="rounded-3xl border border-slate-200 bg-white p-6 text-sm shadow-sm">
               <div className="mb-5 flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-4">
                 <div>
                   <p className="text-xs font-semibold tracking-wide text-blue-600">
