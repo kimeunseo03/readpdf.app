@@ -37,10 +37,13 @@ interface ValuationResult {
   conservativePrice?: number;
   upperReferencePrice?: number;
   riskAdjustedPrice?: number;
-  seniorDebtAmount?: number;
-  tenantDepositAmount?: number;
-  finalComment?: string;
-  recentTransactions: {
+    seniorDebtAmount?: number;
+    seniorMortgageAmount?: number;
+    tenantDepositAmount?: number;
+    tenantMonthlyRent?: number;
+    priorityRepaymentAmount?: number;
+    finalComment?: string;
+    recentTransactions: {
     dealAmount: number;
     dealYear: number;
     dealMonth: number;
@@ -245,336 +248,356 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
         </p>
       )}
 
-      {result && (
+            {result && (
         <>
-          <div className="no-print mt-5 rounded-3xl border border-slate-200 bg-white p-7 text-sm shadow-sm transition-all duration-300">
-            <div className="mb-5 flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-4">
-              <h3 className="text-xl font-bold tracking-tight text-slate-900">
-                가치평가 결과
-              </h3>
-
-              <button
-                type="button"
-                onClick={printReport}
-                className="no-print rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:bg-slate-50 hover:shadow-md"
-              >
-                PDF 저장
-              </button>
-            </div>
-
-            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-6">
-              <div className="rounded-2xl border border-green-100 bg-green-50/50 p-5 transition hover:-translate-y-0.5 hover:shadow-md">
-                <p className="text-xs font-semibold text-green-700">
-                  보정 평균가
-                </p>
-
-                <p className="mt-3 whitespace-pre-line text-xl font-bold leading-snug tracking-tight tabular-nums text-green-700">
-                  {formatKoreanPrice(result.averagePrice)}
-                </p>
-
-                <p className="mt-3 text-xs text-slate-500">
-                  유사도/이상치 보정 반영
-                </p>
-              </div>
-
-              <div className="rounded-2xl border border-blue-100 bg-blue-50/50 p-5 transition hover:-translate-y-0.5 hover:shadow-md">
-                <p className="text-xs font-semibold text-blue-700">
-                  보수 기준가
-                </p>
-
-                <p className="mt-3 whitespace-pre-line text-xl font-bold leading-snug tracking-tight tabular-nums text-blue-700">
-                  {formatKoreanPrice(result.conservativePrice)}
-                </p>
-              </div>
-
-              <div className="rounded-2xl border border-orange-100 bg-orange-50/50 p-5 transition hover:-translate-y-0.5 hover:shadow-md">
-                <p className="text-xs font-semibold text-orange-700">
-                  상단 참고가
-                </p>
-
-                <p className="mt-3 whitespace-pre-line text-xl font-bold leading-snug tracking-tight tabular-nums text-orange-700">
-                  {formatKoreanPrice(result.upperReferencePrice)}
-                </p>
-              </div>
-
-              <div className="rounded-2xl border border-red-100 bg-red-50/50 p-5 transition hover:-translate-y-0.5 hover:shadow-md">
-                <p className="text-xs font-semibold text-red-700">
-                  권리반영 기준가
-                </p>
-
-                <p className="mt-3 whitespace-pre-line text-xl font-bold leading-snug tracking-tight tabular-nums text-red-700">
-                  {formatKoreanPrice(result.riskAdjustedPrice)}
-                </p>
-
-                <p className="mt-3 text-xs text-slate-500">
-                  선순위 근저당/임차보증금 차감
-                </p>
-              </div>
-
-              <div
-                className={
-                  initialValue.rightsRisk?.riskLevel === "SAFE"
-                    ? "rounded-2xl border border-green-100 bg-green-50/50 p-5 transition hover:-translate-y-0.5 hover:shadow-md"
-                    : initialValue.rightsRisk?.riskLevel === "CAUTION"
-                      ? "rounded-2xl border border-yellow-100 bg-yellow-50/50 p-5 transition hover:-translate-y-0.5 hover:shadow-md"
-                      : "rounded-2xl border border-red-100 bg-red-50/50 p-5 transition hover:-translate-y-0.5 hover:shadow-md"
-                }
-              >
-                <p
-                  className={
-                    initialValue.rightsRisk?.riskLevel === "SAFE"
-                      ? "text-xs font-semibold text-green-700"
-                      : initialValue.rightsRisk?.riskLevel === "CAUTION"
-                        ? "text-xs font-semibold text-yellow-700"
-                        : "text-xs font-semibold text-red-700"
-                  }
-                >
-                  권리 위험도
-                </p>
-
-                <p
-                  className={
-                    initialValue.rightsRisk?.riskLevel === "SAFE"
-                      ? "mt-3 text-2xl font-bold text-green-700"
-                      : initialValue.rightsRisk?.riskLevel === "CAUTION"
-                        ? "mt-3 text-2xl font-bold text-yellow-700"
-                        : "mt-3 text-2xl font-bold text-red-700"
-                  }
-                >
-                  {initialValue.rightsRisk?.riskLevel === "SAFE" && "안전"}
-                  {initialValue.rightsRisk?.riskLevel === "CAUTION" && "주의"}
-                  {initialValue.rightsRisk?.riskLevel === "DANGER" && "위험"}
-                  {!initialValue.rightsRisk?.riskLevel && "-"}
-                </p>
-
-                <p className="mt-3 text-xs text-slate-500">
-                  등기부 권리관계 기준
-                </p>
-              </div>
-
-              <div className="rounded-2xl border border-blue-100 bg-white p-5 transition hover:-translate-y-0.5 hover:shadow-md">
-                <p className="text-xs font-semibold text-blue-700">
-                  평가 신뢰도
-                </p>
-
-                <p className="mt-3 text-3xl font-bold tracking-tight tabular-nums text-blue-700">
-                  {result.overallConfidence ?? "-"}
-                </p>
-
-                <p className="mt-3 text-xs text-slate-500">
-                  비교 거래 {result.comparableCount}건
-                </p>
-              </div>
-            </div>
-
-            {(result.seniorDebtAmount ?? 0) > 0 && (
-              <div className="mt-6 rounded-2xl border border-red-100 bg-red-50/60 p-6">
-                <p className="text-xs font-semibold tracking-wide text-red-700">
-                  RIGHTS ADJUSTMENT
-                </p>
-
-                <h3 className="mt-1 text-xl font-bold tracking-tight text-red-900">
-                  권리 차감 반영
-                </h3>
-
-                <p className="mt-3 text-sm leading-6 text-red-900">
-                  선순위 근저당 및 임차보증금 합계{" "}
-                  <strong>{formatKoreanPrice(result.seniorDebtAmount)}</strong>
-                  이 권리반영 기준가 산정에 차감되었습니다.
-                </p>
-              </div>
-            )}
-
-            {result.finalComment && (
-              <div className="mt-6 rounded-2xl border border-slate-200 bg-slate-50/60 p-6">
-                <p className="text-xs font-semibold tracking-wide text-slate-500">
-                  FINAL COMMENT
-                </p>
-
-                <h3 className="mt-1 text-2xl font-bold tracking-tight text-slate-900">
-                  종합 의견
-                </h3>
-
-                <p className="mt-3 text-sm leading-6 text-slate-700">
-                  {result.finalComment}
-                </p>
-              </div>
-            )}
-
-            {result.valuationBasis.length > 0 && (
-              <div className="mt-6 rounded-2xl border border-slate-200 bg-slate-50/60 p-6">
-                <div className="mb-3">
+          <div className="no-print mt-6 grid gap-5 xl:grid-cols-[280px_minmax(0,1fr)]">
+            <aside className="space-y-4">
+              {result.valuationBasis.length > 0 && (
+                <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-5">
                   <p className="text-xs font-semibold tracking-wide text-slate-500">
                     VALUATION BASIS
                   </p>
 
-                  <h3 className="mt-1 text-2xl font-bold tracking-tight text-slate-900">
+                  <h3 className="mt-1 text-lg font-bold tracking-tight text-slate-900">
                     평가 기준
+                  </h3>
+
+                  <ul className="mt-4 space-y-2 text-xs leading-5 text-slate-700">
+                    {result.valuationBasis.map((basis) => (
+                      <li key={basis} className="flex items-start gap-2">
+                        <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-blue-500" />
+                        <span>{basis}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              <div className="rounded-2xl border border-blue-100 bg-blue-50/60 p-5">
+                <p className="text-xs font-semibold tracking-wide text-blue-700">
+                  INTERNAL NOTE
+                </p>
+
+                <h3 className="mt-1 text-lg font-bold tracking-tight text-blue-900">
+                  내부 검토 기준
+                </h3>
+
+                <p className="mt-3 text-xs leading-5 text-blue-900">
+                  본 결과는 등기부 추출값과 국토교통부 실거래가를 기반으로 한
+                  MVP 자동 산정값입니다. 실제 감정평가, 대출심사, 권리분석의
+                  확정 의견이 아닙니다.
+                </p>
+              </div>
+            </aside>
+
+            <div className="rounded-3xl border border-slate-200 bg-white p-6 text-sm shadow-sm">
+              <div className="mb-5 flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-4">
+                <div>
+                  <p className="text-xs font-semibold tracking-wide text-blue-600">
+                    VALUATION RESULT
+                  </p>
+
+                  <h3 className="mt-1 text-xl font-bold tracking-tight text-slate-900">
+                    가치평가 결과
                   </h3>
                 </div>
 
-                <ul className="space-y-2 text-sm text-slate-700">
-                  {result.valuationBasis.map((basis) => (
-                    <li key={basis} className="flex items-start gap-2">
-                      <span className="mt-1.5 h-1.5 w-1.5 rounded-full bg-blue-500" />
-                      <span>{basis}</span>
-                    </li>
-                  ))}
-                </ul>
+                <button
+                  type="button"
+                  onClick={printReport}
+                  className="no-print rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50"
+                >
+                  PDF 저장
+                </button>
               </div>
-            )}
 
-                        {result.recentTransactions.length > 0 && (
-                          <div className="mt-6">
-                            <div className="mb-3 flex items-center justify-between">
-                              <div>
-                                <p className="text-sm font-semibold tracking-wide text-slate-500">
-                                  COMPARABLE SALES
-                                </p>
-            
-                                <h3 className="mt-1 text-2xl font-bold tracking-tight text-slate-900">
-                                  비교 거래 내역
-                                </h3>
+              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                <div className="rounded-2xl border border-green-100 bg-green-50/50 p-5">
+                  <p className="text-xs font-semibold text-green-700">
+                    가치평가 계산값
+                  </p>
+
+                  <p className="mt-3 whitespace-pre-line text-xl font-bold leading-snug tabular-nums text-green-700">
+                    {formatKoreanPrice(result.averagePrice)}
+                  </p>
+
+                  <p className="mt-3 text-xs text-slate-500">
+                    유사도/IQR 이상치 보정 평균가
+                  </p>
+                </div>
+
+                <div className="rounded-2xl border border-red-100 bg-red-50/50 p-5">
+                  <p className="text-xs font-semibold text-red-700">
+                    권리차감 후 계산값
+                  </p>
+
+                  <p className="mt-3 whitespace-pre-line text-xl font-bold leading-snug tabular-nums text-red-700">
+                    {formatKoreanPrice(result.riskAdjustedPrice)}
+                  </p>
+
+                  <p className="mt-3 text-xs text-slate-500">
+                    근저당/보증금 차감 후
+                  </p>
+                </div>
+
+                <div className="rounded-2xl border border-blue-100 bg-blue-50/50 p-5">
+                  <p className="text-xs font-semibold text-blue-700">
+                    보수 기준가
+                  </p>
+
+                  <p className="mt-3 whitespace-pre-line text-xl font-bold leading-snug tabular-nums text-blue-700">
+                    {formatKoreanPrice(result.conservativePrice)}
+                  </p>
+                </div>
+
+                <div className="rounded-2xl border border-orange-100 bg-orange-50/50 p-5">
+                  <p className="text-xs font-semibold text-orange-700">
+                    상단 참고가
+                  </p>
+
+                  <p className="mt-3 whitespace-pre-line text-xl font-bold leading-snug tabular-nums text-orange-700">
+                    {formatKoreanPrice(result.upperReferencePrice)}
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-5 grid gap-4 md:grid-cols-2">
+                <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-5">
+                  <p className="text-xs font-semibold tracking-wide text-slate-500">
+                    RIGHTS DEDUCTION
+                  </p>
+
+                  <h3 className="mt-1 text-lg font-bold text-slate-900">
+                    권리 차감 내역
+                  </h3>
+
+                  <div className="mt-4 space-y-2 text-sm text-slate-700">
+                    <div className="flex justify-between gap-4">
+                      <span>선순위 근저당</span>
+                      <strong>{formatKoreanPrice(result.seniorMortgageAmount)}</strong>
+                    </div>
+
+                    <div className="flex justify-between gap-4">
+                      <span>임차보증금</span>
+                      <strong>{formatKoreanPrice(result.tenantDepositAmount)}</strong>
+                    </div>
+
+                    <div className="flex justify-between gap-4 border-t border-slate-200 pt-2">
+                      <span>권리 차감 합계</span>
+                      <strong className="text-red-700">
+                        {formatKoreanPrice(result.seniorDebtAmount)}
+                      </strong>
+                    </div>
+
+                    <div className="flex justify-between gap-4 text-xs text-slate-500">
+                      <span>최우선변제금 추정 참고</span>
+                      <span>{formatKoreanPrice(result.priorityRepaymentAmount)}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div
+                  className={
+                    initialValue.rightsRisk?.riskLevel === "SAFE"
+                      ? "rounded-2xl border border-green-100 bg-green-50/50 p-5"
+                      : initialValue.rightsRisk?.riskLevel === "CAUTION"
+                        ? "rounded-2xl border border-yellow-100 bg-yellow-50/50 p-5"
+                        : "rounded-2xl border border-red-100 bg-red-50/50 p-5"
+                  }
+                >
+                  <p className="text-xs font-semibold tracking-wide text-slate-500">
+                    RISK / CONFIDENCE
+                  </p>
+
+                  <h3 className="mt-1 text-lg font-bold text-slate-900">
+                    권리 위험도 · 평가 신뢰도
+                  </h3>
+
+                  <div className="mt-4 grid grid-cols-2 gap-3">
+                    <div>
+                      <p className="text-xs text-slate-500">권리 위험도</p>
+                      <p className="mt-1 text-2xl font-bold">
+                        {initialValue.rightsRisk?.riskLevel === "SAFE" && "안전"}
+                        {initialValue.rightsRisk?.riskLevel === "CAUTION" && "주의"}
+                        {initialValue.rightsRisk?.riskLevel === "DANGER" && "위험"}
+                        {!initialValue.rightsRisk?.riskLevel && "-"}
+                      </p>
+                    </div>
+
+                    <div>
+                      <p className="text-xs text-slate-500">평가 신뢰도</p>
+                      <p className="mt-1 text-2xl font-bold text-blue-700">
+                        {result.overallConfidence ?? "-"}
+                      </p>
+                    </div>
+                  </div>
+
+                  <p className="mt-4 text-xs text-slate-500">
+                    비교 거래 {result.comparableCount}건 기준
+                  </p>
+                </div>
+              </div>
+
+              {result.finalComment && (
+                <div className="mt-5 rounded-2xl border border-slate-200 bg-white p-5">
+                  <p className="text-xs font-semibold tracking-wide text-slate-500">
+                    FINAL COMMENT
+                  </p>
+
+                  <h3 className="mt-1 text-lg font-bold tracking-tight text-slate-900">
+                    종합 의견
+                  </h3>
+
+                  <p className="mt-3 text-sm leading-6 text-slate-700">
+                    {result.finalComment}
+                  </p>
+                </div>
+              )}
+
+              {result.recentTransactions.length > 0 && (
+                <div className="mt-6">
+                  <div className="mb-3 flex items-center justify-between">
+                    <div>
+                      <p className="text-xs font-semibold tracking-wide text-slate-500">
+                        COMPARABLE SALES
+                      </p>
+
+                      <h3 className="mt-1 text-lg font-bold tracking-tight text-slate-900">
+                        비교 거래 내역
+                      </h3>
+                    </div>
+
+                    <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
+                      최근 거래 우선
+                    </span>
+                  </div>
+
+                  <div className="overflow-x-auto rounded-2xl border border-slate-200">
+                    <table className="min-w-[980px] w-full text-left text-sm">
+                      <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
+                        <tr>
+                          <th className="px-4 py-3 font-semibold">거래일</th>
+                          <th className="px-4 py-3 font-semibold">거래금액</th>
+                          <th className="px-4 py-3 font-semibold">전용면적</th>
+                          <th className="px-4 py-3 font-semibold">층</th>
+                          <th className="px-4 py-3 font-semibold">비교군</th>
+                          <th className="px-4 py-3 font-semibold">유사도</th>
+                          <th className="px-4 py-3 font-semibold">선정 기준</th>
+                          <th className="px-4 py-3 font-semibold">신뢰도</th>
+                        </tr>
+                      </thead>
+
+                      <tbody>
+                        {result.recentTransactions.map((tx, index) => (
+                          <tr
+                            key={`${tx.dealYear}-${tx.dealMonth}-${tx.dealDay}-${tx.dealAmount}-${index}`}
+                            className={
+                              index === 0
+                                ? "border-b bg-green-50"
+                                : "border-b hover:bg-slate-50"
+                            }
+                          >
+                            <td className="px-4 py-3 text-slate-700">
+                              {tx.dealYear}.
+                              {String(tx.dealMonth).padStart(2, "0")}.
+                              {String(tx.dealDay).padStart(2, "0")}
+                            </td>
+
+                            <td className="whitespace-pre-line px-4 py-3 font-medium tabular-nums text-slate-700">
+                              {formatKoreanPrice(tx.dealAmount)}
+                            </td>
+
+                            <td className="px-4 py-3 text-slate-700">
+                              {tx.area}㎡
+                            </td>
+
+                            <td className="px-4 py-3 text-slate-700">
+                              {tx.floor ?? "-"}층
+                            </td>
+
+                            <td className="px-4 py-3 text-slate-700">
+                              <div className="flex flex-wrap gap-1">
+                                {tx.isSameApartment && (
+                                  <span className="rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-semibold text-blue-700">
+                                    동일단지
+                                  </span>
+                                )}
+
+                                {(tx.monthsAgo ?? 999) <= 3 && (
+                                  <span className="rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-semibold text-green-700">
+                                    최근거래
+                                  </span>
+                                )}
                               </div>
-            
-                              <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
-                                최근 거래 우선
+                            </td>
+
+                            <td className="px-4 py-3 text-slate-700">
+                              {tx.similarityScore ?? "-"}점
+                              {tx.similarityReason
+                                ? ` · ${tx.similarityReason}`
+                                : ""}
+                            </td>
+
+                            <td className="px-4 py-3 text-slate-700">
+                              {tx.selectionReason ?? "-"}
+                            </td>
+
+                            <td className="px-4 py-3 text-slate-700">
+                              <span
+                                className={
+                                  tx.reliabilityGrade === "A"
+                                    ? "rounded-full bg-green-100 px-2 py-1 text-xs font-semibold text-green-700"
+                                    : tx.reliabilityGrade === "B"
+                                      ? "rounded-full bg-yellow-100 px-2 py-1 text-xs font-semibold text-yellow-700"
+                                      : "rounded-full bg-red-100 px-2 py-1 text-xs font-semibold text-red-700"
+                                }
+                              >
+                                {tx.reliabilityGrade ?? "-"}
                               </span>
-                            </div>
-            
-                            <div className="mt-4 overflow-hidden rounded-3xl border border-slate-200">
-                              <table className="w-full text-left text-sm">
-                                <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
-                                  <tr>
-                                    <th className="px-4 py-3 font-semibold">거래일</th>
-                                    <th className="px-4 py-3 font-semibold">거래금액</th>
-                                    <th className="px-4 py-3 font-semibold">전용면적</th>
-                                    <th className="px-4 py-3 font-semibold">층</th>
-                                    <th className="px-4 py-3 font-semibold">비교군</th>
-                                    <th className="px-4 py-3 font-semibold">유사도</th>
-                                    <th className="px-4 py-3 font-semibold">선정 기준</th>
-                                    <th className="px-4 py-3 font-semibold">신뢰도</th>
-                                  </tr>
-                                </thead>
-            
-                                <tbody>
-                                  {result.recentTransactions.map((tx, index) => (
-                                    <tr
-                                      key={`${tx.dealYear}-${tx.dealMonth}-${tx.dealDay}-${tx.dealAmount}-${index}`}
-                                      className={
-                                        index === 0
-                                          ? "border-b bg-green-50 hover:bg-green-100"
-                                          : "border-b hover:bg-slate-50"
-                                      }
-                                    >
-                                      <td className="px-4 py-3 text-slate-700">
-                                        {tx.dealYear}.
-                                        {String(tx.dealMonth).padStart(2, "0")}.
-                                        {String(tx.dealDay).padStart(2, "0")}
-            
-                                        {index === 0 && (
-                                          <span className="ml-2 rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-semibold text-green-700">
-                                            최우선 비교군
-                                          </span>
-                                        )}
-                                      </td>
-            
-                                      <td className="whitespace-pre-line px-4 py-3 font-medium tabular-nums text-slate-700">
-                                        {formatKoreanPrice(tx.dealAmount)}
-                                      </td>
-            
-                                      <td className="px-4 py-3 text-slate-700">
-                                        {tx.area}㎡
-                                      </td>
-            
-                                      <td className="px-4 py-3 text-slate-700">
-                                        {tx.floor ?? "-"}층
-                                      </td>
-            
-                                      <td className="px-4 py-3 text-slate-700">
-                                        <div className="flex flex-wrap gap-1">
-                                          {tx.isSameApartment && (
-                                            <span className="rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-semibold text-blue-700">
-                                              동일단지
-                                            </span>
-                                          )}
-            
-                                          {(tx.monthsAgo ?? 999) <= 3 && (
-                                            <span className="rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-semibold text-green-700">
-                                              최근거래
-                                            </span>
-                                          )}
-                                        </div>
-                                      </td>
-            
-                                      <td className="px-4 py-3 text-slate-700">
-                                        {tx.similarityScore ?? "-"}점
-                                        {tx.similarityReason
-                                          ? ` · ${tx.similarityReason}`
-                                          : ""}
-                                      </td>
-            
-                                      <td className="px-4 py-3 text-slate-700">
-                                        {tx.selectionReason ?? "-"}
-                                      </td>
-            
-                                      <td className="px-4 py-3 text-slate-700">
-                                        <span
-                                          className={
-                                            tx.reliabilityGrade === "A"
-                                              ? "rounded-full bg-green-100 px-2 py-1 text-xs font-semibold text-green-700"
-                                              : tx.reliabilityGrade === "B"
-                                                ? "rounded-full bg-yellow-100 px-2 py-1 text-xs font-semibold text-yellow-700"
-                                                : "rounded-full bg-red-100 px-2 py-1 text-xs font-semibold text-red-700"
-                                          }
-                                        >
-                                          {tx.reliabilityGrade ?? "-"}
-                                        </span>
-                                      </td>
-                                    </tr>
-                                  ))}
-                                </tbody>
-                              </table>
-                            </div>
-                          </div>
-                        )}
-            
-                        {result.warnings.length > 0 && (
-                          <div className="mt-6 rounded-2xl border border-amber-200 bg-amber-50/70 p-6">
-                            <div className="mb-3">
-                              <p className="text-xs font-semibold tracking-wide text-amber-700">
-                                WARNINGS
-                              </p>
-            
-                              <h3 className="mt-1 text-xl font-bold tracking-tight text-amber-900">
-                                주의사항
-                              </h3>
-                            </div>
-            
-                            <ul className="space-y-2 text-sm text-amber-900">
-                              {result.warnings.map((warning) => (
-                                <li key={warning} className="flex items-start gap-2">
-                                  <span className="mt-1.5 h-1.5 w-1.5 rounded-full bg-amber-500" />
-                                  <span>{warning}</span>
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
-                        )}
-                      </div>
-            
-                      <ValuationReport
-                        input={{
-                          addressRaw,
-                          buildingName,
-                          exclusiveAreaM2,
-                          managerName,
-                          rightsRisk: initialValue.rightsRisk
-                        }}
-                        result={result}
-                      />
-                    </>
-                  )}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+
+              {result.warnings.length > 0 && (
+                <div className="mt-5 rounded-2xl border border-amber-200 bg-amber-50/70 p-5">
+                  <p className="text-xs font-semibold tracking-wide text-amber-700">
+                    WARNINGS
+                  </p>
+
+                  <h3 className="mt-1 text-lg font-bold tracking-tight text-amber-900">
+                    주의사항
+                  </h3>
+
+                  <ul className="mt-3 space-y-2 text-sm text-amber-900">
+                    {result.warnings.map((warning) => (
+                      <li key={warning} className="flex items-start gap-2">
+                        <span className="mt-1.5 h-1.5 w-1.5 rounded-full bg-amber-500" />
+                        <span>{warning}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <ValuationReport
+            input={{
+              addressRaw,
+              buildingName,
+              exclusiveAreaM2,
+              managerName,
+              rightsRisk: initialValue.rightsRisk
+            }}
+            result={result}
+          />
+        </>
+      )}
                 </section>
               );
             }
