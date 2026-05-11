@@ -161,7 +161,7 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
         <h2 className="mt-1 text-xl font-bold text-slate-900">
           가치평가 입력값 확인
         </h2>
-
+      </div>
 
       <div className="grid gap-4 md:grid-cols-2">
         <label className="block md:col-span-2">
