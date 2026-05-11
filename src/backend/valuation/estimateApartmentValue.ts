@@ -71,12 +71,6 @@ function estimatePriorityRepaymentAmount(params: {
 
   if (!deposit) return 0;
 
-  /*
-    MVP 기준:
-    - 지역별 최우선변제금은 법령/시점에 따라 달라질 수 있음.
-    - 현재는 실제 권리분석 확정값이 아니라 내부 참고용 보수 추정값.
-    - 임차보증금 전액을 우선 차감하고, 최우선변제 추정액은 별도 참고값으로 산출.
-  */
   return Math.min(deposit, 5500);
 }
 
@@ -190,9 +184,9 @@ export async function estimateApartmentValue(
     tenantMonthlyRent
   });
 
-  const seniorDebtAmount =
-    seniorMortgageAmount + tenantDepositAmount + priorityRepaymentAmount;
-
+    const seniorDebtAmount =
+      seniorMortgageAmount + tenantDepositAmount;
+  
   const riskAdjustedPrice =
     weightedAveragePrice !== undefined
       ? Math.max(weightedAveragePrice - seniorDebtAmount, 0)
@@ -210,12 +204,12 @@ export async function estimateApartmentValue(
     );
   }
 
-  if (priorityRepaymentAmount > 0) {
-    warnings.push(
-      `최우선변제금 추정액 ${priorityRepaymentAmount.toLocaleString()}만원이 보수적으로 반영되었습니다. 실제 금액은 지역 및 계약 시점에 따라 확인이 필요합니다.`
-    );
-  }
-
+    if (priorityRepaymentAmount > 0) {
+      warnings.push(
+        `최우선변제금 추정액 ${priorityRepaymentAmount.toLocaleString()}만원은 임차보증금 중 우선변제 가능성이 있는 참고 금액입니다. 권리 차감액에는 임차보증금 전체가 반영되며, 최우선변제금은 중복 차감하지 않습니다.`
+      );
+    }
+  
   const averageSimilarity = weights.length > 0 ? average(weights) : 0;
 
   const sameApartmentCount = filteredTransactions.filter(
@@ -355,7 +349,8 @@ export async function estimateApartmentValue(
       "층수와 준공연도를 유사도 점수에 반영",
       "IQR 방식으로 극단 거래가 제거된 보정 평균가 사용",
       "보수 기준가는 비교군 하위 거래가, 상단 참고가는 비교군 상위 거래가 기준으로 산정",
-      "선순위 근저당, 임차보증금, 최우선변제금 추정액은 권리반영 기준가에 차감 반영"
+      "권리반영 기준가는 보정 평균가에서 선순위 근저당 채권최고액과 임차보증금을 차감하여 산정",
+      "최우선변제금 추정액은 임차보증금 중 우선변제 가능성이 있는 참고 금액으로 표시하며 중복 차감하지 않음",
     ],
 
     overallConfidence,
