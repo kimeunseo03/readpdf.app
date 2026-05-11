@@ -11,6 +11,15 @@ interface ValuationReportProps {
       riskLevel?: "SAFE" | "CAUTION" | "DANGER";
       summary?: string;
       riskFlags?: string[];
+      riskScore?: number;
+      mortgageAmountText?: string;
+      hasCancellationKeyword?: boolean;
+      riskDetails?: {
+        type: string;
+        label: string;
+        severity: "LOW" | "MEDIUM" | "HIGH";
+        description: string;
+      }[];
     };
   };
 
@@ -148,6 +157,11 @@ export function ValuationReport({ input, result }: ValuationReportProps) {
             <span className={riskBadgeClass(input.rightsRisk?.riskLevel)}>
               {riskLabel(input.rightsRisk?.riskLevel)}
             </span>
+            {input.rightsRisk?.riskScore !== undefined && (
+              <p className="mt-2 text-xs text-slate-500">
+                위험 점수: {input.rightsRisk.riskScore}/100
+              </p>
+            )}
           </div>
         </div>
 
@@ -312,45 +326,62 @@ export function ValuationReport({ input, result }: ValuationReportProps) {
         </div>
       )}
 
-      {input.rightsRisk?.riskFlags &&
-        input.rightsRisk.riskFlags.length > 0 && (
-          <div className="mt-6">
-            <div className="mb-3">
-              <p className="text-xs font-semibold tracking-wide text-slate-500">
-                RIGHTS RISK DETAIL
-              </p>
+      {input.rightsRisk?.riskDetails &&
+  input.rightsRisk.riskDetails.length > 0 && (
+    <div className="mt-6">
+      <div className="mb-3">
+        <p className="text-xs font-semibold tracking-wide text-slate-500">
+          RIGHTS RISK DETAIL
+        </p>
 
-              <h3 className="mt-1 text-lg font-bold text-slate-900">
-                권리 리스크 상세
-              </h3>
-            </div>
+        <h3 className="mt-1 text-lg font-bold text-slate-900">
+          권리 리스크 상세
+        </h3>
+      </div>
 
-            <div className="overflow-hidden rounded-2xl border border-slate-200">
-              <table className="w-full text-left text-sm">
-                <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
-                  <tr>
-                    <th className="px-4 py-3 font-semibold">항목</th>
-                    <th className="px-4 py-3 font-semibold">상태</th>
-                  </tr>
-                </thead>
+      <div className="overflow-hidden rounded-2xl border border-slate-200">
+        <table className="w-full text-left text-sm">
+          <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
+            <tr>
+              <th className="px-4 py-3 font-semibold">항목</th>
+              <th className="px-4 py-3 font-semibold">위험도</th>
+              <th className="px-4 py-3 font-semibold">설명</th>
+            </tr>
+          </thead>
 
-                <tbody>
-                  {input.rightsRisk.riskFlags.map((flag) => (
-                    <tr key={flag} className="border-b">
-                      <td className="px-4 py-3 text-slate-700">
-                        {riskFlagLabel(flag)}
-                      </td>
+          <tbody>
+            {input.rightsRisk.riskDetails.map((detail) => (
+              <tr key={detail.type} className="border-b">
+                <td className="px-4 py-3 text-slate-700">
+                  {detail.label}
+                </td>
 
-                      <td className="px-4 py-3 font-medium text-red-600">
-                        감지됨
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
+                <td className="px-4 py-3">
+                  <span
+                    className={
+                      detail.severity === "HIGH"
+                        ? "rounded-full bg-red-100 px-2 py-1 text-xs font-semibold text-red-700"
+                        : detail.severity === "MEDIUM"
+                        ? "rounded-full bg-yellow-100 px-2 py-1 text-xs font-semibold text-yellow-700"
+                        : "rounded-full bg-green-100 px-2 py-1 text-xs font-semibold text-green-700"
+                    }
+                  >
+                    {detail.severity === "HIGH" && "높음"}
+                    {detail.severity === "MEDIUM" && "중간"}
+                    {detail.severity === "LOW" && "낮음"}
+                  </span>
+                </td>
+
+                <td className="px-4 py-3 text-slate-700">
+                  {detail.description}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+)}
 
       {result.valuationBasis.length > 0 && (
         <div className="mt-8 rounded-2xl border border-slate-200 bg-slate-50/60 p-5">
