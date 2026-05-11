@@ -25,6 +25,8 @@ interface ValuationResult {
   lowestPrice?: number;
   highestPrice?: number;
   averagePrice?: number;
+  conservativePrice?: number;
+  upperReferencePrice?: number;
   finalComment?: string;
   recentTransactions: {
     dealAmount: number;
