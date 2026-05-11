@@ -189,22 +189,6 @@ function cleanMortgageCreditor(value?: string): string {
     .trim() || "확인 필요";
 }
 
-function isCancelledMortgageBlock(block: string): boolean {
-  return /(말소|해지|변경|이전|일부이전|경정|부기등기|기입등기)/.test(block);
-}
-
-function extractCreditorFromMortgageBlock(block: string): string {
-  const creditorMatch = block.match(
-    /근저당권자\s+(.{2,80}?)(?=\s+(?:채무자|채권최고액|공동담보|목록|접수|등기원인|말소|해지|변경|이전|부기등기|기입등기|$))/
-  );
-
-  return cleanMortgageCreditor(creditorMatch?.[1]);
-}
-
-function isInvalidMortgageBlock(block: string): boolean {
-  return /(말소|해지|변경|이전|일부이전|경정|부기등기|기입등기)/.test(block);
-}
-
 function extractCreditorFromMortgageBlock(block: string): string {
   const creditorMatch = block.match(
     /근저당권자\s+(.{2,60}?)(?=\s+(?:[0-9]{6}-|서울|부산|대구|인천|광주|대전|울산|세종|경기|강원|충청|전라|전북|전남|경상|경북|경남|제주|채무자|채권최고액|공동담보|목록|접수|등기원인|$))/
