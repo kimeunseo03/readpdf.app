@@ -3,11 +3,17 @@ export function formatKoreanPrice(value?: number) {
     return "-";
   }
 
-  // value는 만원 단위
-  const won = value * 10000;
+  /*
+    현재 시스템 기준:
+    모든 금액은 "원" 단위로 통일.
+  */
 
-  const eok = Math.floor(value / 10000);
-  const man = value % 10000;
+  const won = Math.round(value);
+
+  const eok = Math.floor(won / 100000000);
+  const remain = won % 100000000;
+
+  const man = Math.floor(remain / 10000);
 
   const formattedWon =
     `${won.toLocaleString()}원`;
@@ -19,10 +25,10 @@ export function formatKoreanPrice(value?: number) {
       `(${man.toLocaleString()}만원)`;
   } else if (man === 0) {
     koreanText =
-      `(${eok}억원)`;
+      `(${eok.toLocaleString()}억원)`;
   } else {
     koreanText =
-      `(${eok}억 ${man.toLocaleString()}만원)`;
+      `(${eok.toLocaleString()}억 ${man.toLocaleString()}만원)`;
   }
 
   return `${formattedWon}\n${koreanText}`;
