@@ -38,6 +38,11 @@ function FieldRow({
   );
 }
 
+function formatWon(value?: number) {
+  if (value === undefined || value === null) return "-";
+  return `${value.toLocaleString()}원`;
+}
+
 export function ParseResultView({ response }: { response: ParseApiResponse }) {
   const { parseResult } = response;
   const { property, rightsRisk, confidence, review, meta } = parseResult;
@@ -160,38 +165,66 @@ export function ParseResultView({ response }: { response: ParseApiResponse }) {
       </span>
     )}
   </div>
+
+  {(rightsRisk.mortgages?.length ?? 0) > 0 && (
+    <div className="mt-5 overflow-hidden rounded-2xl border border-slate-200 bg-white">
+      <div className="border-b border-slate-100 bg-slate-50 px-4 py-3">
+        <p className="text-sm font-bold text-slate-900">
+          근저당권 현황
+        </p>
+      </div>
+
+      <table className="w-full text-left text-sm">
+        <thead className="bg-white text-xs text-slate-500">
+          <tr>
+            <th className="px-4 py-3 font-semibold">순위</th>
+            <th className="px-4 py-3 font-semibold">근저당권자</th>
+            <th className="px-4 py-3 text-right font-semibold">
+              금액(원)
+            </th>
+          </tr>
+        </thead>
+
+        <tbody>
+          {rightsRisk.mortgages?.map((mortgage) => (
+            <tr
+              key={`${mortgage.rank}-${mortgage.creditor}-${mortgage.amount}`}
+              className="border-t border-slate-100"
+            >
+              <td className="px-4 py-3 text-slate-700">
+                {mortgage.rank}
+              </td>
+
+              <td className="px-4 py-3 font-medium text-slate-900">
+                {mortgage.creditor || "-"}
+              </td>
+
+              <td className="px-4 py-3 text-right font-semibold tabular-nums text-slate-900">
+                {formatWon(mortgage.amount)}
+              </td>
+            </tr>
+          ))}
+
+          <tr className="border-t border-slate-200 bg-slate-50">
+            <td
+              colSpan={2}
+              className="px-4 py-3 font-bold text-slate-900"
+            >
+              합계
+            </td>
+
+            <td className="px-4 py-3 text-right font-bold tabular-nums text-red-700">
+              {formatWon(
+                rightsRisk.mortgages?.reduce(
+                  (sum, mortgage) => sum + mortgage.amount,
+                  0
+                )
+              )}
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  )}
         
 </section>
-      
-      {review.manualReviewRequired && (
-  <section className="rounded-2xl border border-amber-200 bg-amber-50/70 p-6">
-    <div className="flex items-start gap-3">
-      <div className="mt-1 h-2.5 w-2.5 rounded-full bg-amber-500" />
-
-      <div>
-        <h3 className="font-semibold text-amber-900">
-          수동 검토 필요
-        </h3>
-
-        <p className="mt-1 text-sm text-amber-800">
-          자동 판독 결과 중 일부 항목은 담당자 확인이 필요합니다.
-        </p>
-
-        <ul className="mt-4 list-disc space-y-1 pl-5 text-sm text-amber-900">
-          {review.reasons.map((reason) => (
-            <li key={reason}>{reason}</li>
-          ))}
-        </ul>
-
-        {review.missingRequiredFields.length > 0 && (
-          <p className="mt-3 text-sm font-medium text-amber-900">
-            누락 필드: {review.missingRequiredFields.join(", ")}
-          </p>
-        )}
-      </div>
-    </div>
-  </section>
-)}
-    </div>
-  );
-}
