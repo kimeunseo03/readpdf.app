@@ -628,6 +628,6 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
           />
         </>
       )}
-                </section>
-              );
-            }
+     </section>
+    );
+  }
