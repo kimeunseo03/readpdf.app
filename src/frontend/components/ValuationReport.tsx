@@ -30,6 +30,12 @@ interface ValuationReportProps {
     highestPrice?: number;
     conservativePrice?: number;
     upperReferencePrice?: number;
+    riskAdjustedPrice?: number;
+    seniorDebtAmount?: number;
+    seniorMortgageAmount?: number;
+    tenantDepositAmount?: number;
+    tenantMonthlyRent?: number;
+    priorityRepaymentAmount?: number;
     overallConfidence?: "A" | "B" | "C";
     valuationBasis: string[];
     finalComment?: string;
@@ -90,13 +96,22 @@ function reliabilityBadgeClass(grade?: "A" | "B" | "C") {
   return "rounded-full bg-red-100 px-2 py-1 text-xs font-semibold text-red-700";
 }
 
-function riskFlagLabel(flag: string) {
-  if (flag === "mortgage_detected") return "근저당";
-  if (flag === "seizure_detected") return "압류";
-  if (flag === "provisional_seizure_detected") return "가압류";
-  if (flag === "leasehold_or_tenant_right_detected") return "임차권/전세권";
-  if (flag === "trust_detected") return "신탁";
-  return flag;
+function severityBadgeClass(severity: "LOW" | "MEDIUM" | "HIGH") {
+  if (severity === "HIGH") {
+    return "rounded-full bg-red-100 px-2 py-1 text-xs font-semibold text-red-700";
+  }
+
+  if (severity === "MEDIUM") {
+    return "rounded-full bg-yellow-100 px-2 py-1 text-xs font-semibold text-yellow-700";
+  }
+
+  return "rounded-full bg-green-100 px-2 py-1 text-xs font-semibold text-green-700";
+}
+
+function severityLabel(severity: "LOW" | "MEDIUM" | "HIGH") {
+  if (severity === "HIGH") return "높음";
+  if (severity === "MEDIUM") return "중간";
+  return "낮음";
 }
 
 export function ValuationReport({ input, result }: ValuationReportProps) {
@@ -153,6 +168,7 @@ export function ValuationReport({ input, result }: ValuationReportProps) {
             <span className={riskBadgeClass(input.rightsRisk?.riskLevel)}>
               {riskLabel(input.rightsRisk?.riskLevel)}
             </span>
+
             {input.rightsRisk?.riskScore !== undefined && (
               <p className="mt-2 text-xs text-slate-500">
                 위험 점수: {input.rightsRisk.riskScore}/100
@@ -169,7 +185,7 @@ export function ValuationReport({ input, result }: ValuationReportProps) {
         </div>
       </div>
 
-      <div className="mt-8 grid gap-4 md:grid-cols-4">
+      <div className="mt-8 grid gap-4 md:grid-cols-5">
         <div className="rounded-2xl border border-green-100 bg-green-50/50 p-4">
           <p className="text-xs font-semibold text-green-700">보정 평균가</p>
           <p className="mt-3 whitespace-pre-line text-lg font-bold leading-snug tracking-tight tabular-nums text-green-700">
@@ -191,6 +207,13 @@ export function ValuationReport({ input, result }: ValuationReportProps) {
           </p>
         </div>
 
+        <div className="rounded-2xl border border-red-100 bg-red-50/50 p-4">
+          <p className="text-xs font-semibold text-red-700">권리반영 기준가</p>
+          <p className="mt-3 whitespace-pre-line text-lg font-bold leading-snug tracking-tight tabular-nums text-red-700">
+            {formatKoreanPrice(result.riskAdjustedPrice)}
+          </p>
+        </div>
+
         <div className="rounded-2xl border border-slate-200 bg-white p-4">
           <p className="text-xs font-semibold text-slate-600">평가 신뢰도</p>
           <p className="mt-3 text-3xl font-bold tracking-tight tabular-nums text-slate-900">
@@ -201,6 +224,48 @@ export function ValuationReport({ input, result }: ValuationReportProps) {
           </p>
         </div>
       </div>
+
+      {(result.seniorDebtAmount ?? 0) > 0 && (
+        <div className="mt-8 rounded-2xl border border-red-100 bg-red-50/60 p-5 text-sm">
+          <p className="text-xs font-semibold tracking-wide text-red-700">
+            RIGHTS ADJUSTMENT
+          </p>
+
+          <h3 className="mt-1 text-lg font-bold text-red-900">
+            권리 차감 반영
+          </h3>
+
+          <dl className="mt-4 grid gap-3 md:grid-cols-2">
+            <div>
+              <dt className="text-red-700">선순위 근저당</dt>
+              <dd className="mt-1 font-semibold tabular-nums text-red-900">
+                {formatKoreanPrice(result.seniorMortgageAmount)}
+              </dd>
+            </div>
+
+            <div>
+              <dt className="text-red-700">임차보증금</dt>
+              <dd className="mt-1 font-semibold tabular-nums text-red-900">
+                {formatKoreanPrice(result.tenantDepositAmount)}
+              </dd>
+            </div>
+
+            <div>
+              <dt className="text-red-700">최우선변제금 추정</dt>
+              <dd className="mt-1 font-semibold tabular-nums text-red-900">
+                {formatKoreanPrice(result.priorityRepaymentAmount)}
+              </dd>
+            </div>
+
+            <div>
+              <dt className="text-red-700">권리 차감 합계</dt>
+              <dd className="mt-1 font-semibold tabular-nums text-red-900">
+                {formatKoreanPrice(result.seniorDebtAmount)}
+              </dd>
+            </div>
+          </dl>
+        </div>
+      )}
 
       {result.finalComment && (
         <div className="mt-8 rounded-2xl border border-slate-200 bg-slate-50/60 p-5">
@@ -218,12 +283,8 @@ export function ValuationReport({ input, result }: ValuationReportProps) {
         </div>
       )}
 
-      <div className="mt-8">
-        <div className="mb-4">
-          
-        </div>
-
-        <div className="overflow-hidden rounded-2xl border border-slate-200">
+      {result.recentTransactions.length > 0 && (
+        <div className="mt-8 overflow-hidden rounded-2xl border border-slate-200">
           <table className="w-full text-left text-sm">
             <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
               <tr>
@@ -299,7 +360,7 @@ export function ValuationReport({ input, result }: ValuationReportProps) {
             </tbody>
           </table>
         </div>
-      </div>
+      )}
 
       {input.rightsRisk?.summary && (
         <div className="mt-8 rounded-2xl border border-amber-200 bg-amber-50/70 p-5 text-sm">
@@ -318,61 +379,51 @@ export function ValuationReport({ input, result }: ValuationReportProps) {
       )}
 
       {input.rightsRisk?.riskDetails &&
-  input.rightsRisk.riskDetails.length > 0 && (
-    <div className="mt-6">
-      <div className="mb-3">
-        <p className="text-xs font-semibold tracking-wide text-slate-500">
-          RIGHTS RISK DETAIL
-        </p>
+        input.rightsRisk.riskDetails.length > 0 && (
+          <div className="mt-6">
+            <div className="mb-3">
+              <p className="text-xs font-semibold tracking-wide text-slate-500">
+                RIGHTS RISK DETAIL
+              </p>
 
-        <h3 className="mt-1 text-lg font-bold text-slate-900">
-          권리 리스크 상세
-        </h3>
-      </div>
+              <h3 className="mt-1 text-lg font-bold text-slate-900">
+                권리 리스크 상세
+              </h3>
+            </div>
 
-      <div className="overflow-hidden rounded-2xl border border-slate-200">
-        <table className="w-full text-left text-sm">
-          <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
-            <tr>
-              <th className="px-4 py-3 font-semibold">항목</th>
-              <th className="px-4 py-3 font-semibold">위험도</th>
-              <th className="px-4 py-3 font-semibold">설명</th>
-            </tr>
-          </thead>
+            <div className="overflow-hidden rounded-2xl border border-slate-200">
+              <table className="w-full text-left text-sm">
+                <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
+                  <tr>
+                    <th className="px-4 py-3 font-semibold">항목</th>
+                    <th className="px-4 py-3 font-semibold">위험도</th>
+                    <th className="px-4 py-3 font-semibold">설명</th>
+                  </tr>
+                </thead>
 
-          <tbody>
-            {input.rightsRisk.riskDetails.map((detail) => (
-              <tr key={detail.type} className="border-b">
-                <td className="px-4 py-3 text-slate-700">
-                  {detail.label}
-                </td>
+                <tbody>
+                  {input.rightsRisk.riskDetails.map((detail) => (
+                    <tr key={detail.type} className="border-b">
+                      <td className="px-4 py-3 text-slate-700">
+                        {detail.label}
+                      </td>
 
-                <td className="px-4 py-3">
-                  <span
-                    className={
-                      detail.severity === "HIGH"
-                        ? "rounded-full bg-red-100 px-2 py-1 text-xs font-semibold text-red-700"
-                        : detail.severity === "MEDIUM"
-                        ? "rounded-full bg-yellow-100 px-2 py-1 text-xs font-semibold text-yellow-700"
-                        : "rounded-full bg-green-100 px-2 py-1 text-xs font-semibold text-green-700"
-                    }
-                  >
-                    {detail.severity === "HIGH" && "높음"}
-                    {detail.severity === "MEDIUM" && "중간"}
-                    {detail.severity === "LOW" && "낮음"}
-                  </span>
-                </td>
+                      <td className="px-4 py-3">
+                        <span className={severityBadgeClass(detail.severity)}>
+                          {severityLabel(detail.severity)}
+                        </span>
+                      </td>
 
-                <td className="px-4 py-3 text-slate-700">
-                  {detail.description}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
-)}
+                      <td className="px-4 py-3 text-slate-700">
+                        {detail.description}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
 
       {result.valuationBasis.length > 0 && (
         <div className="mt-8 rounded-2xl border border-slate-200 bg-slate-50/60 p-5">
