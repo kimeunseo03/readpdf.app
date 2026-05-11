@@ -2,7 +2,7 @@ import { UploadForm } from "@frontend/components/UploadForm";
 
 export default function UploadPage() {
   return (
-    <main className="mx-auto max-w-7xl px-6 py-10">
+    <main className="mx-auto max-w-[1400px] px-4 py-8 lg:px-6">
       <div className="mb-10 flex flex-wrap items-start justify-between gap-4">
         <div>
           <p className="text-sm font-semibold tracking-wide text-blue-600">
