@@ -15,6 +15,11 @@ interface ValuationFormProps {
       riskFlags?: string[];
       riskScore?: number;
       mortgageAmountText?: string;
+      mortgages?: {
+        rank: number;
+        creditor: string;
+        amount: number; // 원
+      }[];
       hasCancellationKeyword?: boolean;
       riskDetails?: {
         type: string;
@@ -39,6 +44,11 @@ interface ValuationResult {
   riskAdjustedPrice?: number;
     seniorDebtAmount?: number;
     seniorMortgageAmount?: number;
+    mortgages?: {
+      rank: number;
+      creditor: string;
+      amount: number; // 원
+    }[];
     tenantDepositAmount?: number;
     tenantMonthlyRent?: number;
     priorityRepaymentAmount?: number;
@@ -204,7 +214,7 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
 
         <label className="block">
           <span className="mb-1 block text-sm font-medium text-slate-700">
-            임차보증금(만원)
+            임차보증금(원)
           </span>
 
           <input
@@ -212,13 +222,13 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
             value={tenantDepositAmount}
             onChange={(e) => setTenantDepositAmount(e.target.value)}
             className="w-full rounded-xl border border-slate-200 bg-white p-3 text-sm shadow-sm transition focus:border-blue-500 focus:outline-none focus:ring-4 focus:ring-blue-100"
-            placeholder="예: 30000"
-          />
+            placeholder="예: 300000000"
+            />
         </label>
 
         <label className="block">
           <span className="mb-1 block text-sm font-medium text-slate-700">
-            월세(만원)
+            월세(원)
           </span>
 
           <input
@@ -226,7 +236,7 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
             value={tenantMonthlyRent}
             onChange={(e) => setTenantMonthlyRent(e.target.value)}
             className="w-full rounded-xl border border-slate-200 bg-white p-3 text-sm shadow-sm transition focus:border-blue-500 focus:outline-none focus:ring-4 focus:ring-blue-100"
-            placeholder="예: 120"
+            placeholder="예: 1200000"
           />
         </label>
 
@@ -335,7 +345,7 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
 
                   <div className="mt-4 space-y-2 text-sm text-slate-700">
                     <div className="flex justify-between gap-4">
-                      <span>선순위 근저당</span>
+                      <span>선순위 근저당 합계</span>
                       <strong>{formatKoreanPrice(result.seniorMortgageAmount)}</strong>
                     </div>
 
@@ -356,6 +366,64 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
                       <span>{formatKoreanPrice(result.priorityRepaymentAmount)}</span>
                     </div>
                   </div>
+
+                  {(result.mortgages?.length ?? 0) > 0 && (
+                    <div className="mt-5 overflow-hidden rounded-2xl border border-slate-200 bg-white">
+                      <div className="border-b border-slate-100 bg-slate-50 px-4 py-3">
+                        <p className="text-sm font-bold text-slate-900">
+                          근저당권 현황
+                        </p>
+                      </div>
+
+                      <table className="w-full text-left text-xs">
+                        <thead className="bg-white text-slate-500">
+                          <tr>
+                            <th className="px-3 py-2 font-semibold">순위</th>
+                            <th className="px-3 py-2 font-semibold">
+                              근저당권자
+                            </th>
+                            <th className="px-3 py-2 text-right font-semibold">
+                              금액(원)
+                            </th>
+                          </tr>
+                        </thead>
+
+                        <tbody>
+                          {result.mortgages?.map((mortgage) => (
+                            <tr
+                              key={`${mortgage.rank}-${mortgage.creditor}-${mortgage.amount}`}
+                              className="border-t border-slate-100"
+                            >
+                              <td className="px-3 py-2 text-slate-700">
+                                {mortgage.rank}
+                              </td>
+
+                              <td className="px-3 py-2 font-medium text-slate-900">
+                                {mortgage.creditor || "-"}
+                              </td>
+
+                              <td className="px-3 py-2 text-right font-semibold tabular-nums text-slate-900">
+                                {mortgage.amount.toLocaleString()}원
+                              </td>
+                            </tr>
+                          ))}
+
+                          <tr className="border-t border-slate-200 bg-slate-50">
+                            <td
+                              colSpan={2}
+                              className="px-3 py-2 font-bold text-slate-900"
+                            >
+                              합계
+                            </td>
+
+                            <td className="px-3 py-2 text-right font-bold tabular-nums text-red-700">
+                              {result.seniorMortgageAmount?.toLocaleString() ?? "-"}원
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
                 </div>
 
                 <div
@@ -466,7 +534,7 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
                             </td>
 
                             <td className="whitespace-pre-line px-4 py-3 font-medium tabular-nums text-slate-700">
-                              {formatKoreanPrice(tx.dealAmount)}
+                              {formatKoreanPrice(tx.dealAmount * 10000)}
                             </td>
 
                             <td className="px-4 py-3 text-slate-700">
