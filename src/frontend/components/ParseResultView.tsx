@@ -101,130 +101,129 @@ export function ParseResultView({ response }: { response: ParseApiResponse }) {
       />
 
       <section className="card-surface p-6">
-  <div className="flex flex-wrap items-center justify-between gap-3">
-    <div>
-      <h3 className="font-semibold text-slate-900">
-        권리관계 리스크
-      </h3>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h3 className="font-semibold text-slate-900">
+              권리관계 리스크
+            </h3>
 
-      <p className="mt-1 text-sm text-slate-500">
-        등기부상 권리 제한 가능성이 있는 키워드를 자동 탐지합니다.
-      </p>
-    </div>
+            <p className="mt-1 text-sm text-slate-500">
+              등기부상 권리 제한 가능성이 있는 키워드를 자동 탐지합니다.
+            </p>
+          </div>
 
-    <span
-      className={
-        rightsRisk.riskLevel === "SAFE"
-          ? "rounded-full bg-green-100 px-3 py-1 text-xs font-semibold text-green-700"
-          : rightsRisk.riskLevel === "CAUTION"
-          ? "rounded-full bg-yellow-100 px-3 py-1 text-xs font-semibold text-yellow-700"
-          : "rounded-full bg-red-100 px-3 py-1 text-xs font-semibold text-red-700"
-      }
-    >
-      {rightsRisk.riskLevel === "SAFE" && "안전"}
-      {rightsRisk.riskLevel === "CAUTION" && "주의"}
-      {rightsRisk.riskLevel === "DANGER" && "위험"}
-      {!rightsRisk.riskLevel && "검토 필요"}
-    </span>
-  </div>
-
-  {rightsRisk.summary && (
-    <p className="mt-4 rounded-2xl bg-slate-50 p-4 text-sm text-slate-700">
-      {rightsRisk.summary}
-    </p>
-  )}
-        
-  <div className="mt-4 flex flex-wrap gap-2">
-    {rightsRisk.riskFlags.length ? (
-      rightsRisk.riskFlags.map((flag) => {
-        const label =
-          flag === "mortgage_detected"
-            ? "근저당 설정 확인"
-            : flag === "seizure_detected"
-            ? "압류 이력 존재"
-            : flag === "provisional_seizure_detected"
-            ? "가압류 이력 존재"
-            : flag === "leasehold_or_tenant_right_detected"
-            ? "임차권/전세권 설정"
-            : flag === "trust_detected"
-            ? "신탁 설정 확인"
-            : flag;
-
-        return (
           <span
-            key={flag}
-            className="rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-800"
+            className={
+              rightsRisk.riskLevel === "SAFE"
+                ? "rounded-full bg-green-100 px-3 py-1 text-xs font-semibold text-green-700"
+                : rightsRisk.riskLevel === "CAUTION"
+                  ? "rounded-full bg-yellow-100 px-3 py-1 text-xs font-semibold text-yellow-700"
+                  : "rounded-full bg-red-100 px-3 py-1 text-xs font-semibold text-red-700"
+            }
           >
-            {label}
+            {rightsRisk.riskLevel === "SAFE" && "안전"}
+            {rightsRisk.riskLevel === "CAUTION" && "주의"}
+            {rightsRisk.riskLevel === "DANGER" && "위험"}
+            {!rightsRisk.riskLevel && "검토 필요"}
           </span>
-        );
-      })
-    ) : (
-      <span className="text-sm text-slate-500">
-        탐지된 리스크 없음
-      </span>
-    )}
-  </div>
+        </div>
 
-  {(rightsRisk.mortgages?.length ?? 0) > 0 && (
-    <div className="mt-5 overflow-hidden rounded-2xl border border-slate-200 bg-white">
-      <div className="border-b border-slate-100 bg-slate-50 px-4 py-3">
-        <p className="text-sm font-bold text-slate-900">
-          근저당권 현황
-        </p>
-      </div>
+        {rightsRisk.summary && (
+          <p className="mt-4 rounded-2xl bg-slate-50 p-4 text-sm text-slate-700">
+            {rightsRisk.summary}
+          </p>
+        )}
 
-      <table className="w-full text-left text-sm">
-        <thead className="bg-white text-xs text-slate-500">
-          <tr>
-            <th className="px-4 py-3 font-semibold">순위</th>
-            <th className="px-4 py-3 font-semibold">근저당권자</th>
-            <th className="px-4 py-3 text-right font-semibold">
-              금액(원)
-            </th>
-          </tr>
-        </thead>
+        <div className="mt-4 flex flex-wrap gap-2">
+          {rightsRisk.riskFlags.length ? (
+            rightsRisk.riskFlags.map((flag) => {
+              const label =
+                flag === "mortgage_detected"
+                  ? "근저당 설정 확인"
+                  : flag === "seizure_detected"
+                    ? "압류 이력 존재"
+                    : flag === "provisional_seizure_detected"
+                      ? "가압류 이력 존재"
+                      : flag === "leasehold_or_tenant_right_detected"
+                        ? "임차권/전세권 설정"
+                        : flag === "trust_detected"
+                          ? "신탁 설정 확인"
+                          : flag;
 
-        <tbody>
-          {rightsRisk.mortgages?.map((mortgage) => (
-            <tr
-              key={`${mortgage.rank}-${mortgage.creditor}-${mortgage.amount}`}
-              className="border-t border-slate-100"
-            >
-              <td className="px-4 py-3 text-slate-700">
-                {mortgage.rank}
-              </td>
+              return (
+                <span
+                  key={flag}
+                  className="rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-800"
+                >
+                  {label}
+                </span>
+              );
+            })
+          ) : (
+            <span className="text-sm text-slate-500">
+              탐지된 리스크 없음
+            </span>
+          )}
+        </div>
 
-              <td className="px-4 py-3 font-medium text-slate-900">
-                {mortgage.creditor || "-"}
-              </td>
+        {(rightsRisk.mortgages?.length ?? 0) > 0 && (
+          <div className="mt-5 overflow-hidden rounded-2xl border border-slate-200 bg-white">
+            <div className="border-b border-slate-100 bg-slate-50 px-4 py-3">
+              <p className="text-sm font-bold text-slate-900">
+                근저당권 현황
+              </p>
+            </div>
 
-              <td className="px-4 py-3 text-right font-semibold tabular-nums text-slate-900">
-                {formatWon(mortgage.amount)}
-              </td>
-            </tr>
-          ))}
+            <table className="w-full text-left text-sm">
+              <thead className="bg-white text-xs text-slate-500">
+                <tr>
+                  <th className="px-4 py-3 font-semibold">순위</th>
+                  <th className="px-4 py-3 font-semibold">근저당권자</th>
+                  <th className="px-4 py-3 text-right font-semibold">
+                    금액(원)
+                  </th>
+                </tr>
+              </thead>
 
-          <tr className="border-t border-slate-200 bg-slate-50">
-            <td
-              colSpan={2}
-              className="px-4 py-3 font-bold text-slate-900"
-            >
-              합계
-            </td>
+              <tbody>
+                {rightsRisk.mortgages?.map((mortgage) => (
+                  <tr
+                    key={`${mortgage.rank}-${mortgage.creditor}-${mortgage.amount}`}
+                    className="border-t border-slate-100"
+                  >
+                    <td className="px-4 py-3 text-slate-700">
+                      {mortgage.rank}
+                    </td>
 
-            <td className="px-4 py-3 text-right font-bold tabular-nums text-red-700">
-              {formatWon(
-                rightsRisk.mortgages?.reduce(
-                  (sum, mortgage) => sum + mortgage.amount,
-                  0
-                )
-              )}
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-  )}
-        
-</section>
+                    <td className="px-4 py-3 font-medium text-slate-900">
+                      {mortgage.creditor || "-"}
+                    </td>
+
+                    <td className="px-4 py-3 text-right font-semibold tabular-nums text-slate-900">
+                      {formatWon(mortgage.amount)}
+                    </td>
+                  </tr>
+                ))}
+
+                <tr className="border-t border-slate-200 bg-slate-50">
+                  <td
+                    colSpan={2}
+                    className="px-4 py-3 font-bold text-slate-900"
+                  >
+                    합계
+                  </td>
+
+                  <td className="px-4 py-3 text-right font-bold tabular-nums text-red-700">
+                    {formatWon(
+                      rightsRisk.mortgages?.reduce(
+                        (sum, mortgage) => sum + mortgage.amount,
+                        0
+                      )
+                    )}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
