@@ -126,11 +126,11 @@ export async function estimateApartmentValue(
     );
   }
 
-  const originalPrices = transactions.map((t) => t.dealAmount);
+  const originalPrices = transactions.map((t) => t.dealAmount * 10000);
   const filteredPriceSet = removeOutliersByIqr(originalPrices);
 
   const excludedTransactions = transactions.filter(
-    (tx) => !filteredPriceSet.includes(tx.dealAmount)
+    (tx) => !filteredPriceSet.includes(tx.dealAmount * 10000)
   );
 
   const excludedReasons: string[] = [];
@@ -139,12 +139,14 @@ export async function estimateApartmentValue(
     excludedReasons.push(
       `${tx.dealYear}.${String(tx.dealMonth).padStart(2, "0")}.${String(
         tx.dealDay
-      ).padStart(2, "0")} 거래 (${formatWon(tx.dealAmount)}) 이상치 제외`
+      ).padStart(2, "0")} 거래 (${formatWon(
+        tx.dealAmount * 10000
+      )}) 이상치 제외`
     );
   });
 
   const filteredTransactions = transactions.filter((tx) =>
-    filteredPriceSet.includes(tx.dealAmount)
+    filteredPriceSet.includes(tx.dealAmount * 10000)
   );
 
   if (excludedTransactions.length > 0) {
@@ -155,7 +157,10 @@ export async function estimateApartmentValue(
     excludedReasons.forEach((reason) => warnings.push(reason));
   }
 
-  const filteredPrices = filteredTransactions.map((t) => t.dealAmount);
+  const filteredPrices = filteredTransactions.map(
+    (t) => t.dealAmount * 10000
+  );
+
   const weights = filteredTransactions.map((t) => t.similarityScore ?? 50);
 
   const weightedAveragePrice = filteredPrices.length
