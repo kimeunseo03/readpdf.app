@@ -109,10 +109,6 @@ export function ValuationReport({ input, result }: ValuationReportProps) {
           INTERNAL VALUATION REPORT
         </p>
 
-        <h2 className="mt-2 text-2xl font-bold tracking-tight text-slate-900">
-          아파트 가치평가 내부 검토 리포트
-        </h2>
-
         <p className="mt-2 text-sm text-slate-500">
           내부 검토용 자료이며, 감정평가서 또는 법률 의견서가 아닙니다.
         </p>
@@ -224,12 +220,7 @@ export function ValuationReport({ input, result }: ValuationReportProps) {
 
       <div className="mt-8">
         <div className="mb-4">
-          <p className="text-xs font-semibold tracking-wide text-slate-500">
-            COMPARABLE SALES
-          </p>
-          <h3 className="mt-1 text-lg font-bold text-slate-900">
-            비교 거래 내역
-          </h3>
+          
         </div>
 
         <div className="overflow-hidden rounded-2xl border border-slate-200">
