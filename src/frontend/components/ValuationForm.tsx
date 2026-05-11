@@ -162,11 +162,6 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
           가치평가 입력값 확인
         </h2>
 
-        <p className="mt-2 text-sm text-slate-500">
-          등기부에서 추출한 값을 기준으로 평가를 실행합니다. 필요하면 주소,
-          단지명, 면적, 담당자명, 임대차 정보를 수정하세요.
-        </p>
-      </div>
 
       <div className="grid gap-4 md:grid-cols-2">
         <label className="block md:col-span-2">
