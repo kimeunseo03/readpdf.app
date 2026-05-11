@@ -206,52 +206,51 @@ export function parseRegistryText(params: {
   const landRightRatio = extractLandRightRatio(compactText);
   addEvidence(evidence, "property.landRightRatio", findSnippet(compactText, /소유권대지권.{0,180}/), landRightRatio ? 0.82 : 0.2);
 
-  const mortgageAmountMatch = compactText.match(
-  /채권최고액\s*(?:금)?\s*([0-9,]+)\s*원?/
-);
+    const mortgageAmountMatch = compactText.match(
+    /채권최고액\s*(?:금)?\s*([0-9,]+)\s*원?/
+  );
 
-const rightsRisk = {
-  hasMortgage: /근저당권/.test(compactText),
-  hasSeizure: /(^|[^가])압류/.test(compactText),
-  hasProvisionalSeizure: /가압류/.test(compactText),
-  hasLeaseholdRight: /전세권|임차권/.test(compactText),
-  hasTrust: /신탁/.test(compactText),
-  coOwnerCount: undefined as number | undefined,
-  riskFlags: [] as string[],
-  riskLevel: "SAFE" as "SAFE" | "CAUTION" | "DANGER",
-  riskScore: 0,
-  summary: "",
-  mortgageAmountText: mortgageAmountMatch?.[1]
-    ? `${mortgageAmountMatch[1]}원`
-    : undefined,
-  hasCancellationKeyword: /말소|해지|말소등기/.test(compactText),
-  riskDetails: [] as {
-    type: string;
-    label: string;
-    severity: "LOW" | "MEDIUM" | "HIGH";
-    description: string;
-  }[]
-};
+  const rightsRisk = {
+    hasMortgage: /근저당권/.test(compactText),
+    hasSeizure: /(^|[^가])압류/.test(compactText),
+    hasProvisionalSeizure: /가압류/.test(compactText),
+    hasLeaseholdRight: /전세권|임차권/.test(compactText),
+    hasTrust: /신탁/.test(compactText),
+    coOwnerCount: undefined as number | undefined,
+    riskFlags: [] as string[],
+    riskLevel: "SAFE" as "SAFE" | "CAUTION" | "DANGER",
+    riskScore: 0,
+    summary: "",
+    mortgageAmountText: mortgageAmountMatch?.[1]
+      ? `${mortgageAmountMatch[1]}원`
+      : undefined,
+    hasCancellationKeyword: /말소|해지|말소등기/.test(compactText),
+    riskDetails: [] as {
+      type: string;
+      label: string;
+      severity: "LOW" | "MEDIUM" | "HIGH";
+      description: string;
+    }[]
+  };
 
-  if (rightsRisk.hasMortgage) rightsRisk.riskFlags.push("mortgage_detected");
-  if (rightsRisk.hasSeizure) rightsRisk.riskFlags.push("seizure_detected");
-  if (rightsRisk.hasProvisionalSeizure) rightsRisk.riskFlags.push("provisional_seizure_detected");
-  if (rightsRisk.hasLeaseholdRight) rightsRisk.riskFlags.push("leasehold_or_tenant_right_detected");
-  if (rightsRisk.hasTrust) rightsRisk.riskFlags.push("trust_detected");
   if (rightsRisk.hasMortgage) {
-  rightsRisk.riskScore += 25;
-  rightsRisk.riskDetails.push({
-    type: "mortgage",
-    label: "근저당",
-    severity: "MEDIUM",
-    description: rightsRisk.mortgageAmountText
-      ? `근저당권 및 채권최고액 ${rightsRisk.mortgageAmountText}이 확인되었습니다.`
-      : "근저당권 설정 문구가 확인되었습니다."
-  });
-}
+    rightsRisk.riskFlags.push("mortgage_detected");
+    rightsRisk.riskScore += 25;
+
+    rightsRisk.riskDetails.push({
+      type: "mortgage",
+      label: "근저당",
+      severity: "MEDIUM",
+      description: rightsRisk.mortgageAmountText
+        ? `근저당권 및 채권최고액 ${rightsRisk.mortgageAmountText}이 확인되었습니다.`
+        : "근저당권 설정 문구가 확인되었습니다."
+    });
+  }
 
   if (rightsRisk.hasLeaseholdRight) {
+    rightsRisk.riskFlags.push("leasehold_or_tenant_right_detected");
     rightsRisk.riskScore += 20;
+
     rightsRisk.riskDetails.push({
       type: "leasehold",
       label: "전세권/임차권",
@@ -259,9 +258,11 @@ const rightsRisk = {
       description: "전세권 또는 임차권 관련 문구가 확인되었습니다."
     });
   }
-  
+
   if (rightsRisk.hasSeizure) {
+    rightsRisk.riskFlags.push("seizure_detected");
     rightsRisk.riskScore += 45;
+
     rightsRisk.riskDetails.push({
       type: "seizure",
       label: "압류",
@@ -269,9 +270,11 @@ const rightsRisk = {
       description: "압류 관련 문구가 확인되어 고위험 권리관계 검토가 필요합니다."
     });
   }
-  
+
   if (rightsRisk.hasProvisionalSeizure) {
+    rightsRisk.riskFlags.push("provisional_seizure_detected");
     rightsRisk.riskScore += 45;
+
     rightsRisk.riskDetails.push({
       type: "provisional_seizure",
       label: "가압류",
@@ -279,9 +282,11 @@ const rightsRisk = {
       description: "가압류 관련 문구가 확인되어 고위험 권리관계 검토가 필요합니다."
     });
   }
-  
+
   if (rightsRisk.hasTrust) {
+    rightsRisk.riskFlags.push("trust_detected");
     rightsRisk.riskScore += 40;
+
     rightsRisk.riskDetails.push({
       type: "trust",
       label: "신탁",
@@ -289,10 +294,10 @@ const rightsRisk = {
       description: "신탁 관련 문구가 확인되어 소유권 및 처분 제한 검토가 필요합니다."
     });
   }
-  
+
   if (rightsRisk.hasCancellationKeyword) {
     rightsRisk.riskScore = Math.max(0, rightsRisk.riskScore - 15);
-  
+
     rightsRisk.riskDetails.push({
       type: "cancellation_keyword",
       label: "말소/해지 문구",
@@ -301,9 +306,9 @@ const rightsRisk = {
         "말소 또는 해지 관련 문구가 확인되었습니다. 실제 유효 여부는 원문 확인이 필요합니다."
     });
   }
-  
+
   rightsRisk.riskScore = Math.min(100, rightsRisk.riskScore);
-  
+
   if (rightsRisk.riskScore >= 60) {
     rightsRisk.riskLevel = "DANGER";
   } else if (rightsRisk.riskScore >= 25) {
@@ -311,11 +316,11 @@ const rightsRisk = {
   } else {
     rightsRisk.riskLevel = "SAFE";
   }
-  
+
   const riskLabels = rightsRisk.riskDetails
     .filter((detail) => detail.type !== "cancellation_keyword")
     .map((detail) => detail.label);
-  
+
   if (riskLabels.length === 0) {
     rightsRisk.summary =
       "특이 권리관계는 발견되지 않았습니다.";
@@ -324,52 +329,15 @@ const rightsRisk = {
       `${riskLabels.join(", ")} 관련 권리관계가 확인되었습니다. 등기부 원문 기준의 추가 검토가 필요합니다.`;
   }
 
-  if (
-  rightsRisk.hasSeizure ||
-  rightsRisk.hasProvisionalSeizure ||
-  rightsRisk.hasTrust
-) {
-  rightsRisk.riskLevel = "DANGER";
-} else if (
-  rightsRisk.hasMortgage ||
-  rightsRisk.hasLeaseholdRight
-) {
-  rightsRisk.riskLevel = "CAUTION";
-}
-
-  const summaryParts: string[] = [];
-
-  if (rightsRisk.hasMortgage) {
-    summaryParts.push("근저당");
-  }
-  
-  if (rightsRisk.hasSeizure) {
-    summaryParts.push("압류");
-  }
-  
-  if (rightsRisk.hasProvisionalSeizure) {
-    summaryParts.push("가압류");
-  }
-  
-  if (rightsRisk.hasLeaseholdRight) {
-    summaryParts.push("임차권/전세권");
-  }
-  
-  if (rightsRisk.hasTrust) {
-    summaryParts.push("신탁");
-  }
-  
-  if (summaryParts.length === 0) {
-    rightsRisk.summary =
-      "특이 권리관계는 발견되지 않았습니다.";
-  } else {
-    rightsRisk.summary =
-      `${summaryParts.join(", ")} 관련 권리관계가 확인되어 추가 검토가 필요합니다.`;
-  }
-  
-  addEvidence(evidence, "rightsRisk", findSnippet(compactText, /(근저당권|가압류|압류|전세권|임차권|신탁).{0,100}/), rightsRisk.riskFlags.length ? 0.74 : 0.65);
+  addEvidence(
+    evidence,
+    "rightsRisk",
+    findSnippet(compactText, /(근저당권|가압류|압류|전세권|임차권|신탁).{0,100}/),
+    rightsRisk.riskFlags.length ? 0.74 : 0.65
+  );
 
   const missingRequiredFields: string[] = [];
+
   if (!addressRaw) missingRequiredFields.push("addressRaw");
   if (!buildingDong) missingRequiredFields.push("buildingDong");
   if (!unitNumber) missingRequiredFields.push("unitNumber");
@@ -383,13 +351,29 @@ const rightsRisk = {
     overall: 0
   };
 
-  confidence.overall = Number(((confidence.documentType + confidence.address + confidence.area + confidence.rightsRisk + ocrDecision.confidence) / 5).toFixed(2));
+  confidence.overall = Number(
+    (
+      (
+        confidence.documentType +
+        confidence.address +
+        confidence.area +
+        confidence.rightsRisk +
+        ocrDecision.confidence
+      ) / 5
+    ).toFixed(2)
+  );
 
   const reasons = [
     ...ocrDecision.reasons,
-    ...(documentTypeConfidence < 0.75 ? ["등본 문서 여부 신뢰도가 낮습니다."] : []),
-    ...(missingRequiredFields.length ? ["가치평가 입력 필수 필드가 누락되었습니다."] : []),
-    ...(rightsRisk.riskFlags.length ? ["권리관계 리스크 키워드가 탐지되었습니다. 법률 판단이 아닌 내부 검토 플래그입니다."] : [])
+    ...(documentTypeConfidence < 0.75
+      ? ["등본 문서 여부 신뢰도가 낮습니다."]
+      : []),
+    ...(missingRequiredFields.length
+      ? ["가치평가 입력 필수 필드가 누락되었습니다."]
+      : []),
+    ...(rightsRisk.riskFlags.length
+      ? ["권리관계 리스크 키워드가 탐지되었습니다. 법률 판단이 아닌 내부 검토 플래그입니다."]
+      : [])
   ];
 
   return {
@@ -397,11 +381,15 @@ const rightsRisk = {
       fileId: params.fileId,
       originalFileName: params.originalFileName,
       pageCount: params.pageCount,
-      documentType: documentTypeConfidence >= 0.75 ? "real_estate_registry" : "unknown",
+      documentType:
+        documentTypeConfidence >= 0.75
+          ? "real_estate_registry"
+          : "unknown",
       registryType,
       textExtractionMethod: "native_pdf_text",
       parsedAt: new Date().toISOString()
     },
+
     property: {
       addressRaw,
       sido,
@@ -414,14 +402,19 @@ const rightsRisk = {
       landRightRatio,
       floor
     },
+
     rightsRisk,
+
     confidence,
+
     review: {
       manualReviewRequired: reasons.length > 0 || confidence.overall < 0.75,
       reasons,
       missingRequiredFields
     },
+
     sourceEvidence: evidence,
+
     meta: {
       ocrRequired: ocrDecision.ocrRequired,
       maskedTextPreview: maskSensitiveText(compactText).slice(0, 1200),
