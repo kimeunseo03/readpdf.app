@@ -44,6 +44,17 @@ export type RegistryParseResult = {
     summary?: string;
 
     mortgageAmountText?: string;
+
+    mortgages?: {
+      rank: number;
+      creditor: string;
+
+      /**
+       * 원 단위
+       */
+      amount: number;
+    }[];
+
     hasCancellationKeyword?: boolean;
 
     riskDetails?: {
