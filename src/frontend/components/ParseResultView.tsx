@@ -205,8 +205,7 @@ export function ParseResultView({ response }: { response: ParseApiResponse }) {
   </div>
         
 </section>
-</section>
-
+      
       {review.manualReviewRequired && (
   <section className="rounded-2xl border border-amber-200 bg-amber-50/70 p-6">
     <div className="flex items-start gap-3">
