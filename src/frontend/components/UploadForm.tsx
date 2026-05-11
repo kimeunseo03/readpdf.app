@@ -84,51 +84,48 @@ export function UploadForm() {
             </div>
           </label>
 
-                    <button
-                      type="submit"
-                      disabled={isLoading || !file}
-                      className="mt-4 rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
-                    >
-                      {isLoading ? "판독 중..." : "PDF 판독 실행"}
-                    </button>
-                  </form>
-          
-                  <div className="mt-6 rounded-2xl border border-blue-100 bg-blue-50/60 p-4 text-xs leading-6 text-blue-900">
-                    <p className="font-semibold text-blue-900">평가 기준</p>
-          
-                    <ul className="mt-2 space-y-1.5">
-                      <li>· 국토교통부 아파트 매매 실거래가 자료를 사용합니다.</li>
-                      <li>· 동일 법정동과 동일 단지 거래를 우선 비교합니다.</li>
-                      <li>· 전용면적 ±3㎡ 비교군을 우선 적용합니다.</li>
-                      <li>· 거래 부족 시 전용면적 허용 범위를 ±5㎡까지 확장합니다.</li>
-                      <li>· 최근 12개월 거래만 사용합니다.</li>
-                      <li>· IQR 방식으로 극단 거래가를 제외합니다.</li>
-                      <li>· 권리반영 기준가는 근저당과 임차보증금을 차감해 산정합니다.</li>
-                      <li>· 최우선변제금은 참고 금액이며 중복 차감하지 않습니다.</li>
-                    </ul>
-                  </div>
-          
-                  <div className="mt-4 rounded-2xl bg-slate-50 p-4 text-xs leading-6 text-slate-600">
-                    <p className="font-semibold text-slate-800">내부 정책</p>
-                    <p>
-                      KB부동산 등 유료 서비스 데이터, 로그인 우회, 무단 크롤링,
-                      화면 캡처 자동화는 사용하지 않습니다.
-                    </p>
-                  </div>
-          
-                  {error && (
-          <div className="mt-5 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
-            {error}
-          </div>
-        )}
+          <button
+            type="submit"
+            disabled={isLoading || !file}
+            className="mt-4 rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {isLoading ? "판독 중..." : "PDF 판독 실행"}
+          </button>
+        </form>
 
-        <div className="mt-6 rounded-2xl bg-slate-50 p-4 text-xs leading-6 text-slate-600">
+        <div className="mt-6 rounded-2xl border border-blue-100 bg-blue-50/60 p-4 text-xs leading-6 text-blue-900">
+          <p className="font-semibold text-blue-900">평가 기준</p>
+
+          <ul className="mt-2 space-y-1.5">
+            <li>· 국토교통부 아파트 매매 실거래가 자료를 사용합니다.</li>
+            <li>· 동일 법정동과 동일 단지 거래를 우선 비교합니다.</li>
+            <li>· 전용면적 ±3㎡ 비교군을 우선 적용합니다.</li>
+            <li>· 거래 부족 시 전용면적 허용 범위를 ±5㎡까지 확장합니다.</li>
+            <li>· 최근 12개월 거래만 사용합니다.</li>
+            <li>· IQR 방식으로 극단 거래가를 제외합니다.</li>
+            <li>
+              · 권리반영 기준가는 근저당과 임차보증금을 차감해 산정합니다.
+            </li>
+            <li>
+              · 최우선변제금은 참고 금액이며 중복 차감하지 않습니다.
+            </li>
+          </ul>
+        </div>
+
+        <div className="mt-4 rounded-2xl bg-slate-50 p-4 text-xs leading-6 text-slate-600">
           <p className="font-semibold text-slate-800">내부 정책</p>
           <p>
             KB부동산 등 유료 서비스 데이터, 로그인 우회, 무단 크롤링,
             화면 캡처 자동화는 사용하지 않습니다.
           </p>
         </div>
+
+        {error && (
+          <div className="mt-5 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+            {error}
+          </div>
+        )}
+        
       </section>
 
       <section>
