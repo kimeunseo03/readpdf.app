@@ -171,6 +171,40 @@ export function ParseResultView({ response }: { response: ParseApiResponse }) {
       </span>
     )}
   </div>
+        
+  <div className="mt-4 flex flex-wrap gap-2">
+    {rightsRisk.riskFlags.length ? (
+      rightsRisk.riskFlags.map((flag) => {
+        const label =
+          flag === "mortgage_detected"
+            ? "근저당 설정 확인"
+            : flag === "seizure_detected"
+            ? "압류 이력 존재"
+            : flag === "provisional_seizure_detected"
+            ? "가압류 이력 존재"
+            : flag === "leasehold_or_tenant_right_detected"
+            ? "임차권/전세권 설정"
+            : flag === "trust_detected"
+            ? "신탁 설정 확인"
+            : flag;
+
+        return (
+          <span
+            key={flag}
+            className="rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-800"
+          >
+            {label}
+          </span>
+        );
+      })
+    ) : (
+      <span className="text-sm text-slate-500">
+        탐지된 리스크 없음
+      </span>
+    )}
+  </div>
+        
+</section>
 </section>
 
       {review.manualReviewRequired && (
