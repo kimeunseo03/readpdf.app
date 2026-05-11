@@ -59,7 +59,8 @@ export interface ValuationInput {
 
 export interface TransactionItem {
   /**
-   * 실거래가. 원 단위.
+   * 실거래가. 공공데이터 API 원본 기준 만원 단위.
+   * 화면 표시 및 가치평가 계산 시 원 단위로 변환한다.
    */
   dealAmount: number;
 
