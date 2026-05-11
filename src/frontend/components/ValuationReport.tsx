@@ -386,7 +386,7 @@ export function ValuationReport({ input, result }: ValuationReportProps) {
                   </td>
 
                   <td className="whitespace-pre-line px-4 py-3 font-medium tabular-nums text-slate-700">
-                    {formatKoreanPrice(tx.dealAmount)}
+                    {formatKoreanPrice(tx.dealAmount * 10000)}
                   </td>
 
                   <td className="px-4 py-3 text-slate-700">{tx.area}㎡</td>
