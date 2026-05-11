@@ -132,16 +132,6 @@ export function ValuationReport({ input, result }: ValuationReportProps) {
 
   return (
     <section className="print-report mt-6 rounded-3xl border border-slate-200 bg-white p-8 shadow-sm print:border-0 print:shadow-none">
-      <div className="mb-8 border-b border-slate-200 pb-5">
-        <h2 className="text-xl font-bold text-slate-900">
-          아파트 가치평가 내부 검토 리포트
-        </h2>
-
-        <p className="mt-2 text-xs text-slate-400">
-          생성 시각: {generatedAt}
-        </p>
-      </div>
-
       <div className="grid gap-x-8 gap-y-5 text-sm md:grid-cols-3">
         <div>
           <p className="text-slate-500">주소</p>
