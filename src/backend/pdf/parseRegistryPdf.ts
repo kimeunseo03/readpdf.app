@@ -193,40 +193,32 @@ function extractMortgages(text: string): MortgageEntry[] {
   const results: MortgageEntry[] = [];
   const seen = new Set<string>();
 
-  const amountRegex =
-    /채권최고액\s*(?:금)?\s*([0-9][0-9,]{4,})\s*원/g;
+  /*
+    등기부 텍스트는 줄바꿈이 깨질 수 있으므로,
+    "근저당권설정" 단위로 블록을 먼저 나누고
+    각 블록 안에서 채권최고액/근저당권자/순위를 추출한다.
+  */
+  const blockRegex =
+    /(?:^|\s)(\d{1,3})\s+근저당권설정\s+([\s\S]*?)(?=\s+\d{1,3}\s+(?:근저당권설정|소유권|압류|가압류|전세권|임차권|신탁|말소|변경)|$)/g;
 
-  const matches = Array.from(text.matchAll(amountRegex));
+  const blocks = Array.from(text.matchAll(blockRegex));
 
-  matches.forEach((match) => {
-    const amountText = match[1];
-    const amount = parseWonAmount(amountText);
+  blocks.forEach((blockMatch) => {
+    const rank = Number(blockMatch[1]);
+    const block = blockMatch[2] ?? "";
 
+    const amountMatch = block.match(
+      /채권최고액\s*(?:금)?\s*([0-9][0-9,]{4,})\s*원/
+    );
+
+    if (!amountMatch?.[1]) return;
+
+    const amount = parseWonAmount(amountMatch[1]);
     if (!amount) return;
 
-    const amountIndex = match.index ?? 0;
-    const before = text.slice(Math.max(0, amountIndex - 260), amountIndex);
-    const after = text.slice(amountIndex, amountIndex + 420);
-    const context = `${before} ${after}`;
-
-    if (!/근저당권/.test(context)) return;
-
-    const rankMatch =
-      before.match(/(?:^|\s)(\d{1,3})\s+근저당권설정/) ||
-      before.match(/순위번호\s*(\d{1,3})/) ||
-      before.match(/(?:^|\s)(\d{1,3})\s+.*?채권최고액/);
-
-    const rank = rankMatch?.[1]
-      ? Number(rankMatch[1])
-      : results.length + 1;
-
-    const creditorMatch =
-      after.match(
-        /근저당권자\s+(.{2,100}?)(?=\s+(?:공동담보|채무자|채권최고액|등기목적|접수|말소|해지|목록|부기등기|$))/
-      ) ||
-      context.match(
-        /근저당권자\s+(.{2,100}?)(?=\s+(?:공동담보|채무자|채권최고액|등기목적|접수|말소|해지|목록|부기등기|$))/
-      );
+    const creditorMatch = block.match(
+      /근저당권자\s+(.{2,100}?)(?=\s+(?:공동담보|채무자|채권최고액|등기목적|접수|말소|해지|목록|부기등기|$))/
+    );
 
     const creditor = cleanMortgageCreditor(creditorMatch?.[1]);
 
@@ -237,8 +229,59 @@ function extractMortgages(text: string): MortgageEntry[] {
     results.push({ rank, creditor, amount });
   });
 
+  /*
+    fallback:
+    일부 PDF는 "순위 + 근저당권설정" 형태가 깨져 있을 수 있으므로,
+    채권최고액 기준 인접 문맥에서 한 번 더 추출한다.
+  */
+  if (results.length === 0) {
+    const amountRegex =
+      /채권최고액\s*(?:금)?\s*([0-9][0-9,]{4,})\s*원/g;
+
+    const matches = Array.from(text.matchAll(amountRegex));
+
+    matches.forEach((match) => {
+      const amountText = match[1];
+      const amount = parseWonAmount(amountText);
+
+      if (!amount) return;
+
+      const amountIndex = match.index ?? 0;
+      const before = text.slice(Math.max(0, amountIndex - 300), amountIndex);
+      const after = text.slice(amountIndex, amountIndex + 420);
+      const context = `${before} ${after}`;
+
+      if (!/근저당권/.test(context)) return;
+
+      const rankMatch =
+        before.match(/(?:^|\s)(\d{1,3})\s+근저당권설정/) ||
+        before.match(/(?:^|\s)(\d{1,3})\s+.*?근저당권설정/);
+
+      const rank = rankMatch?.[1]
+        ? Number(rankMatch[1])
+        : results.length + 1;
+
+      const creditorMatch =
+        after.match(
+          /근저당권자\s+(.{2,100}?)(?=\s+(?:공동담보|채무자|채권최고액|등기목적|접수|말소|해지|목록|부기등기|$))/
+        ) ||
+        context.match(
+          /근저당권자\s+(.{2,100}?)(?=\s+(?:공동담보|채무자|채권최고액|등기목적|접수|말소|해지|목록|부기등기|$))/
+        );
+
+      const creditor = cleanMortgageCreditor(creditorMatch?.[1]);
+
+      const key = `${rank}-${creditor}-${amount}`;
+      if (seen.has(key)) return;
+
+      seen.add(key);
+      results.push({ rank, creditor, amount });
+    });
+  }
+
   return results.sort((a, b) => a.rank - b.rank);
 }
+
 export function parseRegistryText(params: {
   fileId: string;
   originalFileName: string;
