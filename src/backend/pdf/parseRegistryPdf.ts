@@ -205,14 +205,6 @@ function isInvalidMortgageBlock(block: string): boolean {
   return /(말소|해지|변경|이전|일부이전|경정|부기등기|기입등기)/.test(block);
 }
 
-function extractCreditorFromMortgageBlock(block: string): string {
-  const creditorMatch = block.match(
-    /근저당권자\s+(.{2,80}?)(?=\s+(?:채무자|채권최고액|공동담보|목록|접수|등기원인|말소|해지|변경|이전|부기등기|기입등기|$))/
-  );
-
-  return cleanMortgageCreditor(creditorMatch?.[1]);
-}
-
 function extractMortgages(text: string): MortgageEntry[] {
   const results: MortgageEntry[] = [];
   const seen = new Set<string>();
