@@ -7,6 +7,7 @@ interface MortgageItem {
   rank: number;
   creditor: string;
   amount: number; // 원
+  targetOwner?: string;
 }
 
 interface ValuationFormProps {
@@ -370,26 +371,31 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
                     <tr>
                       <th className="px-4 py-3 font-semibold">순위</th>
                       <th className="px-4 py-3 font-semibold">근저당권자</th>
-                      <th className="px-4 py-3 text-right font-semibold">
-                        금액(원)
-                      </th>
+                      <th className="px-4 py-3 text-right font-semibold">금액(원)</th>
+                      <th className="px-4 py-3 font-semibold">대상소유자</th>
                     </tr>
                   </thead>
 
                   <tbody>
                     {result.mortgages?.map((mortgage) => (
                       <tr
-                        key={`${mortgage.rank}-${mortgage.creditor}-${mortgage.amount}`}
+                        key={`${mortgage.rank}-${mortgage.creditor}-${mortgage.amount}-${mortgage.targetOwner ?? ""}`}
                         className="border-t border-slate-100"
                       >
                         <td className="px-4 py-3 text-slate-700">
                           {mortgage.rank}
                         </td>
+                      
                         <td className="px-4 py-3 font-medium text-slate-900">
                           {mortgage.creditor || "-"}
                         </td>
+                      
                         <td className="px-4 py-3 text-right font-semibold tabular-nums text-slate-900">
                           {mortgage.amount.toLocaleString()}원
+                        </td>
+                      
+                        <td className="px-4 py-3 text-slate-700">
+                          {mortgage.targetOwner || "-"}
                         </td>
                       </tr>
                     ))}
