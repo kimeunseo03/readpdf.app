@@ -53,6 +53,8 @@ interface ValuationResult {
 
 export function ValuationForm({ initialValue }: ValuationFormProps) {
   const [managerName, setManagerName] = useState("");
+  const [tenantDepositAmount, setTenantDepositAmount] = useState("");
+  const [tenantMonthlyRent, setTenantMonthlyRent] = useState("");  
   const [addressRaw, setAddressRaw] = useState(initialValue.addressRaw ?? "");
   const [buildingName, setBuildingName] = useState(initialValue.buildingName ?? "");
   const [exclusiveAreaM2, setExclusiveAreaM2] = useState(
@@ -89,6 +91,12 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
           addressRaw,
           buildingName,
           exclusiveAreaM2: Number(exclusiveAreaM2),
+          tenantDepositAmount: tenantDepositAmount
+            ? Number(tenantDepositAmount)
+            : undefined,
+          tenantMonthlyRent: tenantMonthlyRent
+            ? Number(tenantMonthlyRent)
+            : undefined,
           rightsRisk: initialValue.rightsRisk
         })
       });
@@ -169,6 +177,34 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
           <span className="mb-1 block text-sm font-medium text-slate-700">
             담당자명
           </span>
+
+          <label className="block">
+            <span className="mb-1 block text-sm font-medium text-slate-700">
+              임차보증금(만원)
+            </span>
+          
+            <input
+              type="number"
+              value={tenantDepositAmount}
+              onChange={(e) => setTenantDepositAmount(e.target.value)}
+              className="w-full rounded-xl border border-slate-200 bg-white p-3 text-sm shadow-sm transition focus:border-blue-500 focus:outline-none focus:ring-4 focus:ring-blue-100"
+              placeholder="예: 30000"
+            />
+          </label>
+          
+          <label className="block">
+            <span className="mb-1 block text-sm font-medium text-slate-700">
+              월세(만원)
+            </span>
+          
+            <input
+              type="number"
+              value={tenantMonthlyRent}
+              onChange={(e) => setTenantMonthlyRent(e.target.value)}
+              className="w-full rounded-xl border border-slate-200 bg-white p-3 text-sm shadow-sm transition focus:border-blue-500 focus:outline-none focus:ring-4 focus:ring-blue-100"
+              placeholder="예: 120"
+            />
+          </label>
 
           <input
             value={managerName}
