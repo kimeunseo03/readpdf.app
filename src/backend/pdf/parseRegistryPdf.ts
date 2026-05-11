@@ -177,25 +177,13 @@ function formatWon(value: number): string {
   return `${value.toLocaleString()}원`;
 }
 
-function cleanMortgageCreditor(value?: string): string {
-  if (!value) return "확인 필요";
-
-  return value
-    .replace(/\s+/g, " ")
-    .replace(
-      /\s+(공동담보|채무자|채권최고액|등기목적|접수|말소|해지|목록|부기등기).*$/g,
-      ""
-    )
-    .trim() || "확인 필요";
-}
-
 function cleanSummaryCreditor(value?: string): string {
   if (!value) return "확인 필요";
 
   return value
     .replace(/\s+/g, " ")
     .replace(
-      /\s+(?:\d{1,3}\s+근저당권설정|채권최고액|대상소유자|제\d+호|말소|해지|변경|이전|$).*$/g,
+      /\s+(?:\d{1,3}\s+근저당권설정|채권최고액|대상소유자|제\d+호|공동담보|채무자|말소|해지|변경|이전|$).*$/g,
       ""
     )
     .trim() || "확인 필요";
@@ -384,18 +372,12 @@ export function parseRegistryText(params: {
     0
   );
 
-  const fallbackMortgageAmountMatch = compactText.match(
-    /채권최고액\s*(?:금)?\s*([0-9][0-9,]{4,})\s*원?/
-  );
-
-  const mortgageAmountText = totalMortgageAmount
+    const mortgageAmountText = totalMortgageAmount
     ? formatWon(totalMortgageAmount)
-    : fallbackMortgageAmountMatch?.[1]
-      ? formatWon(parseWonAmount(fallbackMortgageAmountMatch[1]))
-      : undefined;
+    : undefined;
 
   const rightsRisk = {
-    hasMortgage: /근저당권/.test(compactText),
+    hasMortgage: mortgages.length > 0,
     hasSeizure: /(^|[^가])압류/.test(compactText),
     hasProvisionalSeizure: /가압류/.test(compactText),
     hasLeaseholdRight: /전세권|임차권/.test(compactText),
