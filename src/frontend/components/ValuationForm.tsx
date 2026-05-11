@@ -158,10 +158,6 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
     }
   }
 
-    function printReport() {
-    window.print();
-  }
-  
   return (
     <>
       <section className="card-surface p-6">
