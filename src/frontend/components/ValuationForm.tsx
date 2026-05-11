@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { ValuationReport } from "./ValuationReport";
 import { formatKoreanPrice } from "../../backend/valuation/formatKoreanPrice";
 
 interface MortgageItem {
@@ -101,19 +100,6 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<ValuationResult | null>(null);
   const [error, setError] = useState<string | null>(null);
-
-  function printReport() {
-    const originalTitle = document.title;
-    const safeAddress = addressRaw?.split(" ")[0] || "valuation";
-    const today = new Date().toISOString().slice(0, 10);
-
-    document.title = `${safeAddress}_가치평가리포트_${today}`;
-    window.print();
-
-    setTimeout(() => {
-      document.title = originalTitle;
-    }, 500);
-  }
 
   async function runValuation() {
     setLoading(true);
@@ -271,7 +257,6 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
     </section>
 
     {result && (
-      <>
         <section className="no-print mt-6">
           <div className="rounded-3xl border border-slate-200 bg-white p-6 text-sm shadow-sm">
             <div className="mb-5 flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-4">
@@ -630,18 +615,6 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
             )}
           </div>
         </section>
-
-         <ValuationReport
-          input={{
-            addressRaw,
-            buildingName,
-            exclusiveAreaM2,
-            managerName,
-            rightsRisk: initialValue.rightsRisk
-          }}
-          result={result}
-        />
-      </>
     )}
   </>
   );
