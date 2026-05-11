@@ -4,7 +4,6 @@ import { extractRegion } from "./extractRegion";
 import { findLegalDongCode } from "./legalDongCode";
 
 import type {
-  TransactionItem,
   ValuationInput,
   ValuationResult
 } from "./types";
@@ -17,19 +16,12 @@ function average(numbers: number[]) {
   );
 }
 
-function weightedAverage(
-  values: number[],
-  weights: number[]
-) {
-  if (!values.length || values.length !== weights.length) {
-    return 0;
-  }
+function weightedAverage(values: number[], weights: number[]) {
+  if (!values.length || values.length !== weights.length) return 0;
 
   const totalWeight = weights.reduce((sum, w) => sum + w, 0);
 
-  if (!totalWeight) {
-    return average(values);
-  }
+  if (!totalWeight) return average(values);
 
   const weightedSum = values.reduce((sum, value, index) => {
     return sum + value * weights[index];
@@ -53,14 +45,11 @@ function removeOutliersByIqr(values: number[]) {
   return sorted.filter((value) => value >= lowerBound && value <= upperBound);
 }
 
-function parseKoreanMoneyTextToManwon(value?: string) {
+function parseKoreanMoneyTextToWon(value?: string) {
   if (!value) return 0;
 
   const numeric = Number(value.replace(/[^0-9]/g, ""));
-
-  if (!numeric) return 0;
-
-  return Math.round(numeric / 10000);
+  return numeric || 0;
 }
 
 function estimatePriorityRepaymentAmount(params: {
@@ -71,7 +60,21 @@ function estimatePriorityRepaymentAmount(params: {
 
   if (!deposit) return 0;
 
-  return Math.min(deposit, 5500);
+  return Math.min(deposit, 55_000_000);
+}
+
+function getSeniorMortgageAmount(input: ValuationInput) {
+  const mortgages = input.rightsRisk?.mortgages ?? [];
+
+  if (mortgages.length > 0) {
+    return mortgages.reduce((sum, mortgage) => sum + mortgage.amount, 0);
+  }
+
+  return parseKoreanMoneyTextToWon(input.rightsRisk?.mortgageAmountText);
+}
+
+function formatWon(value: number) {
+  return `${value.toLocaleString()}원`;
 }
 
 export async function estimateApartmentValue(
@@ -136,12 +139,12 @@ export async function estimateApartmentValue(
     excludedReasons.push(
       `${tx.dealYear}.${String(tx.dealMonth).padStart(2, "0")}.${String(
         tx.dealDay
-      ).padStart(2, "0")} 거래 (${tx.dealAmount.toLocaleString()}만원) 이상치 제외`
+      ).padStart(2, "0")} 거래 (${formatWon(tx.dealAmount)}) 이상치 제외`
     );
   });
 
-  const filteredTransactions = transactions.filter(
-    (tx) => filteredPriceSet.includes(tx.dealAmount)
+  const filteredTransactions = transactions.filter((tx) =>
+    filteredPriceSet.includes(tx.dealAmount)
   );
 
   if (excludedTransactions.length > 0) {
@@ -149,16 +152,11 @@ export async function estimateApartmentValue(
       `${excludedTransactions.length}건의 이상 거래가가 IQR 기준으로 자동 제외되었습니다.`
     );
 
-    excludedReasons.forEach((reason) => {
-      warnings.push(reason);
-    });
+    excludedReasons.forEach((reason) => warnings.push(reason));
   }
 
   const filteredPrices = filteredTransactions.map((t) => t.dealAmount);
-
-  const weights = filteredTransactions.map(
-    (t) => t.similarityScore ?? 50
-  );
+  const weights = filteredTransactions.map((t) => t.similarityScore ?? 50);
 
   const weightedAveragePrice = filteredPrices.length
     ? weightedAverage(filteredPrices, weights)
@@ -172,9 +170,8 @@ export async function estimateApartmentValue(
     ? Math.max(...filteredPrices)
     : undefined;
 
-  const seniorMortgageAmount = parseKoreanMoneyTextToManwon(
-    input.rightsRisk?.mortgageAmountText
-  );
+  const mortgages = input.rightsRisk?.mortgages ?? [];
+  const seniorMortgageAmount = getSeniorMortgageAmount(input);
 
   const tenantDepositAmount = input.tenantDepositAmount ?? 0;
   const tenantMonthlyRent = input.tenantMonthlyRent ?? 0;
@@ -184,9 +181,8 @@ export async function estimateApartmentValue(
     tenantMonthlyRent
   });
 
-    const seniorDebtAmount =
-      seniorMortgageAmount + tenantDepositAmount;
-  
+  const seniorDebtAmount = seniorMortgageAmount + tenantDepositAmount;
+
   const riskAdjustedPrice =
     weightedAveragePrice !== undefined
       ? Math.max(weightedAveragePrice - seniorDebtAmount, 0)
@@ -194,22 +190,28 @@ export async function estimateApartmentValue(
 
   if (seniorMortgageAmount > 0) {
     warnings.push(
-      `선순위 근저당 채권최고액 ${seniorMortgageAmount.toLocaleString()}만원이 권리반영 기준가에 반영되었습니다.`
+      `선순위 근저당 채권최고액 합계 ${formatWon(
+        seniorMortgageAmount
+      )}이 권리반영 기준가에 반영되었습니다.`
     );
   }
 
   if (tenantDepositAmount > 0) {
     warnings.push(
-      `임차보증금 ${tenantDepositAmount.toLocaleString()}만원이 권리반영 기준가에 반영되었습니다.`
+      `임차보증금 ${formatWon(
+        tenantDepositAmount
+      )}이 권리반영 기준가에 반영되었습니다.`
     );
   }
 
-    if (priorityRepaymentAmount > 0) {
-      warnings.push(
-        `최우선변제금 추정액 ${priorityRepaymentAmount.toLocaleString()}만원은 임차보증금 중 우선변제 가능성이 있는 참고 금액입니다. 권리 차감액에는 임차보증금 전체가 반영되며, 최우선변제금은 중복 차감하지 않습니다.`
-      );
-    }
-  
+  if (priorityRepaymentAmount > 0) {
+    warnings.push(
+      `최우선변제금 추정액 ${formatWon(
+        priorityRepaymentAmount
+      )}은 임차보증금 중 우선변제 가능성이 있는 참고 금액입니다. 권리 차감액에는 임차보증금 전체가 반영되며, 최우선변제금은 중복 차감하지 않습니다.`
+    );
+  }
+
   const averageSimilarity = weights.length > 0 ? average(weights) : 0;
 
   const sameApartmentCount = filteredTransactions.filter(
@@ -230,7 +232,8 @@ export async function estimateApartmentValue(
   confidenceScore += Math.min(filteredTransactions.length, 5) * 12;
   confidenceScore += averageSimilarity * 0.35;
   confidenceScore += sameApartmentCount > 0 ? 15 : 0;
-  confidenceScore += recentTransactionCount >= 3 ? 10 : recentTransactionCount * 3;
+  confidenceScore +=
+    recentTransactionCount >= 3 ? 10 : recentTransactionCount * 3;
 
   if (excludedRatio >= 0.4) {
     confidenceScore -= 15;
@@ -276,10 +279,7 @@ export async function estimateApartmentValue(
     overallConfidence = "B";
   }
 
-  if (
-    input.rightsRisk?.riskLevel === "DANGER" &&
-    overallConfidence === "A"
-  ) {
+  if (input.rightsRisk?.riskLevel === "DANGER" && overallConfidence === "A") {
     overallConfidence = "B";
   }
 
@@ -331,27 +331,18 @@ export async function estimateApartmentValue(
     conservativePrice,
     upperReferencePrice,
     riskAdjustedPrice,
+
     seniorDebtAmount,
     seniorMortgageAmount,
+    mortgages,
+
     tenantDepositAmount,
     tenantMonthlyRent,
     priorityRepaymentAmount,
 
     recentTransactions: transactions,
 
-    valuationBasis: [
-      "국토교통부 아파트 매매 실거래가 자료 사용",
-      "동일 법정동 기준 조회",
-      "전용면적 ±3㎡ 비교군을 우선 적용",
-      "거래 부족 시 전용면적 허용 범위를 ±5㎡까지 자동 확장",
-      "최근 12개월 거래를 사용하며 최근 거래는 정렬 우선순위에만 반영",
-      "동일 단지 거래는 높은 유사도 점수로 반영",
-      "층수와 준공연도를 유사도 점수에 반영",
-      "IQR 방식으로 극단 거래가 제거된 보정 평균가 사용",
-      "보수 기준가는 비교군 하위 거래가, 상단 참고가는 비교군 상위 거래가 기준으로 산정",
-      "권리반영 기준가는 보정 평균가에서 선순위 근저당 채권최고액과 임차보증금을 차감하여 산정",
-      "최우선변제금 추정액은 임차보증금 중 우선변제 가능성이 있는 참고 금액으로 표시하며 중복 차감하지 않음",
-    ],
+    valuationBasis: [],
 
     overallConfidence,
     finalComment,
