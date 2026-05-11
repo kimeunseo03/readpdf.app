@@ -160,6 +160,85 @@ function extractLandRightRatio(text: string): string | undefined {
   return undefined;
 }
 
+type MortgageEntry = {
+  rank: number;
+  creditor: string;
+  amount: number; // 원 단위
+};
+
+function parseWonAmount(value?: string): number {
+  if (!value) return 0;
+
+  const numeric = Number(value.replace(/[^0-9]/g, ""));
+  return Number.isFinite(numeric) ? numeric : 0;
+}
+
+function formatWon(value: number): string {
+  return `${value.toLocaleString()}원`;
+}
+
+function cleanMortgageCreditor(value?: string): string {
+  if (!value) return "확인 필요";
+
+  return value
+    .replace(/\s+/g, " ")
+    .replace(
+      /\s+(공동담보|채무자|채권최고액|등기목적|접수|말소|해지|목록|부기등기).*$/g,
+      ""
+    )
+    .trim() || "확인 필요";
+}
+
+function extractMortgages(text: string): MortgageEntry[] {
+  const results: MortgageEntry[] = [];
+  const seen = new Set<string>();
+
+  const amountRegex =
+    /채권최고액\s*(?:금)?\s*([0-9][0-9,]{4,})\s*원/g;
+
+  const matches = Array.from(text.matchAll(amountRegex));
+
+  matches.forEach((match) => {
+    const amountText = match[1];
+    const amount = parseWonAmount(amountText);
+
+    if (!amount) return;
+
+    const amountIndex = match.index ?? 0;
+    const before = text.slice(Math.max(0, amountIndex - 260), amountIndex);
+    const after = text.slice(amountIndex, amountIndex + 420);
+    const context = `${before} ${after}`;
+
+    if (!/근저당권/.test(context)) return;
+
+    const rankMatch =
+      before.match(/(?:^|\s)(\d{1,3})\s+근저당권설정/) ||
+      before.match(/순위번호\s*(\d{1,3})/) ||
+      before.match(/(?:^|\s)(\d{1,3})\s+.*?채권최고액/);
+
+    const rank = rankMatch?.[1]
+      ? Number(rankMatch[1])
+      : results.length + 1;
+
+    const creditorMatch =
+      after.match(
+        /근저당권자\s+(.{2,100}?)(?=\s+(?:공동담보|채무자|채권최고액|등기목적|접수|말소|해지|목록|부기등기|$))/
+      ) ||
+      context.match(
+        /근저당권자\s+(.{2,100}?)(?=\s+(?:공동담보|채무자|채권최고액|등기목적|접수|말소|해지|목록|부기등기|$))/
+      );
+
+    const creditor = cleanMortgageCreditor(creditorMatch?.[1]);
+
+    const key = `${rank}-${creditor}-${amount}`;
+    if (seen.has(key)) return;
+
+    seen.add(key);
+    results.push({ rank, creditor, amount });
+  });
+
+  return results.sort((a, b) => a.rank - b.rank);
+}
 export function parseRegistryText(params: {
   fileId: string;
   originalFileName: string;
@@ -206,9 +285,21 @@ export function parseRegistryText(params: {
   const landRightRatio = extractLandRightRatio(compactText);
   addEvidence(evidence, "property.landRightRatio", findSnippet(compactText, /소유권대지권.{0,180}/), landRightRatio ? 0.82 : 0.2);
 
-    const mortgageAmountMatch = compactText.match(
-    /채권최고액\s*(?:금)?\s*([0-9,]+)\s*원?/
+  const mortgages = extractMortgages(compactText);
+  const totalMortgageAmount = mortgages.reduce(
+    (sum, mortgage) => sum + mortgage.amount,
+    0
   );
+
+  const fallbackMortgageAmountMatch = compactText.match(
+    /채권최고액\s*(?:금)?\s*([0-9][0-9,]{4,})\s*원?/
+  );
+
+  const mortgageAmountText = totalMortgageAmount
+    ? formatWon(totalMortgageAmount)
+    : fallbackMortgageAmountMatch?.[1]
+      ? formatWon(parseWonAmount(fallbackMortgageAmountMatch[1]))
+      : undefined;
 
   const rightsRisk = {
     hasMortgage: /근저당권/.test(compactText),
@@ -221,9 +312,8 @@ export function parseRegistryText(params: {
     riskLevel: "SAFE" as "SAFE" | "CAUTION" | "DANGER",
     riskScore: 0,
     summary: "",
-    mortgageAmountText: mortgageAmountMatch?.[1]
-      ? `${mortgageAmountMatch[1]}원`
-      : undefined,
+    mortgageAmountText,
+    mortgages,
     hasCancellationKeyword: /말소|해지|말소등기/.test(compactText),
     riskDetails: [] as {
       type: string;
@@ -241,9 +331,11 @@ export function parseRegistryText(params: {
       type: "mortgage",
       label: "근저당",
       severity: "MEDIUM",
-      description: rightsRisk.mortgageAmountText
-        ? `근저당권 및 채권최고액 ${rightsRisk.mortgageAmountText}이 확인되었습니다.`
-        : "근저당권 설정 문구가 확인되었습니다."
+      description: rightsRisk.mortgages.length
+        ? `근저당권 ${rightsRisk.mortgages.length}건, 채권최고액 합계 ${rightsRisk.mortgageAmountText}이 확인되었습니다.`
+        : rightsRisk.mortgageAmountText
+          ? `근저당권 및 채권최고액 ${rightsRisk.mortgageAmountText}이 확인되었습니다.`
+          : "근저당권 설정 문구가 확인되었습니다."
     });
   }
 
