@@ -205,21 +205,72 @@ function isInvalidMortgageBlock(block: string): boolean {
   return /(말소|해지|변경|이전|일부이전|경정|부기등기|기입등기)/.test(block);
 }
 
-function extractMortgages(text: string): MortgageEntry[] {
+function extractCreditorFromMortgageBlock(block: string): string {
+  const creditorMatch = block.match(
+    /근저당권자\s+(.{2,60}?)(?=\s+(?:[0-9]{6}-|서울|부산|대구|인천|광주|대전|울산|세종|경기|강원|충청|전라|전북|전남|경상|경북|경남|제주|채무자|채권최고액|공동담보|목록|접수|등기원인|$))/
+  );
+
+  return cleanMortgageCreditor(creditorMatch?.[1]);
+}
+
+function extractActiveMortgagesFromSummary(text: string): MortgageEntry[] {
+  const summaryStart = text.indexOf("주요 등기사항 요약");
+  if (summaryStart < 0) return [];
+
+  const summaryText = text.slice(summaryStart);
+  const sectionMatch = summaryText.match(
+    /3\.\s*\(근\)저당권 및 전세권 등\s*\(\s*을구\s*\)([\s\S]*?)(?:\[ 참 고 사 항 \]|출력일시|$)/
+  );
+
+  const section = sectionMatch?.[1] ?? summaryText;
   const results: MortgageEntry[] = [];
   const seen = new Set<string>();
 
+  const rowRegex =
+    /(?:^|\s)(\d{1,3})\s+근저당권설정\s+\d{4}년\d{1,2}월\d{1,2}일\s+채권최고액\s*(?:금)?\s*([0-9][0-9,]{4,})\s*원[\s\S]{0,120}?근저당권자\s+([가-힣A-Za-z0-9()[\]주식회사\s]+?)(?=\s+\d{1,3}\s+근저당권설정|\s*\[|$)/g;
+
+  Array.from(section.matchAll(rowRegex)).forEach((match) => {
+    const rank = Number(match[1]);
+    const amount = parseWonAmount(match[2]);
+    const creditor = cleanMortgageCreditor(match[3]);
+
+    if (!rank || !amount) return;
+
+    const key = `${rank}-${creditor}-${amount}`;
+    if (seen.has(key)) return;
+
+    seen.add(key);
+    results.push({ rank, creditor, amount });
+  });
+
+  return results.sort((a, b) => a.rank - b.rank);
+}
+
+function extractMortgagesFromBody(text: string): MortgageEntry[] {
+  const results: MortgageEntry[] = [];
+  const seen = new Set<string>();
+
+  const eulguStart = text.indexOf("【 을 구 】");
+  const source = eulguStart >= 0 ? text.slice(eulguStart) : text;
+
   const blockRegex =
-    /(?:^|\s)(\d{1,3})\s+근저당권설정\s+([\s\S]*?)(?=\s+\d{1,3}\s+(?:근저당권설정|소유권|압류|가압류|전세권|임차권|신탁|말소|변경|이전|경정|부기등기|기입등기)|$)/g;
+    /(?:^|\s)(\d{1,3})\s+근저당권설정\s+([\s\S]*?)(?=\s+\d{1,3}\s+(?:근저당권설정|[0-9]+번근저당권설정등|소유권|압류|가압류|전세권|임차권|신탁|말소|변경|이전|경정|부기등기|기입등기)|\s+-- 이 하 여 백 --|$)/g;
 
-  const blocks = Array.from(text.matchAll(blockRegex));
-
-  blocks.forEach((blockMatch) => {
+  Array.from(source.matchAll(blockRegex)).forEach((blockMatch) => {
     const rank = Number(blockMatch[1]);
     const block = blockMatch[2] ?? "";
 
     if (!rank) return;
-    if (isInvalidMortgageBlock(block)) return;
+
+    /*
+      같은 을구 안에 "1번근저당권설정등기말소", "2번근저당권설정등기말소"가 있으면
+      해당 순위의 근저당은 현재 유효하지 않은 것으로 제외한다.
+    */
+    const cancellationRegex = new RegExp(
+      `${rank}\\s*번\\s*근저당권설정등?\\s*기?말소|${rank}\\s*번근저당권설정등\\s*기말소`
+    );
+
+    if (cancellationRegex.test(source)) return;
 
     const amountMatch = block.match(
       /채권최고액\s*(?:금)?\s*([0-9][0-9,]{4,})\s*원/
@@ -240,6 +291,25 @@ function extractMortgages(text: string): MortgageEntry[] {
   });
 
   return results.sort((a, b) => a.rank - b.rank);
+}
+
+function extractMortgages(text: string): MortgageEntry[] {
+  /*
+    1순위: 주요 등기사항 요약
+    - 이 섹션은 "말소되지 않은 사항" 기준 요약이므로 살아있는 권리 추출에 가장 적합.
+  */
+  const summaryMortgages = extractActiveMortgagesFromSummary(text);
+
+  if (summaryMortgages.length > 0) {
+    return summaryMortgages;
+  }
+
+  /*
+    2순위: 을구 본문
+    - 요약 페이지가 없을 때만 fallback.
+    - 같은 순위의 말소 등기가 있으면 제외.
+  */
+  return extractMortgagesFromBody(text);
 }
 
 export function parseRegistryText(params: {
