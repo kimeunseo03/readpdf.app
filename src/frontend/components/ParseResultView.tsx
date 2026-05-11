@@ -1,24 +1,6 @@
 import type { ParseApiResponse } from "@frontend/lib/api";
 import { ValuationForm } from "./ValuationForm";
 
-function ConfidenceBadge({ value }: { value: number }) {
-  const label = value >= 0.9 ? "높음" : value >= 0.75 ? "보통" : "검토 필요";
-
-  return (
-    <span
-      className={
-        value >= 0.9
-          ? "rounded-full bg-green-100 px-3 py-1 text-xs font-semibold text-green-700"
-          : value >= 0.75
-          ? "rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold text-blue-700"
-          : "rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-700"
-      }
-    >
-      {label} · {(value * 100).toFixed(0)}%
-    </span>
-  );
-}
-
 function FieldRow({
   label,
   value
@@ -45,26 +27,23 @@ function formatWon(value?: number) {
 
 export function ParseResultView({ response }: { response: ParseApiResponse }) {
   const { parseResult } = response;
-  const { property, rightsRisk, confidence, review, meta } = parseResult;
+  const { property, rightsRisk, review } = parseResult;
 
   return (
     <div className="space-y-6">
-     <section className="card-surface p-6">
-  <div>
-    <h2 className="text-lg font-semibold text-slate-900">
-      판독 요약
-    </h2>
+      <section className="card-surface p-6">
+        <div>
+          <h2 className="text-lg font-semibold text-slate-900">판독 요약</h2>
+          <p className="mt-1 text-sm text-slate-500">
+            등기부에서 추출한 주소 정보입니다.
+          </p>
+        </div>
 
-    <p className="mt-1 text-sm text-slate-500">
-      등기부에서 추출한 주소 정보입니다.
-    </p>
-  </div>
+        <dl className="mt-5">
+          <FieldRow label="주소" value={property.addressRaw} />
+        </dl>
+      </section>
 
-  <dl className="mt-5">
-    <FieldRow label="주소" value={property.addressRaw} />
-  </dl>
-</section>
-      
       <section className="rounded-3xl border bg-white p-6 shadow-sm">
         <h3 className="font-semibold text-slate-900">물건 정보</h3>
         <p className="mt-1 text-sm text-slate-500">
@@ -103,10 +82,7 @@ export function ParseResultView({ response }: { response: ParseApiResponse }) {
       <section className="card-surface p-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h3 className="font-semibold text-slate-900">
-              권리관계 리스크
-            </h3>
-
+            <h3 className="font-semibold text-slate-900">권리관계 리스크</h3>
             <p className="mt-1 text-sm text-slate-500">
               등기부상 권리 제한 가능성이 있는 키워드를 자동 탐지합니다.
             </p>
@@ -160,18 +136,14 @@ export function ParseResultView({ response }: { response: ParseApiResponse }) {
               );
             })
           ) : (
-            <span className="text-sm text-slate-500">
-              탐지된 리스크 없음
-            </span>
+            <span className="text-sm text-slate-500">탐지된 리스크 없음</span>
           )}
         </div>
 
         {(rightsRisk.mortgages?.length ?? 0) > 0 && (
           <div className="mt-5 overflow-hidden rounded-2xl border border-slate-200 bg-white">
             <div className="border-b border-slate-100 bg-slate-50 px-4 py-3">
-              <p className="text-sm font-bold text-slate-900">
-                근저당권 현황
-              </p>
+              <p className="text-sm font-bold text-slate-900">근저당권 현황</p>
             </div>
 
             <table className="w-full text-left text-sm">
@@ -206,10 +178,7 @@ export function ParseResultView({ response }: { response: ParseApiResponse }) {
                 ))}
 
                 <tr className="border-t border-slate-200 bg-slate-50">
-                  <td
-                    colSpan={2}
-                    className="px-4 py-3 font-bold text-slate-900"
-                  >
+                  <td colSpan={2} className="px-4 py-3 font-bold text-slate-900">
                     합계
                   </td>
 
@@ -227,3 +196,34 @@ export function ParseResultView({ response }: { response: ParseApiResponse }) {
           </div>
         )}
       </section>
+
+      {review.manualReviewRequired && (
+        <section className="rounded-2xl border border-amber-200 bg-amber-50/70 p-6">
+          <div className="flex items-start gap-3">
+            <div className="mt-1 h-2.5 w-2.5 rounded-full bg-amber-500" />
+
+            <div>
+              <h3 className="font-semibold text-amber-900">수동 검토 필요</h3>
+
+              <p className="mt-1 text-sm text-amber-800">
+                자동 판독 결과 중 일부 항목은 담당자 확인이 필요합니다.
+              </p>
+
+              <ul className="mt-4 list-disc space-y-1 pl-5 text-sm text-amber-900">
+                {review.reasons.map((reason) => (
+                  <li key={reason}>{reason}</li>
+                ))}
+              </ul>
+
+              {review.missingRequiredFields.length > 0 && (
+                <p className="mt-3 text-sm font-medium text-amber-900">
+                  누락 필드: {review.missingRequiredFields.join(", ")}
+                </p>
+              )}
+            </div>
+          </div>
+        </section>
+      )}
+    </div>
+  );
+}
