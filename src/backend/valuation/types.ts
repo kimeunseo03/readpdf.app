@@ -2,8 +2,12 @@ export interface ValuationInput {
   addressRaw?: string;
   buildingName?: string;
   exclusiveAreaM2?: number;
+  tenantDepositAmount?: number;
+  tenantMonthlyRent?: number;
   rightsRisk?: {
     riskLevel?: "SAFE" | "CAUTION" | "DANGER";
+    mortgageAmountText?: string;
+    riskScore?: number;  
   };
 }
 
@@ -48,6 +52,9 @@ export interface ValuationResult {
   averagePrice?: number;
   conservativePrice?: number;
   upperReferencePrice?: number;
+  riskAdjustedPrice?: number;
+  seniorDebtAmount?: number;
+  tenantDepositAmount?: number;
 
   recentTransactions: TransactionItem[];
 
