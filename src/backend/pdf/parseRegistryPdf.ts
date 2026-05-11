@@ -189,23 +189,38 @@ function cleanMortgageCreditor(value?: string): string {
     .trim() || "확인 필요";
 }
 
+function isCancelledMortgageBlock(block: string): boolean {
+  return /(말소|해지|변경|이전|일부이전|경정|부기등기|기입등기)/.test(block);
+}
+
+function extractCreditorFromMortgageBlock(block: string): string {
+  const creditorMatch = block.match(
+    /근저당권자\s+(.{2,80}?)(?=\s+(?:채무자|채권최고액|공동담보|목록|접수|등기원인|말소|해지|변경|이전|부기등기|기입등기|$))/
+  );
+
+  return cleanMortgageCreditor(creditorMatch?.[1]);
+}
+
 function extractMortgages(text: string): MortgageEntry[] {
   const results: MortgageEntry[] = [];
   const seen = new Set<string>();
 
   /*
-    등기부 텍스트는 줄바꿈이 깨질 수 있으므로,
-    "근저당권설정" 단위로 블록을 먼저 나누고
-    각 블록 안에서 채권최고액/근저당권자/순위를 추출한다.
+    유효 근저당권설정만 추출한다.
+    - 근저당권설정 블록 기준
+    - 채권최고액 필수
+    - 말소/해지/변경/이전/기입등기 블록 제외
   */
   const blockRegex =
-    /(?:^|\s)(\d{1,3})\s+근저당권설정\s+([\s\S]*?)(?=\s+\d{1,3}\s+(?:근저당권설정|소유권|압류|가압류|전세권|임차권|신탁|말소|변경)|$)/g;
+    /(?:^|\s)(\d{1,3})\s+근저당권설정\s+([\s\S]*?)(?=\s+\d{1,3}\s+(?:근저당권설정|소유권|압류|가압류|전세권|임차권|신탁|말소|변경|이전|경정|부기등기|기입등기)|$)/g;
 
   const blocks = Array.from(text.matchAll(blockRegex));
 
   blocks.forEach((blockMatch) => {
     const rank = Number(blockMatch[1]);
     const block = blockMatch[2] ?? "";
+
+    if (!rank || isCancelledMortgageBlock(block)) return;
 
     const amountMatch = block.match(
       /채권최고액\s*(?:금)?\s*([0-9][0-9,]{4,})\s*원/
@@ -216,23 +231,23 @@ function extractMortgages(text: string): MortgageEntry[] {
     const amount = parseWonAmount(amountMatch[1]);
     if (!amount) return;
 
-    const creditorMatch = block.match(
-      /근저당권자\s+(.{2,100}?)(?=\s+(?:공동담보|채무자|채권최고액|등기목적|접수|말소|해지|목록|부기등기|$))/
-    );
-
-    const creditor = cleanMortgageCreditor(creditorMatch?.[1]);
+    const creditor = extractCreditorFromMortgageBlock(block);
 
     const key = `${rank}-${creditor}-${amount}`;
     if (seen.has(key)) return;
 
     seen.add(key);
-    results.push({ rank, creditor, amount });
+    results.push({
+      rank,
+      creditor,
+      amount
+    });
   });
 
   /*
     fallback:
-    일부 PDF는 "순위 + 근저당권설정" 형태가 깨져 있을 수 있으므로,
-    채권최고액 기준 인접 문맥에서 한 번 더 추출한다.
+    일부 PDF는 블록 분리가 깨질 수 있어 채권최고액 기준으로 재탐색.
+    단, 이 경우에도 말소/변경/이전/기입등기 문맥은 제외한다.
   */
   if (results.length === 0) {
     const amountRegex =
@@ -241,41 +256,34 @@ function extractMortgages(text: string): MortgageEntry[] {
     const matches = Array.from(text.matchAll(amountRegex));
 
     matches.forEach((match) => {
-      const amountText = match[1];
-      const amount = parseWonAmount(amountText);
-
-      if (!amount) return;
-
       const amountIndex = match.index ?? 0;
-      const before = text.slice(Math.max(0, amountIndex - 300), amountIndex);
-      const after = text.slice(amountIndex, amountIndex + 420);
+      const before = text.slice(Math.max(0, amountIndex - 260), amountIndex);
+      const after = text.slice(amountIndex, amountIndex + 320);
       const context = `${before} ${after}`;
 
-      if (!/근저당권/.test(context)) return;
+      if (!/근저당권설정/.test(context)) return;
+      if (isCancelledMortgageBlock(context)) return;
 
-      const rankMatch =
-        before.match(/(?:^|\s)(\d{1,3})\s+근저당권설정/) ||
-        before.match(/(?:^|\s)(\d{1,3})\s+.*?근저당권설정/);
+      const amount = parseWonAmount(match[1]);
+      if (!amount) return;
+
+      const rankMatch = before.match(/(?:^|\s)(\d{1,3})\s+근저당권설정/);
 
       const rank = rankMatch?.[1]
         ? Number(rankMatch[1])
         : results.length + 1;
 
-      const creditorMatch =
-        after.match(
-          /근저당권자\s+(.{2,100}?)(?=\s+(?:공동담보|채무자|채권최고액|등기목적|접수|말소|해지|목록|부기등기|$))/
-        ) ||
-        context.match(
-          /근저당권자\s+(.{2,100}?)(?=\s+(?:공동담보|채무자|채권최고액|등기목적|접수|말소|해지|목록|부기등기|$))/
-        );
-
-      const creditor = cleanMortgageCreditor(creditorMatch?.[1]);
+      const creditor = extractCreditorFromMortgageBlock(context);
 
       const key = `${rank}-${creditor}-${amount}`;
       if (seen.has(key)) return;
 
       seen.add(key);
-      results.push({ rank, creditor, amount });
+      results.push({
+        rank,
+        creditor,
+        amount
+      });
     });
   }
 
