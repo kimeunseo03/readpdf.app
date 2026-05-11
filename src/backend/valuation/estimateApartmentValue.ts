@@ -351,6 +351,6 @@ export async function estimateApartmentValue(
 
     overallConfidence,
     finalComment,
-    warnings
+    warnings: [...new Set(warnings)]
   };
 }
