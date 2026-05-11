@@ -34,6 +34,16 @@ export type RegistryParseResult = {
     coOwnerCount?: number;
     riskFlags: string[];
     riskLevel?: "SAFE" | "CAUTION" | "DANGER";
+    riskScore?: number;
+    summary?: string;
+    mortgageAmountText?: string;
+    hasCancellationKeyword?: boolean;
+    riskDetails?: {
+      type: string;
+      label: string;
+      severity: "LOW" | "MEDIUM" | "HIGH";
+      description: string;
+    }[];
     summary?: string;
   };
   confidence: {
