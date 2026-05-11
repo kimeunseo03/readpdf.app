@@ -251,7 +251,10 @@ function extractMortgagesFromBody(text: string): MortgageEntry[] {
       해당 순위의 근저당은 현재 유효하지 않은 것으로 제외한다.
     */
     const cancellationRegex = new RegExp(
-      `${rank}\\s*번\\s*근저당권설정등?\\s*기?말소|${rank}\\s*번근저당권설정등\\s*기말소`
+      `${rank}\\s*번\\s*근저당권설정\\s*등?\\s*기?\\s*말소|` +
+        `${rank}\\s*번근저당권설정\\s*등?\\s*기?\\s*말소|` +
+        `${rank}\\s*번\\s*근저당권설정등\\s*기말소|` +
+        `${rank}\\s*번근저당권설정등\\s*기말소`
     );
 
     if (cancellationRegex.test(source)) return;
