@@ -206,7 +206,11 @@ export function parseRegistryText(params: {
   const landRightRatio = extractLandRightRatio(compactText);
   addEvidence(evidence, "property.landRightRatio", findSnippet(compactText, /소유권대지권.{0,180}/), landRightRatio ? 0.82 : 0.2);
 
-  const rightsRisk = {
+  const mortgageAmountMatch = compactText.match(
+  /채권최고액\s*(?:금)?\s*([0-9,]+)\s*원?/
+);
+
+const rightsRisk = {
   hasMortgage: /근저당권/.test(compactText),
   hasSeizure: /(^|[^가])압류/.test(compactText),
   hasProvisionalSeizure: /가압류/.test(compactText),
@@ -215,7 +219,18 @@ export function parseRegistryText(params: {
   coOwnerCount: undefined as number | undefined,
   riskFlags: [] as string[],
   riskLevel: "SAFE" as "SAFE" | "CAUTION" | "DANGER",
-  summary: ""
+  riskScore: 0,
+  summary: "",
+  mortgageAmountText: mortgageAmountMatch?.[1]
+    ? `${mortgageAmountMatch[1]}원`
+    : undefined,
+  hasCancellationKeyword: /말소|해지|말소등기/.test(compactText),
+  riskDetails: [] as {
+    type: string;
+    label: string;
+    severity: "LOW" | "MEDIUM" | "HIGH";
+    description: string;
+  }[]
 };
 
   if (rightsRisk.hasMortgage) rightsRisk.riskFlags.push("mortgage_detected");
@@ -223,6 +238,91 @@ export function parseRegistryText(params: {
   if (rightsRisk.hasProvisionalSeizure) rightsRisk.riskFlags.push("provisional_seizure_detected");
   if (rightsRisk.hasLeaseholdRight) rightsRisk.riskFlags.push("leasehold_or_tenant_right_detected");
   if (rightsRisk.hasTrust) rightsRisk.riskFlags.push("trust_detected");
+  if (rightsRisk.hasMortgage) {
+  rightsRisk.riskScore += 25;
+  rightsRisk.riskDetails.push({
+    type: "mortgage",
+    label: "근저당",
+    severity: "MEDIUM",
+    description: rightsRisk.mortgageAmountText
+      ? `근저당권 및 채권최고액 ${rightsRisk.mortgageAmountText}이 확인되었습니다.`
+      : "근저당권 설정 문구가 확인되었습니다."
+  });
+}
+
+  if (rightsRisk.hasLeaseholdRight) {
+    rightsRisk.riskScore += 20;
+    rightsRisk.riskDetails.push({
+      type: "leasehold",
+      label: "전세권/임차권",
+      severity: "MEDIUM",
+      description: "전세권 또는 임차권 관련 문구가 확인되었습니다."
+    });
+  }
+  
+  if (rightsRisk.hasSeizure) {
+    rightsRisk.riskScore += 45;
+    rightsRisk.riskDetails.push({
+      type: "seizure",
+      label: "압류",
+      severity: "HIGH",
+      description: "압류 관련 문구가 확인되어 고위험 권리관계 검토가 필요합니다."
+    });
+  }
+  
+  if (rightsRisk.hasProvisionalSeizure) {
+    rightsRisk.riskScore += 45;
+    rightsRisk.riskDetails.push({
+      type: "provisional_seizure",
+      label: "가압류",
+      severity: "HIGH",
+      description: "가압류 관련 문구가 확인되어 고위험 권리관계 검토가 필요합니다."
+    });
+  }
+  
+  if (rightsRisk.hasTrust) {
+    rightsRisk.riskScore += 40;
+    rightsRisk.riskDetails.push({
+      type: "trust",
+      label: "신탁",
+      severity: "HIGH",
+      description: "신탁 관련 문구가 확인되어 소유권 및 처분 제한 검토가 필요합니다."
+    });
+  }
+  
+  if (rightsRisk.hasCancellationKeyword) {
+    rightsRisk.riskScore = Math.max(0, rightsRisk.riskScore - 15);
+  
+    rightsRisk.riskDetails.push({
+      type: "cancellation_keyword",
+      label: "말소/해지 문구",
+      severity: "LOW",
+      description:
+        "말소 또는 해지 관련 문구가 확인되었습니다. 실제 유효 여부는 원문 확인이 필요합니다."
+    });
+  }
+  
+  rightsRisk.riskScore = Math.min(100, rightsRisk.riskScore);
+  
+  if (rightsRisk.riskScore >= 60) {
+    rightsRisk.riskLevel = "DANGER";
+  } else if (rightsRisk.riskScore >= 25) {
+    rightsRisk.riskLevel = "CAUTION";
+  } else {
+    rightsRisk.riskLevel = "SAFE";
+  }
+  
+  const riskLabels = rightsRisk.riskDetails
+    .filter((detail) => detail.type !== "cancellation_keyword")
+    .map((detail) => detail.label);
+  
+  if (riskLabels.length === 0) {
+    rightsRisk.summary =
+      "특이 권리관계는 발견되지 않았습니다.";
+  } else {
+    rightsRisk.summary =
+      `${riskLabels.join(", ")} 관련 권리관계가 확인되었습니다. 등기부 원문 기준의 추가 검토가 필요합니다.`;
+  }
 
   if (
   rightsRisk.hasSeizure ||
