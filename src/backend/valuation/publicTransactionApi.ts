@@ -20,10 +20,25 @@ function getRecentDealYearMonths(monthCount = 12): string[] {
     const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, "0");
+
     result.push(`${year}${month}`);
   }
 
   return result;
+}
+
+function normalizeApartmentName(value?: string) {
+  return value?.replace(/\s/g, "").trim() ?? "";
+}
+
+function getMonthsAgo(year: number, month: number, day: number) {
+  const now = new Date();
+  const dealDate = new Date(year, month - 1, day || 1);
+
+  return (
+    (now.getFullYear() - dealDate.getFullYear()) * 12 +
+    (now.getMonth() - dealDate.getMonth())
+  );
 }
 
 async function fetchApartmentTradeApi(
@@ -103,19 +118,27 @@ async function fetchApartmentTradeApi(
         itemXml.match(/<buildYear>(.*?)<\/buildYear>/)?.[1] ?? 0
       );
 
-      if (!dealAmount || !area) continue;
+      const dealType =
+        itemXml.match(/<dealingGbn>(.*?)<\/dealingGbn>/)?.[1]?.trim() ??
+        itemXml.match(/<dealGbn>(.*?)<\/dealGbn>/)?.[1]?.trim() ??
+        "";
+
+      if (!dealAmount || !area || !dealYear || !dealMonth) continue;
 
       const areaToleranceM2 = params.areaToleranceM2 ?? 3;
 
+      const areaDifferenceM2 = params.exclusiveAreaM2
+        ? Math.abs(area - params.exclusiveAreaM2)
+        : undefined;
+
       const isSimilarArea =
-        !params.exclusiveAreaM2 ||
-        Math.abs(area - params.exclusiveAreaM2) <= areaToleranceM2;
+        areaDifferenceM2 === undefined ||
+        areaDifferenceM2 <= areaToleranceM2;
 
       if (!isSimilarArea) continue;
 
-      const normalizedApiName = aptNm.replace(/\s/g, "");
-      const normalizedTargetName =
-        params.buildingName?.replace(/\s/g, "") ?? "";
+      const normalizedApiName = normalizeApartmentName(aptNm);
+      const normalizedTargetName = normalizeApartmentName(params.buildingName);
 
       const isSameApartment =
         normalizedTargetName.length > 0 &&
@@ -124,78 +147,72 @@ async function fetchApartmentTradeApi(
           normalizedTargetName.includes(normalizedApiName)
         );
 
-     const areaDifferenceM2 = params.exclusiveAreaM2
-      ? Math.abs(area - params.exclusiveAreaM2)
-      : undefined;
-    
-    let similarityScore = 35;
-    let similarityReason = "동일 법정동 유사 면적";
-    
-    if (isSameApartment) {
-      similarityScore += 45;
-      similarityReason = "동일 단지";
-    }
-    
-    if (areaDifferenceM2 !== undefined) {
-      if (areaDifferenceM2 <= 1) {
-        similarityScore += 15;
-      } else if (areaDifferenceM2 <= 2) {
+      const monthsAgo = getMonthsAgo(dealYear, dealMonth, dealDay);
+
+      // 12개월 초과 거래는 비교군에서 제외
+      if (monthsAgo > 12) continue;
+
+      let similarityScore = 35;
+      let similarityReason = "동일 법정동 유사 면적";
+
+      if (isSameApartment) {
+        similarityScore += 45;
+        similarityReason = "동일 단지";
+      }
+
+      if (areaDifferenceM2 !== undefined) {
+        if (areaDifferenceM2 <= 1) {
+          similarityScore += 15;
+        } else if (areaDifferenceM2 <= 2) {
+          similarityScore += 8;
+        } else {
+          similarityScore += 3;
+        }
+      }
+
+      // 최근거래는 정렬에서만 우선하고, 점수에는 가산하지 않음
+
+      if (floor >= 10) {
         similarityScore += 8;
-      } else {
-        similarityScore += 3;
+      } else if (floor >= 6) {
+        similarityScore += 4;
+      } else if (floor <= 2) {
+        similarityScore -= 8;
       }
-    }
-    
-    const now = new Date();
-    const dealDate = new Date(dealYear, dealMonth - 1, dealDay);
-    const monthsAgo =
-      (now.getFullYear() - dealDate.getFullYear()) * 12 +
-      (now.getMonth() - dealDate.getMonth());
-    
-    if (monthsAgo <= 3) {
-      similarityScore += 15;
-    } else if (monthsAgo <= 6) {
-      similarityScore += 8;
-    } else if (monthsAgo <= 12) {
-      similarityScore += 3;
-    }
-    
-    if (floor >= 10) {
-      similarityScore += 8;
-    } else if (floor >= 6) {
-      similarityScore += 4;
-    } else if (floor <= 2) {
-      similarityScore -= 8;
-    }
-    
-    if (buildYear > 0) {
-      const currentYear = new Date().getFullYear();
-      const buildingAge = currentYear - buildYear;
-    
-      if (buildingAge <= 10) {
-        similarityScore += 10;
-      } else if (buildingAge <= 20) {
-        similarityScore += 5;
-      } else if (buildingAge >= 30) {
-        similarityScore -= 5;
+
+      if (buildYear > 0) {
+        const currentYear = new Date().getFullYear();
+        const buildingAge = currentYear - buildYear;
+
+        if (buildingAge <= 10) {
+          similarityScore += 10;
+        } else if (buildingAge <= 20) {
+          similarityScore += 5;
+        } else if (buildingAge >= 30) {
+          similarityScore -= 5;
+        }
       }
-    }
-    
-    similarityScore = Math.max(0, Math.min(100, similarityScore));
-      
+
+      if (dealType.includes("직거래")) {
+        similarityScore -= 8;
+      }
+
+      similarityScore = Math.max(0, Math.min(100, similarityScore));
+
       const transactionKey = [
         dealAmount,
         dealYear,
         dealMonth,
         dealDay,
         area,
-        floor
+        floor,
+        aptNm
       ].join("|");
 
       if (seenTransactionKeys.has(transactionKey)) continue;
 
       seenTransactionKeys.add(transactionKey);
-      
+
       let reliabilityGrade: "A" | "B" | "C" = "C";
 
       if (similarityScore >= 85) {
@@ -222,7 +239,7 @@ async function fetchApartmentTradeApi(
           ? "동일 단지 거래"
           : `동일 법정동 유사 면적 거래(±${areaToleranceM2}㎡)`
       });
-      }
+    }
 
     console.log("filtered_transaction_count", transactions.length);
 
@@ -240,11 +257,11 @@ export async function fetchPublicTransactions(
   console.log("valuation_legalDongCode", params.legalDongCode ?? "undefined");
 
   const recentMonths = getRecentDealYearMonths(12);
-  const areaTolerances = [3, 5, 8];
-  
+  const areaTolerances = [3, 5];
+
   for (const areaToleranceM2 of areaTolerances) {
     const apiTransactions: TransactionItem[] = [];
-  
+
     for (const dealYearMonth of recentMonths) {
       const monthlyTransactions = await fetchApartmentTradeApi({
         legalDongCode: params.legalDongCode,
@@ -253,62 +270,43 @@ export async function fetchPublicTransactions(
         exclusiveAreaM2: params.exclusiveAreaM2,
         areaToleranceM2
       });
-  
+
       apiTransactions.push(...monthlyTransactions);
-  
+
       const sameApartmentCount = apiTransactions.filter(
         (tx) => tx.isSameApartment
       ).length;
-  
+
       if (sameApartmentCount >= 3 || apiTransactions.length >= 5) {
         break;
       }
     }
-  
+
     if (apiTransactions.length > 0) {
       return apiTransactions
-        .filter((tx) => (tx.monthsAgo ?? 999) <= 12)
         .sort((a, b) => {
           const sameA = a.isSameApartment ? 1 : 0;
           const sameB = b.isSameApartment ? 1 : 0;
-  
+
           if (sameB !== sameA) {
             return sameB - sameA;
           }
-  
+
           const scoreA = a.similarityScore ?? 0;
           const scoreB = b.similarityScore ?? 0;
-  
+
           if (scoreB !== scoreA) {
             return scoreB - scoreA;
           }
-  
-          const gradeRank = {
-            A: 3,
-            B: 2,
-            C: 1
-          };
-  
-          const gradeA = a.reliabilityGrade
-            ? gradeRank[a.reliabilityGrade]
-            : 0;
-  
-          const gradeB = b.reliabilityGrade
-            ? gradeRank[b.reliabilityGrade]
-            : 0;
-  
-          if (gradeB !== gradeA) {
-            return gradeB - gradeA;
-          }
-  
+
           const dateA = a.dealYear * 10000 + a.dealMonth * 100 + a.dealDay;
           const dateB = b.dealYear * 10000 + b.dealMonth * 100 + b.dealDay;
-  
+
           return dateB - dateA;
         })
         .slice(0, 5);
     }
   }
-  
+
   return [];
 }
