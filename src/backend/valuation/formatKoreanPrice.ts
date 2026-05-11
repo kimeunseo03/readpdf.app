@@ -2,12 +2,6 @@ export function formatKoreanPrice(value?: number) {
   if (value === undefined || value === null) {
     return "-";
   }
-
-  /*
-    현재 시스템 기준:
-    모든 금액은 "원" 단위로 통일.
-  */
-
   const won = Math.round(value);
 
   const eok = Math.floor(won / 100000000);
