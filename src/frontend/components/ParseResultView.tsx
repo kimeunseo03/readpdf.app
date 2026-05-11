@@ -44,33 +44,22 @@ export function ParseResultView({ response }: { response: ParseApiResponse }) {
 
   return (
     <div className="space-y-6">
-      <section className="card-surface p-6">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <h2 className="text-lg font-semibold text-slate-900">판독 요약</h2>
-            <p className="mt-1 text-sm text-slate-500">
-              {parseResult.document.originalFileName}
-            </p>
-          </div>
+     <section className="card-surface p-6">
+  <div>
+    <h2 className="text-lg font-semibold text-slate-900">
+      판독 요약
+    </h2>
 
-          <ConfidenceBadge value={confidence.overall} />
-        </div>
+    <p className="mt-1 text-sm text-slate-500">
+      등기부에서 추출한 주소 정보입니다.
+    </p>
+  </div>
 
-        <dl className="mt-5">
-          <FieldRow label="문서 유형" value={parseResult.document.documentType} />
-          <FieldRow label="등본 유형" value={parseResult.document.registryType} />
-          <FieldRow label="페이지 수" value={parseResult.document.pageCount} />
-          <FieldRow
-            label="OCR 필요 여부"
-            value={meta.ocrRequired ? "필요" : "불필요"}
-          />
-          <FieldRow
-            label="수동 검토"
-            value={review.manualReviewRequired ? "필요" : "불필요"}
-          />
-        </dl>
-      </section>
-
+  <dl className="mt-5">
+    <FieldRow label="주소" value={property.addressRaw} />
+  </dl>
+</section>
+      
       <section className="rounded-3xl border bg-white p-6 shadow-sm">
         <h3 className="font-semibold text-slate-900">물건 정보</h3>
         <p className="mt-1 text-sm text-slate-500">
