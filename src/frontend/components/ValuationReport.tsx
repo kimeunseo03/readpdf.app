@@ -1,5 +1,11 @@
 import { formatKoreanPrice } from "../../backend/valuation/formatKoreanPrice";
 
+interface MortgageItem {
+  rank: number;
+  creditor: string;
+  amount: number; // 원
+}
+
 interface ValuationReportProps {
   input: {
     addressRaw?: string;
@@ -13,6 +19,7 @@ interface ValuationReportProps {
       riskFlags?: string[];
       riskScore?: number;
       mortgageAmountText?: string;
+      mortgages?: MortgageItem[];
       hasCancellationKeyword?: boolean;
       riskDetails?: {
         type: string;
@@ -33,11 +40,11 @@ interface ValuationReportProps {
     riskAdjustedPrice?: number;
     seniorDebtAmount?: number;
     seniorMortgageAmount?: number;
+    mortgages?: MortgageItem[];
     tenantDepositAmount?: number;
     tenantMonthlyRent?: number;
     priorityRepaymentAmount?: number;
     overallConfidence?: "A" | "B" | "C";
-    valuationBasis: string[];
     finalComment?: string;
 
     recentTransactions: {
@@ -59,6 +66,11 @@ interface ValuationReportProps {
 
     warnings: string[];
   };
+}
+
+function formatWon(value?: number) {
+  if (value === undefined || value === null) return "-";
+  return `${value.toLocaleString()}원`;
 }
 
 function riskLabel(level?: "SAFE" | "CAUTION" | "DANGER") {
@@ -116,17 +128,14 @@ function severityLabel(severity: "LOW" | "MEDIUM" | "HIGH") {
 
 export function ValuationReport({ input, result }: ValuationReportProps) {
   const generatedAt = new Date().toLocaleString("ko-KR");
+  const mortgages = result.mortgages ?? input.rightsRisk?.mortgages ?? [];
 
   return (
     <section className="print-report mt-6 rounded-3xl border border-slate-200 bg-white p-8 shadow-sm print:border-0 print:shadow-none">
       <div className="mb-8 border-b border-slate-200 pb-5">
-        <p className="text-xs font-semibold tracking-wide text-blue-600">
-          INTERNAL VALUATION REPORT
-        </p>
-
-        <p className="mt-2 text-sm text-slate-500">
-          내부 검토용 자료이며, 감정평가서 또는 법률 의견서가 아닙니다.
-        </p>
+        <h2 className="text-xl font-bold text-slate-900">
+          아파트 가치평가 내부 검토 리포트
+        </h2>
 
         <p className="mt-2 text-xs text-slate-400">
           생성 시각: {generatedAt}
@@ -168,104 +177,107 @@ export function ValuationReport({ input, result }: ValuationReportProps) {
             <span className={riskBadgeClass(input.rightsRisk?.riskLevel)}>
               {riskLabel(input.rightsRisk?.riskLevel)}
             </span>
-
-            {input.rightsRisk?.riskScore !== undefined && (
-              <p className="mt-2 text-xs text-slate-500">
-                위험 점수: {input.rightsRisk.riskScore}/100
-              </p>
-            )}
           </div>
         </div>
 
         <div>
-          <p className="text-slate-500">비교 거래 수</p>
+          <p className="text-slate-500">평가 신뢰도</p>
           <p className="mt-1 font-medium text-slate-900">
-            {result.comparableCount}건
-          </p>
-        </div>
-      </div>
-
-      <div className="mt-8 grid gap-4 md:grid-cols-5">
-        <div className="rounded-2xl border border-green-100 bg-green-50/50 p-4">
-          <p className="text-xs font-semibold text-green-700">보정 평균가</p>
-          <p className="mt-3 whitespace-pre-line text-lg font-bold leading-snug tracking-tight tabular-nums text-green-700">
-            {formatKoreanPrice(result.averagePrice)}
-          </p>
-        </div>
-
-        <div className="rounded-2xl border border-blue-100 bg-blue-50/50 p-4">
-          <p className="text-xs font-semibold text-blue-700">보수 기준가</p>
-          <p className="mt-3 whitespace-pre-line text-lg font-bold leading-snug tracking-tight tabular-nums text-blue-700">
-            {formatKoreanPrice(result.conservativePrice)}
-          </p>
-        </div>
-
-        <div className="rounded-2xl border border-orange-100 bg-orange-50/50 p-4">
-          <p className="text-xs font-semibold text-orange-700">상단 참고가</p>
-          <p className="mt-3 whitespace-pre-line text-lg font-bold leading-snug tracking-tight tabular-nums text-orange-700">
-            {formatKoreanPrice(result.upperReferencePrice)}
-          </p>
-        </div>
-
-        <div className="rounded-2xl border border-red-100 bg-red-50/50 p-4">
-          <p className="text-xs font-semibold text-red-700">권리반영 기준가</p>
-          <p className="mt-3 whitespace-pre-line text-lg font-bold leading-snug tracking-tight tabular-nums text-red-700">
-            {formatKoreanPrice(result.riskAdjustedPrice)}
-          </p>
-        </div>
-
-        <div className="rounded-2xl border border-slate-200 bg-white p-4">
-          <p className="text-xs font-semibold text-slate-600">평가 신뢰도</p>
-          <p className="mt-3 text-3xl font-bold tracking-tight tabular-nums text-slate-900">
             {result.overallConfidence ?? "-"}
           </p>
-          <p className="mt-2 text-xs text-slate-500">
-            비교 거래 {result.comparableCount}건
-          </p>
         </div>
       </div>
 
-      {(result.seniorDebtAmount ?? 0) > 0 && (
-        <div className="mt-8 rounded-2xl border border-red-100 bg-red-50/60 p-5 text-sm">
-          <p className="text-xs font-semibold tracking-wide text-red-700">
-            RIGHTS ADJUSTMENT
-          </p>
+      <div className="mt-8 rounded-2xl border border-red-100 bg-red-50/60 p-5 text-sm">
+        <p className="text-xs font-semibold tracking-wide text-red-700">
+          RIGHTS DEDUCTION
+        </p>
 
-          <h3 className="mt-1 text-lg font-bold text-red-900">
-            권리 차감 반영
-          </h3>
+        <h3 className="mt-1 text-lg font-bold text-red-900">
+          권리 차감 내역
+        </h3>
 
-          <dl className="mt-4 grid gap-3 md:grid-cols-2">
-            <div>
-              <dt className="text-red-700">선순위 근저당</dt>
-              <dd className="mt-1 font-semibold tabular-nums text-red-900">
-                {formatKoreanPrice(result.seniorMortgageAmount)}
-              </dd>
+        <dl className="mt-4 grid gap-3 md:grid-cols-2">
+          <div>
+            <dt className="text-red-700">선순위 근저당 합계</dt>
+            <dd className="mt-1 font-semibold tabular-nums text-red-900">
+              {formatWon(result.seniorMortgageAmount)}
+            </dd>
+          </div>
+
+          <div>
+            <dt className="text-red-700">임차보증금</dt>
+            <dd className="mt-1 font-semibold tabular-nums text-red-900">
+              {formatWon(result.tenantDepositAmount)}
+            </dd>
+          </div>
+
+          <div>
+            <dt className="text-red-700">권리 차감 합계</dt>
+            <dd className="mt-1 font-semibold tabular-nums text-red-900">
+              {formatWon(result.seniorDebtAmount)}
+            </dd>
+          </div>
+
+          <div>
+            <dt className="text-red-700">최우선변제금 추정 참고</dt>
+            <dd className="mt-1 font-semibold tabular-nums text-red-900">
+              {formatWon(result.priorityRepaymentAmount)}
+            </dd>
+          </div>
+        </dl>
+
+        {mortgages.length > 0 && (
+          <div className="mt-6 overflow-hidden rounded-2xl border border-red-100 bg-white">
+            <div className="border-b border-red-100 bg-red-50 px-4 py-3">
+              <p className="text-sm font-bold text-red-900">근저당권 현황</p>
             </div>
 
-            <div>
-              <dt className="text-red-700">임차보증금</dt>
-              <dd className="mt-1 font-semibold tabular-nums text-red-900">
-                {formatKoreanPrice(result.tenantDepositAmount)}
-              </dd>
-            </div>
+            <table className="w-full text-left text-sm">
+              <thead className="bg-white text-xs tracking-wide text-slate-500">
+                <tr>
+                  <th className="px-4 py-3 font-semibold">순위</th>
+                  <th className="px-4 py-3 font-semibold">근저당권자</th>
+                  <th className="px-4 py-3 text-right font-semibold">
+                    금액(원)
+                  </th>
+                </tr>
+              </thead>
 
-            <div>
-              <dt className="text-red-700">최우선변제금 추정</dt>
-              <dd className="mt-1 font-semibold tabular-nums text-red-900">
-                {formatKoreanPrice(result.priorityRepaymentAmount)}
-              </dd>
-            </div>
+              <tbody>
+                {mortgages.map((mortgage) => (
+                  <tr
+                    key={`${mortgage.rank}-${mortgage.creditor}-${mortgage.amount}`}
+                    className="border-t border-slate-100"
+                  >
+                    <td className="px-4 py-3 text-slate-700">
+                      {mortgage.rank}
+                    </td>
 
-            <div>
-              <dt className="text-red-700">권리 차감 합계</dt>
-              <dd className="mt-1 font-semibold tabular-nums text-red-900">
-                {formatKoreanPrice(result.seniorDebtAmount)}
-              </dd>
-            </div>
-          </dl>
-        </div>
-      )}
+                    <td className="px-4 py-3 font-medium text-slate-900">
+                      {mortgage.creditor || "-"}
+                    </td>
+
+                    <td className="px-4 py-3 text-right font-semibold tabular-nums text-slate-900">
+                      {formatWon(mortgage.amount)}
+                    </td>
+                  </tr>
+                ))}
+
+                <tr className="border-t border-red-100 bg-red-50/70">
+                  <td className="px-4 py-3 font-bold text-red-900" colSpan={2}>
+                    합계
+                  </td>
+
+                  <td className="px-4 py-3 text-right font-bold tabular-nums text-red-900">
+                    {formatWon(result.seniorMortgageAmount)}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
 
       {result.finalComment && (
         <div className="mt-8 rounded-2xl border border-slate-200 bg-slate-50/60 p-5">
@@ -280,85 +292,6 @@ export function ValuationReport({ input, result }: ValuationReportProps) {
           <p className="mt-3 text-sm leading-6 text-slate-700">
             {result.finalComment}
           </p>
-        </div>
-      )}
-
-      {result.recentTransactions.length > 0 && (
-        <div className="mt-8 overflow-hidden rounded-2xl border border-slate-200">
-          <table className="w-full text-left text-sm">
-            <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
-              <tr>
-                <th className="px-4 py-3 font-semibold">거래일</th>
-                <th className="px-4 py-3 font-semibold">금액</th>
-                <th className="px-4 py-3 font-semibold">면적</th>
-                <th className="px-4 py-3 font-semibold">층</th>
-                <th className="px-4 py-3 font-semibold">비교군</th>
-                <th className="px-4 py-3 font-semibold">유사도</th>
-                <th className="px-4 py-3 font-semibold">선정 기준</th>
-                <th className="px-4 py-3 font-semibold">신뢰도</th>
-              </tr>
-            </thead>
-
-            <tbody>
-              {result.recentTransactions.map((tx, index) => (
-                <tr
-                  key={`${tx.dealYear}-${tx.dealMonth}-${tx.dealDay}-${tx.dealAmount}-${index}`}
-                  className={index === 0 ? "border-b bg-green-50" : "border-b"}
-                >
-                  <td className="px-4 py-3 text-slate-700">
-                    {tx.dealYear}.{String(tx.dealMonth).padStart(2, "0")}.
-                    {String(tx.dealDay).padStart(2, "0")}
-
-                    {index === 0 && (
-                      <span className="ml-2 rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-semibold text-green-700">
-                        최우선 비교군
-                      </span>
-                    )}
-                  </td>
-
-                  <td className="whitespace-pre-line px-4 py-3 font-medium tabular-nums text-slate-700">
-                    {formatKoreanPrice(tx.dealAmount)}
-                  </td>
-
-                  <td className="px-4 py-3 text-slate-700">{tx.area}㎡</td>
-
-                  <td className="px-4 py-3 text-slate-700">
-                    {tx.floor ?? "-"}층
-                  </td>
-
-                  <td className="px-4 py-3 text-slate-700">
-                    <div className="flex flex-wrap gap-1">
-                      {tx.isSameApartment && (
-                        <span className="rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-semibold text-blue-700">
-                          동일단지
-                        </span>
-                      )}
-
-                      {(tx.monthsAgo ?? 999) <= 3 && (
-                        <span className="rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-semibold text-green-700">
-                          최근거래
-                        </span>
-                      )}
-                    </div>
-                  </td>
-
-                  <td className="px-4 py-3 text-slate-700">
-                    {tx.similarityScore ?? "-"}점
-                  </td>
-
-                  <td className="px-4 py-3 text-slate-700">
-                    {tx.selectionReason ?? "-"}
-                  </td>
-
-                  <td className="px-4 py-3 text-slate-700">
-                    <span className={reliabilityBadgeClass(tx.reliabilityGrade)}>
-                      {tx.reliabilityGrade ?? "-"}
-                    </span>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
         </div>
       )}
 
@@ -425,26 +358,76 @@ export function ValuationReport({ input, result }: ValuationReportProps) {
           </div>
         )}
 
-      {result.valuationBasis.length > 0 && (
-        <div className="mt-8 rounded-2xl border border-slate-200 bg-slate-50/60 p-5">
-          <div className="mb-3">
-            <p className="text-xs font-semibold tracking-wide text-slate-500">
-              VALUATION BASIS
-            </p>
+      {result.recentTransactions.length > 0 && (
+        <div className="mt-8 overflow-hidden rounded-2xl border border-slate-200">
+          <table className="w-full text-left text-sm">
+            <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
+              <tr>
+                <th className="px-4 py-3 font-semibold">거래일</th>
+                <th className="px-4 py-3 font-semibold">금액</th>
+                <th className="px-4 py-3 font-semibold">면적</th>
+                <th className="px-4 py-3 font-semibold">층</th>
+                <th className="px-4 py-3 font-semibold">비교군</th>
+                <th className="px-4 py-3 font-semibold">유사도</th>
+                <th className="px-4 py-3 font-semibold">선정 기준</th>
+                <th className="px-4 py-3 font-semibold">신뢰도</th>
+              </tr>
+            </thead>
 
-            <h3 className="mt-1 text-lg font-bold text-slate-900">
-              평가 기준
-            </h3>
-          </div>
+            <tbody>
+              {result.recentTransactions.map((tx, index) => (
+                <tr
+                  key={`${tx.dealYear}-${tx.dealMonth}-${tx.dealDay}-${tx.dealAmount}-${index}`}
+                  className={index === 0 ? "border-b bg-green-50" : "border-b"}
+                >
+                  <td className="px-4 py-3 text-slate-700">
+                    {tx.dealYear}.{String(tx.dealMonth).padStart(2, "0")}.
+                    {String(tx.dealDay).padStart(2, "0")}
+                  </td>
 
-          <ul className="space-y-2.5 text-sm text-slate-700">
-            {result.valuationBasis.map((basis) => (
-              <li key={basis} className="flex items-start gap-2">
-                <span className="mt-1.5 h-1.5 w-1.5 rounded-full bg-blue-500" />
-                <span>{basis}</span>
-              </li>
-            ))}
-          </ul>
+                  <td className="whitespace-pre-line px-4 py-3 font-medium tabular-nums text-slate-700">
+                    {formatKoreanPrice(tx.dealAmount)}
+                  </td>
+
+                  <td className="px-4 py-3 text-slate-700">{tx.area}㎡</td>
+
+                  <td className="px-4 py-3 text-slate-700">
+                    {tx.floor ?? "-"}층
+                  </td>
+
+                  <td className="px-4 py-3 text-slate-700">
+                    <div className="flex flex-wrap gap-1">
+                      {tx.isSameApartment && (
+                        <span className="rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-semibold text-blue-700">
+                          동일단지
+                        </span>
+                      )}
+
+                      {(tx.monthsAgo ?? 999) <= 3 && (
+                        <span className="rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-semibold text-green-700">
+                          최근거래
+                        </span>
+                      )}
+                    </div>
+                  </td>
+
+                  <td className="px-4 py-3 text-slate-700">
+                    {tx.similarityScore ?? "-"}점
+                  </td>
+
+                  <td className="px-4 py-3 text-slate-700">
+                    {tx.selectionReason ?? "-"}
+                  </td>
+
+                  <td className="px-4 py-3 text-slate-700">
+                    <span className={reliabilityBadgeClass(tx.reliabilityGrade)}>
+                      {tx.reliabilityGrade ?? "-"}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       )}
 
