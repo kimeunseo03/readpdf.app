@@ -164,6 +164,7 @@ type MortgageEntry = {
   rank: number;
   creditor: string;
   amount: number; // 원 단위
+  targetOwner?: string;
 };
 
 function parseWonAmount(value?: string): number {
@@ -200,49 +201,36 @@ function extractActiveMortgagesFromSummary(text: string): MortgageEntry[] {
   );
 
   const section = sectionMatch?.[1] ?? "";
-  if (!section) return [];
+  if (!section || /기록사항\s*없음/.test(section)) return [];
+
+  const rowRegex =
+    /(\d{1,3})\s+근저당권설정\s+[\s\S]*?채권최고액\s*(?:금)?\s*([0-9][0-9,]{4,})\s*원\s+근저당권자\s+(.+?)\s+([가-힣A-Za-z0-9·.\-()]+)(?=\s+\d{1,3}\s+근저당권설정|\s*\[ 참 고 사 항 \]|$)/g;
 
   const results: MortgageEntry[] = [];
   const seen = new Set<string>();
 
-  const rowStartRegex =
-    /(?:^|\s)(\d{1,3})\s+근저당권설정\s+\d{4}년\d{1,2}월\d{1,2}일/g;
+  for (const match of section.matchAll(rowRegex)) {
+    const originalRank = Number(match[1]);
+    const amount = parseWonAmount(match[2]);
+    const creditor = cleanSummaryCreditor(match[3]);
+    const targetOwner = match[4]?.replace(/\s+/g, " ").trim();
 
-  const starts = Array.from(section.matchAll(rowStartRegex));
+    if (!originalRank || !amount || !creditor || creditor === "확인 필요") {
+      continue;
+    }
 
-  starts.forEach((startMatch, index) => {
-    const startIndex = startMatch.index ?? 0;
-    const nextIndex =
-      index + 1 < starts.length
-        ? starts[index + 1].index ?? section.length
-        : section.length;
-
-    const row = section.slice(startIndex, nextIndex);
-
-    const amountMatch = row.match(
-      /채권최고액\s*(?:금)?\s*([0-9][0-9,]{4,})\s*원/
-    );
-
-    const creditorMatch = row.match(
-      /근저당권자\s+(.+?)(?=\s+\d{1,3}\s+근저당권설정|$)/
-    );
-
-    const rank = Number(startMatch[1]);
-    const amount = parseWonAmount(amountMatch?.[1]);
-    const creditor = cleanSummaryCreditor(creditorMatch?.[1]);
-
-    if (!rank || !amount) return;
-
-    const key = `${rank}-${creditor}-${amount}`;
-    if (seen.has(key)) return;
+    const key = `${originalRank}-${creditor}-${amount}-${targetOwner ?? ""}`;
+    if (seen.has(key)) continue;
 
     seen.add(key);
+
     results.push({
-      rank,
+      rank: originalRank,
       creditor,
-      amount
+      amount,
+      targetOwner
     });
-  });
+  }
 
   return results.sort((a, b) => a.rank - b.rank);
 }
