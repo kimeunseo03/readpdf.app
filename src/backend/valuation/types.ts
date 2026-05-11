@@ -1,11 +1,30 @@
 export type RiskLevel = "SAFE" | "CAUTION" | "DANGER";
 export type ReliabilityGrade = "A" | "B" | "C";
 
+export interface MortgageItem {
+  rank: number;
+  creditor: string;
+
+  /**
+   * 원 단위
+   */
+  amount: number;
+}
+
 export interface RightsRiskInput {
   riskLevel?: RiskLevel;
   riskScore?: number;
 
+  /**
+   * 기존 단일 추출 문자열. 하위 호환용.
+   */
   mortgageAmountText?: string;
+
+  /**
+   * 근저당권 현황. 원 단위.
+   */
+  mortgages?: MortgageItem[];
+
   hasCancellationKeyword?: boolean;
 
   riskFlags?: string[];
@@ -16,6 +35,8 @@ export interface RightsRiskInput {
     severity: "LOW" | "MEDIUM" | "HIGH";
     description: string;
   }[];
+
+  summary?: string;
 }
 
 export interface ValuationInput {
@@ -24,12 +45,12 @@ export interface ValuationInput {
   exclusiveAreaM2?: number;
 
   /**
-   * 만원 단위
+   * 원 단위
    */
   tenantDepositAmount?: number;
 
   /**
-   * 만원 단위
+   * 원 단위
    */
   tenantMonthlyRent?: number;
 
@@ -37,7 +58,11 @@ export interface ValuationInput {
 }
 
 export interface TransactionItem {
+  /**
+   * 실거래가. 원 단위.
+   */
   dealAmount: number;
+
   dealYear: number;
   dealMonth: number;
   dealDay: number;
@@ -73,51 +98,63 @@ export interface ValuationResult {
 
   comparableCount: number;
 
+  /**
+   * 원 단위
+   */
   lowestPrice?: number;
+
+  /**
+   * 원 단위
+   */
   highestPrice?: number;
 
   /**
-   * 기준 참고가. 만원 단위.
+   * 기준 참고가. 원 단위.
    */
   averagePrice?: number;
 
   /**
-   * 비교군 하위값. 임의 98% 할인 제거.
+   * 비교군 하위값. 원 단위.
    */
   conservativePrice?: number;
 
   /**
-   * 비교군 상위값. 임의 102% 할증 제거.
+   * 비교군 상위값. 원 단위.
    */
   upperReferencePrice?: number;
 
   /**
-   * 선순위 근저당 + 임차보증금 + 최우선변제금 반영 후 참고가.
+   * 선순위 근저당 및 임차보증금 차감 후 참고가. 원 단위.
    */
   riskAdjustedPrice?: number;
 
   /**
-   * 권리 차감 합계. 만원 단위.
+   * 권리 차감 합계. 원 단위.
    */
   seniorDebtAmount?: number;
 
   /**
-   * 선순위 근저당 채권최고액. 만원 단위.
+   * 선순위 근저당 채권최고액 합계. 원 단위.
    */
   seniorMortgageAmount?: number;
 
   /**
-   * 임차보증금. 만원 단위.
+   * 근저당권 현황. 원 단위.
+   */
+  mortgages?: MortgageItem[];
+
+  /**
+   * 임차보증금. 원 단위.
    */
   tenantDepositAmount?: number;
 
   /**
-   * 월세. 만원 단위.
+   * 월세. 원 단위.
    */
   tenantMonthlyRent?: number;
 
   /**
-   * 추정 최우선변제금. 만원 단위.
+   * 추정 최우선변제금. 원 단위.
    */
   priorityRepaymentAmount?: number;
 
