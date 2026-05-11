@@ -2,13 +2,22 @@ export type RiskLevel = "SAFE" | "CAUTION" | "DANGER";
 export type ReliabilityGrade = "A" | "B" | "C";
 
 export interface MortgageItem {
+  /**
+   * 화면 표시용 순위. 원 순위번호가 아니라 1부터 재부여한 순번.
+   */
   rank: number;
+
   creditor: string;
 
   /**
    * 원 단위
    */
   amount: number;
+
+  /**
+   * 주요 등기사항 요약의 대상소유자.
+   */
+  targetOwner?: string;
 }
 
 export interface RightsRiskInput {
