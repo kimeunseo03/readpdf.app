@@ -4,6 +4,12 @@ import { useState } from "react";
 import { ValuationReport } from "./ValuationReport";
 import { formatKoreanPrice } from "../../backend/valuation/formatKoreanPrice";
 
+interface MortgageItem {
+  rank: number;
+  creditor: string;
+  amount: number; // 원
+}
+
 interface ValuationFormProps {
   initialValue: {
     addressRaw?: string;
@@ -15,11 +21,7 @@ interface ValuationFormProps {
       riskFlags?: string[];
       riskScore?: number;
       mortgageAmountText?: string;
-      mortgages?: {
-        rank: number;
-        creditor: string;
-        amount: number; // 원
-      }[];
+      mortgages?: MortgageItem[];
       hasCancellationKeyword?: boolean;
       riskDetails?: {
         type: string;
@@ -42,18 +44,14 @@ interface ValuationResult {
   conservativePrice?: number;
   upperReferencePrice?: number;
   riskAdjustedPrice?: number;
-    seniorDebtAmount?: number;
-    seniorMortgageAmount?: number;
-    mortgages?: {
-      rank: number;
-      creditor: string;
-      amount: number; // 원
-    }[];
-    tenantDepositAmount?: number;
-    tenantMonthlyRent?: number;
-    priorityRepaymentAmount?: number;
-    finalComment?: string;
-    recentTransactions: {
+  seniorDebtAmount?: number;
+  seniorMortgageAmount?: number;
+  mortgages?: MortgageItem[];
+  tenantDepositAmount?: number;
+  tenantMonthlyRent?: number;
+  priorityRepaymentAmount?: number;
+  finalComment?: string;
+  recentTransactions: {
     dealAmount: number;
     dealYear: number;
     dealMonth: number;
@@ -72,6 +70,20 @@ interface ValuationResult {
   valuationBasis: string[];
   overallConfidence?: "A" | "B" | "C";
   warnings: string[];
+}
+
+function formatAccountingInput(value: string) {
+  const numeric = value.replace(/[^0-9]/g, "");
+
+  if (!numeric) return "";
+
+  return Number(numeric).toLocaleString();
+}
+
+function parseAccountingInput(value: string) {
+  const numeric = value.replace(/[^0-9]/g, "");
+
+  return numeric ? Number(numeric) : undefined;
 }
 
 export function ValuationForm({ initialValue }: ValuationFormProps) {
@@ -116,12 +128,8 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
           addressRaw,
           buildingName,
           exclusiveAreaM2: Number(exclusiveAreaM2),
-          tenantDepositAmount: tenantDepositAmount
-            ? Number(tenantDepositAmount)
-            : undefined,
-          tenantMonthlyRent: tenantMonthlyRent
-            ? Number(tenantMonthlyRent)
-            : undefined,
+          tenantDepositAmount: parseAccountingInput(tenantDepositAmount),
+          tenantMonthlyRent: parseAccountingInput(tenantMonthlyRent),
           rightsRisk: initialValue.rightsRisk
         })
       });
@@ -218,12 +226,15 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
           </span>
 
           <input
-            type="number"
+            type="text"
+            inputMode="numeric"
             value={tenantDepositAmount}
-            onChange={(e) => setTenantDepositAmount(e.target.value)}
+            onChange={(e) =>
+              setTenantDepositAmount(formatAccountingInput(e.target.value))
+            }
             className="w-full rounded-xl border border-slate-200 bg-white p-3 text-sm shadow-sm transition focus:border-blue-500 focus:outline-none focus:ring-4 focus:ring-blue-100"
-            placeholder="예: 300000000"
-            />
+            placeholder="예: 300,000,000"
+          />
         </label>
 
         <label className="block">
@@ -232,11 +243,14 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
           </span>
 
           <input
-            type="number"
+            type="text"
+            inputMode="numeric"
             value={tenantMonthlyRent}
-            onChange={(e) => setTenantMonthlyRent(e.target.value)}
+            onChange={(e) =>
+              setTenantMonthlyRent(formatAccountingInput(e.target.value))
+            }
             className="w-full rounded-xl border border-slate-200 bg-white p-3 text-sm shadow-sm transition focus:border-blue-500 focus:outline-none focus:ring-4 focus:ring-blue-100"
-            placeholder="예: 1200000"
+            placeholder="예: 1,200,000"
           />
         </label>
 
@@ -258,11 +272,10 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
         </p>
       )}
 
-            {result && (
+      {result && (
         <>
           <div className="no-print mt-6">
-
-          <div className="rounded-3xl border border-slate-200 bg-white p-6 text-sm shadow-sm">
+            <div className="rounded-3xl border border-slate-200 bg-white p-6 text-sm shadow-sm">
               <div className="mb-5 flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-4">
                 <div>
                   <p className="text-xs font-semibold tracking-wide text-blue-600">
@@ -346,12 +359,16 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
                   <div className="mt-4 space-y-2 text-sm text-slate-700">
                     <div className="flex justify-between gap-4">
                       <span>선순위 근저당 합계</span>
-                      <strong>{formatKoreanPrice(result.seniorMortgageAmount)}</strong>
+                      <strong>
+                        {formatKoreanPrice(result.seniorMortgageAmount)}
+                      </strong>
                     </div>
 
                     <div className="flex justify-between gap-4">
                       <span>임차보증금</span>
-                      <strong>{formatKoreanPrice(result.tenantDepositAmount)}</strong>
+                      <strong>
+                        {formatKoreanPrice(result.tenantDepositAmount)}
+                      </strong>
                     </div>
 
                     <div className="flex justify-between gap-4 border-t border-slate-200 pt-2">
@@ -363,7 +380,9 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
 
                     <div className="flex justify-between gap-4 text-xs text-slate-500">
                       <span>최우선변제금 추정 참고</span>
-                      <span>{formatKoreanPrice(result.priorityRepaymentAmount)}</span>
+                      <span>
+                        {formatKoreanPrice(result.priorityRepaymentAmount)}
+                      </span>
                     </div>
                   </div>
 
@@ -417,7 +436,9 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
                             </td>
 
                             <td className="px-3 py-2 text-right font-bold tabular-nums text-red-700">
-                              {result.seniorMortgageAmount?.toLocaleString() ?? "-"}원
+                              {result.seniorMortgageAmount?.toLocaleString() ??
+                                "-"}
+                              원
                             </td>
                           </tr>
                         </tbody>
@@ -447,9 +468,12 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
                     <div>
                       <p className="text-xs text-slate-500">권리 위험도</p>
                       <p className="mt-1 text-2xl font-bold">
-                        {initialValue.rightsRisk?.riskLevel === "SAFE" && "안전"}
-                        {initialValue.rightsRisk?.riskLevel === "CAUTION" && "주의"}
-                        {initialValue.rightsRisk?.riskLevel === "DANGER" && "위험"}
+                        {initialValue.rightsRisk?.riskLevel === "SAFE" &&
+                          "안전"}
+                        {initialValue.rightsRisk?.riskLevel === "CAUTION" &&
+                          "주의"}
+                        {initialValue.rightsRisk?.riskLevel === "DANGER" &&
+                          "위험"}
                         {!initialValue.rightsRisk?.riskLevel && "-"}
                       </p>
                     </div>
@@ -628,6 +652,6 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
           />
         </>
       )}
-     </section>
-    );
-  }
+    </section>
+  );
+}
