@@ -294,13 +294,17 @@ async function requestPublicDataItems<T>(
 
     const url = new URL(endpoint);
 
-    url.search = `?serviceKey=${apiKey}&_type=json`;
-
+    url.search = `?serviceKey=${apiKey}`;
+    
     Object.entries(params).forEach(([key, value]) => {
       if (value !== undefined && value !== "") {
         url.searchParams.set(key, String(value));
       }
     });
+
+    const text = await response.text();
+
+    console.log("apartment_api_raw", text.slice(0, 500));
 
     const response = await fetch(url.toString(), {
       method: "GET",
@@ -354,22 +358,73 @@ return normalizeItems<T>(item);
 export async function fetchLegalDongApartmentList(params: {
   legalDongCode?: string;
 }): Promise<ApartmentListItem[]> {
-  if (!params.legalDongCode) return [];
+  try {
+    if (!params.legalDongCode) return [];
 
-  const items = await requestPublicDataItems<Record<string, unknown>>(
-    "https://apis.data.go.kr/1611000/AptBasisInfoService/getLegaldongAptList3",
-    {
-      bjdCode: params.legalDongCode
+    const apiKey = process.env.PUBLIC_DATA_API_KEY;
+
+    if (!apiKey) {
+      console.warn("PUBLIC_DATA_API_KEY is missing.");
+      return [];
     }
-  );
 
-  return items.map((item) => ({
-    kaptCode: String(item.kaptCode ?? "") || undefined,
-    kaptName: String(item.kaptName ?? "") || undefined,
-    kaptAddr: String(item.kaptAddr ?? "") || undefined,
-    doroJuso: String(item.doroJuso ?? "") || undefined,
-    bjdCode: String(item.bjdCode ?? "") || undefined
-  }));
+    const url = new URL(
+      "https://apis.data.go.kr/1611000/AptBasisInfoService/getLegaldongAptList3"
+    );
+
+    url.search = `?serviceKey=${apiKey}`;
+    url.searchParams.set("bjdCode", params.legalDongCode);
+
+    const response = await fetch(url.toString(), {
+      method: "GET",
+      cache: "no-store"
+    });
+
+    const xml = await response.text();
+
+    if (!response.ok) {
+      console.warn("apartment_list_api_failed", {
+        status: response.status,
+        url: url.toString(),
+        body: xml.slice(0, 500)
+      });
+
+      return [];
+    }
+
+    console.log("apartment_list_xml_sample", xml.slice(0, 500));
+
+    const itemMatches = [...xml.matchAll(/<item>([\s\S]*?)<\/item>/g)];
+
+    return itemMatches.map((match) => {
+      const itemXml = match[1];
+
+      return {
+        kaptCode:
+          itemXml.match(/<kaptCode>(.*?)<\/kaptCode>/)?.[1]?.trim() ||
+          undefined,
+
+        kaptName:
+          itemXml.match(/<kaptName>(.*?)<\/kaptName>/)?.[1]?.trim() ||
+          undefined,
+
+        kaptAddr:
+          itemXml.match(/<kaptAddr>(.*?)<\/kaptAddr>/)?.[1]?.trim() ||
+          undefined,
+
+        doroJuso:
+          itemXml.match(/<doroJuso>(.*?)<\/doroJuso>/)?.[1]?.trim() ||
+          undefined,
+
+        bjdCode:
+          itemXml.match(/<bjdCode>(.*?)<\/bjdCode>/)?.[1]?.trim() ||
+          undefined
+      };
+    });
+  } catch (error) {
+    console.error("fetchLegalDongApartmentList_error", error);
+    return [];
+  }
 }
 
 export async function findApartmentKaptCode(params: {
