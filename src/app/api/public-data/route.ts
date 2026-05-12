@@ -118,7 +118,7 @@ async function getRecentTransactionPrices(params: {
   url.searchParams.set("LAWD_CD", params.lawdCd);
   url.searchParams.set("DEAL_YMD", params.dealYmd);
   url.searchParams.set("pageNo", "1");
-  url.searchParams.set("numOfRows", "50");
+  url.searchParams.set("numOfRows", "30");
 
   const res = await fetch(url.toString(), {
     method: "GET",
@@ -131,8 +131,10 @@ async function getRecentTransactionPrices(params: {
 
   const text = await res.text();
 
+  console.log("TRANSACTION RAW:", text);
+
   return {
-    raw: text.slice(0, 3000),
+    raw: text.slice(0, 5000),
   };
 }
 
