@@ -115,20 +115,23 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
     try {
       const res = await fetch("/api/valuation", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({
-        addressRaw,
-        buildingName,
-        exclusiveAreaM2: Number(exclusiveAreaM2),
-        floor: floor ? Number(floor) : undefined,
-        tenantDepositAmount: hasRentalInfo
-          ? parseAccountingInput(tenantDepositAmount)
-          : undefined,
-        tenantMonthlyRent: hasRentalInfo
-          ? parseAccountingInput(tenantMonthlyRent)
-          : undefined,
-        rightsRisk: initialValue.rightsRisk
-      })
+          addressRaw,
+          buildingName,
+          exclusiveAreaM2: Number(exclusiveAreaM2),
+          floor: floor ? Number(floor) : undefined,
+          tenantDepositAmount: hasRentalInfo
+            ? parseAccountingInput(tenantDepositAmount)
+            : undefined,
+          tenantMonthlyRent: hasRentalInfo
+            ? parseAccountingInput(tenantMonthlyRent)
+            : undefined,
+          rightsRisk: initialValue.rightsRisk,
+        }),
+      });
           
       if (!res.ok) {
         throw new Error("가치평가 API 호출에 실패했습니다.");
