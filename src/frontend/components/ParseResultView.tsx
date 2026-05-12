@@ -267,8 +267,7 @@ export function ParseResultView({ response }: { response: ParseApiResponse }) {
                 </div>
 
                 <p className="rounded-xl bg-blue-50 p-3 text-xs leading-5 text-blue-800">
-                  수정값은 원본 PDF를 변경하지 않으며, 아래 가치평가 입력값과
-                  보고서 산출에만 반영됩니다.
+                  수정값은 원본 PDF를 변경하지 않으며, 가치평가 실행과 보고서 산출에만 반영됩니다.
                 </p>
               </div>
             ) : (
