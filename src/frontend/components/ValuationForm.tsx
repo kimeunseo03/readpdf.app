@@ -299,176 +299,58 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
               </button>
             </div>
 
-            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-              <div className="rounded-2xl border border-green-100 bg-green-50/60 p-5">
-                <p className="text-xs font-semibold text-green-700">
-                  가치평가 계산값
-                </p>
-                <p className="mt-3 whitespace-pre-line text-xl font-bold leading-snug tabular-nums text-green-700">
-                  {formatKoreanPrice(result.averagePrice)}
-                </p>
-                <p className="mt-3 text-xs text-slate-500">
-                  유사도/IQR 이상치 보정 평균가
-                </p>
-              </div>
+<div className="grid grid-cols-5 gap-4">
+  <div className="rounded-2xl border border-green-100 bg-green-50/60 p-5">
+    <p className="text-xs font-semibold text-green-700">보정 평균가</p>
+    <p className="mt-2 whitespace-pre-line text-2xl font-bold leading-snug tabular-nums text-green-700">
+      {formatKoreanPrice(result.averagePrice)}
+    </p>
+    <p className="mt-2 text-xs text-slate-500">
+      유사도/이상치 보정 반영
+    </p>
+  </div>
 
-              <div className="rounded-2xl border border-red-100 bg-red-50/60 p-5">
-                <p className="text-xs font-semibold text-red-700">
-                  권리차감 후 계산값
-                </p>
-                <p className="mt-3 whitespace-pre-line text-xl font-bold leading-snug tabular-nums text-red-700">
-                  {formatKoreanPrice(result.riskAdjustedPrice)}
-                </p>
-                <p className="mt-3 text-xs text-slate-500">
-                  근저당/보증금 차감 후
-                </p>
-              </div>
+  <div className="rounded-2xl border border-red-100 bg-red-50/60 p-5">
+    <p className="text-xs font-semibold text-red-700">권리 반영가</p>
+    <p className="mt-2 whitespace-pre-line text-2xl font-bold leading-snug tabular-nums text-red-700">
+      {formatKoreanPrice(result.riskAdjustedPrice)}
+    </p>
+    <p className="mt-2 text-xs text-slate-500">
+      근저당/보증금 차감 후
+    </p>
+  </div>
 
-              <div className="rounded-2xl border border-blue-100 bg-blue-50/60 p-5">
-                <p className="text-xs font-semibold text-blue-700">
-                  보수 기준가
-                </p>
-                <p className="mt-3 whitespace-pre-line text-xl font-bold leading-snug tabular-nums text-blue-700">
-                  {formatKoreanPrice(result.conservativePrice)}
-                </p>
-              </div>
+  <div className="rounded-2xl border border-blue-100 bg-blue-50/60 p-5">
+    <p className="text-xs font-semibold text-blue-700">최저 거래가</p>
+    <p className="mt-2 whitespace-pre-line text-2xl font-bold leading-snug tabular-nums text-blue-700">
+      {formatKoreanPrice(result.conservativePrice)}
+    </p>
+    <p className="mt-2 text-xs text-slate-500">
+      비교군 하단값
+    </p>
+  </div>
 
-              <div className="rounded-2xl border border-orange-100 bg-orange-50/60 p-5">
-                <p className="text-xs font-semibold text-orange-700">
-                  상단 참고가
-                </p>
-                <p className="mt-3 whitespace-pre-line text-xl font-bold leading-snug tabular-nums text-orange-700">
-                  {formatKoreanPrice(result.upperReferencePrice)}
-                </p>
-              </div>
-            </div>
-          </div>
+  <div className="rounded-2xl border border-orange-100 bg-orange-50/60 p-5">
+    <p className="text-xs font-semibold text-orange-700">최고 거래가</p>
+    <p className="mt-2 whitespace-pre-line text-2xl font-bold leading-snug tabular-nums text-orange-700">
+      {formatKoreanPrice(result.upperReferencePrice)}
+    </p>
+    <p className="mt-2 text-xs text-slate-500">
+      비교군 상단값
+    </p>
+  </div>
 
-          <div className="grid gap-5 xl:grid-cols-3">
-            <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
-              <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50 px-5 py-4">
-                <div>
-                  <p className="text-xs font-semibold tracking-wide text-slate-500">
-                    MORTGAGE STATUS
-                  </p>
-                  <h3 className="mt-1 text-lg font-bold text-slate-900">
-                    근저당권 현황
-                  </h3>
-                </div>
-
-                <p className="text-sm font-bold text-red-700">
-                  {formatKoreanPrice(result.seniorMortgageAmount)}
-                </p>
-              </div>
-
-              {(result.mortgages?.length ?? 0) > 0 ? (
-                <table className="w-full text-left text-sm">
-                  <thead className="bg-white text-xs text-slate-500">
-                    <tr>
-                      <th className="px-4 py-3 font-semibold">순위</th>
-                      <th className="px-4 py-3 font-semibold">근저당권자</th>
-                      <th className="px-4 py-3 text-right font-semibold">금액(원)</th>
-                      <th className="px-4 py-3 font-semibold">대상소유자</th>
-                    </tr>
-                  </thead>
-
-                  <tbody>
-                    {result.mortgages?.map((mortgage) => (
-                      <tr
-                        key={`${mortgage.rank}-${mortgage.creditor}-${mortgage.amount}-${mortgage.targetOwner ?? ""}`}
-                        className="border-t border-slate-100"
-                      >
-                        <td className="px-4 py-3 text-slate-700">
-                          {mortgage.rank}
-                        </td>
-                      
-                        <td className="px-4 py-3 font-medium text-slate-900">
-                          {mortgage.creditor || "-"}
-                        </td>
-                      
-                        <td className="px-4 py-3 text-right font-semibold tabular-nums text-slate-900">
-                          {mortgage.amount.toLocaleString()}원
-                        </td>
-                      
-                        <td className="px-4 py-3 text-slate-700">
-                          {mortgage.targetOwner || "-"}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              ) : (
-                <p className="p-5 text-sm text-slate-500">
-                  추출된 근저당권 내역이 없습니다.
-                </p>
-              )}
-            </div>
-
-            <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-              <p className="text-xs font-semibold tracking-wide text-slate-500">
-                RIGHTS DEDUCTION
-              </p>
-
-              <h3 className="mt-1 text-lg font-bold text-slate-900">
-                권리 차감 내역
-              </h3>
-
-              <div className="mt-4 space-y-3 text-sm text-slate-700">
-                <div className="flex justify-between gap-4">
-                  <span>선순위 근저당 합계</span>
-                  <strong>{formatKoreanPrice(result.seniorMortgageAmount)}</strong>
-                </div>
-
-                <div className="flex justify-between gap-4">
-                  <span>임차보증금</span>
-                  <strong>{formatKoreanPrice(result.tenantDepositAmount)}</strong>
-                </div>
-
-                <div className="flex justify-between gap-4 border-t border-slate-200 pt-3">
-                  <span>권리 차감 합계</span>
-                  <strong className="text-red-700">
-                    {formatKoreanPrice(result.seniorDebtAmount)}
-                  </strong>
-                </div>
-
-                <div className="flex justify-between gap-4 text-xs text-slate-500">
-                  <span>최우선변제금 추정 참고</span>
-                  <span>{formatKoreanPrice(result.priorityRepaymentAmount)}</span>
-                </div>
-              </div>
-            </div>
-
-            <div className={riskCardClass(initialValue.rightsRisk?.riskLevel)}>
-              <p className="text-xs font-semibold tracking-wide text-slate-500">
-                RISK / CONFIDENCE
-              </p>
-
-              <h3 className="mt-1 text-lg font-bold text-slate-900">
-                권리 위험도 · 평가 신뢰도
-              </h3>
-
-              <div className="mt-5 grid grid-cols-2 gap-3">
-                <div className="rounded-xl border border-white/70 bg-white/60 p-4">
-                  <p className="text-xs text-slate-500">권리 위험도</p>
-                  <p className="mt-2 text-2xl font-bold">
-                    {riskLabel(initialValue.rightsRisk?.riskLevel)}
-                  </p>
-                </div>
-
-                <div className="rounded-xl border border-white/70 bg-white/60 p-4">
-                  <p className="text-xs text-slate-500">평가 신뢰도</p>
-                  <p className="mt-2 text-2xl font-bold text-blue-700">
-                    {result.overallConfidence ?? "-"}
-                  </p>
-                </div>
-              </div>
-
-              <p className="mt-4 text-xs text-slate-500">
-                비교 거래 {result.comparableCount}건 기준
-              </p>
-            </div>
-          </div>
-
+  <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+    <p className="text-xs font-semibold text-slate-600">평가 신뢰도</p>
+    <p className="mt-2 text-3xl font-bold text-blue-700">
+      {result.overallConfidence ?? "-"}
+    </p>
+    <p className="mt-2 text-xs text-slate-500">
+      비교 거래 {result.comparableCount}건 기준
+    </p>
+  </div>
+</div>
+            
           {result.recentTransactions.length > 0 && (
             <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
               <div className="mb-4 flex items-center justify-between gap-3">
