@@ -134,7 +134,7 @@ async function getRecentTransactionPrices(params: {
   console.log("TRANSACTION RAW:", text);
 
   return {
-    raw: text.slice(0, 5000),
+    raw: text.slice(0, 2000),
   };
 }
 
