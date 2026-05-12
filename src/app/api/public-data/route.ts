@@ -75,7 +75,7 @@ async function getKaptCode(params: {
       "https://apis.data.go.kr/1613000/AptBasisInfoServiceV3/getAphusBassInfo"
     );
 
-    url.searchParams.set("serviceKey", serviceKey);
+    url.searchParams.append("serviceKey", serviceKey);
     url.searchParams.set("kaptCode", "A13822003");
     url.searchParams.set("_type", "json");
 
