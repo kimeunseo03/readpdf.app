@@ -69,54 +69,7 @@ async function getKaptCode(params: {
     throw new Error("PUBLIC_DATA_API_KEY가 설정되지 않았습니다.");
   }
 
-  async function getRecentTransactionPrices(
-  kaptCode: string
-) {
-  const serviceKey = process.env.PUBLIC_DATA_API_KEY;
-
-  if (!serviceKey) {
-    throw new Error(
-      "PUBLIC_DATA_API_KEY가 설정되지 않았습니다."
-    );
-  }
-
-  if (!kaptCode) {
-    return [];
-  }
-
-  const url = new URL(
-    "https://apis.data.go.kr/1613000/RTMSDataSvcAptTradeDev/getRTMSDataSvcAptTradeDev"
-  );
-
-  url.searchParams.set("serviceKey", serviceKey);
-  url.searchParams.set("kaptCode", kaptCode);
-  url.searchParams.set("LAWD_CD", "11710");
-  url.searchParams.set("DEAL_YMD", "202605");
-  url.searchParams.set("_type", "json");
-
-  const res = await fetch(url.toString(), {
-    method: "GET",
-    cache: "no-store",
-  });
-
-  if (!res.ok) {
-    throw new Error(
-      `실거래 API 호출 실패: ${res.status}`
-    );
-  }
-
-  const data = await res.json();
-
-  console.log(
-    "TRANSACTION RAW:",
-    JSON.stringify(data, null, 2)
-  );
-
-  return data;
-}
-
   const searchBaseAddress = roadAddress || jibunAddress;
-
   const addressParts = searchBaseAddress.split(" ");
 
   const sido = addressParts[0] || "";
@@ -144,28 +97,63 @@ async function getKaptCode(params: {
 
   const data = await res.json();
 
-  console.log(
-    "KAPT RAW:",
-    JSON.stringify(data, null, 2)
-  );
+  const rawItems = data?.response?.body?.items?.item ?? [];
+  const items = Array.isArray(rawItems) ? rawItems : [rawItems];
 
-  const items =
-    data?.response?.body?.items?.item ?? [];
-
-  const normalizedBuildingName =
-    buildingName.replace(/\s/g, "").toLowerCase();
+  const normalizedBuildingName = buildingName
+    .replace(/\s/g, "")
+    .toLowerCase();
 
   const matched = items.find((item: any) => {
     const aptName = String(item.kaptName || "")
       .replace(/\s/g, "")
       .toLowerCase();
 
-    return aptName.includes(normalizedBuildingName);
+    return (
+      aptName.includes(normalizedBuildingName) ||
+      normalizedBuildingName.includes(aptName)
+    );
   });
 
   return {
     matched: Boolean(matched),
     kaptCode: matched?.kaptCode ?? null,
+  };
+}
+
+async function getRecentTransactionPrices(params: {
+  lawdCd: string;
+  dealYmd: string;
+}) {
+  const serviceKey = process.env.PUBLIC_DATA_API_KEY;
+
+  if (!serviceKey) {
+    throw new Error("PUBLIC_DATA_API_KEY가 설정되지 않았습니다.");
+  }
+
+  const url = new URL(
+    "https://apis.data.go.kr/1613000/RTMSDataSvcAptTradeDev/getRTMSDataSvcAptTradeDev"
+  );
+
+  url.searchParams.set("serviceKey", serviceKey);
+  url.searchParams.set("LAWD_CD", params.lawdCd);
+  url.searchParams.set("DEAL_YMD", params.dealYmd);
+  url.searchParams.set("pageNo", "1");
+  url.searchParams.set("numOfRows", "50");
+
+  const res = await fetch(url.toString(), {
+    method: "GET",
+    cache: "no-store",
+  });
+
+  if (!res.ok) {
+    throw new Error(`실거래 API 호출 실패: ${res.status}`);
+  }
+
+  const text = await res.text();
+
+  return {
+    raw: text.slice(0, 3000),
   };
 }
 
@@ -194,25 +182,18 @@ export async function POST(req: NextRequest) {
 
     let vworldRaw: any = null;
     let coordinates = null;
-    let kaptData = null;
-    let transactionData = null;
+    let kaptData: any = null;
+    let transactionData: any = null;
 
     let addressType: VWorldAddressType = roadAddress ? "road" : "parcel";
 
     try {
       vworldRaw = await getVWorldCoord(primaryAddress, addressType);
-
-      console.log("VWORLD RAW PRIMARY:", JSON.stringify(vworldRaw, null, 2));
-
       coordinates = extractVWorldPoint(vworldRaw);
 
       if (!coordinates && jibunAddress && roadAddress) {
         addressType = "parcel";
-
         vworldRaw = await getVWorldCoord(jibunAddress, "parcel");
-
-        console.log("VWORLD RAW FALLBACK:", JSON.stringify(vworldRaw, null, 2));
-
         coordinates = extractVWorldPoint(vworldRaw);
       }
     } catch (error) {
@@ -220,14 +201,7 @@ export async function POST(req: NextRequest) {
 
       if (jibunAddress && roadAddress) {
         addressType = "parcel";
-
         vworldRaw = await getVWorldCoord(jibunAddress, "parcel");
-
-        console.log(
-          "VWORLD RAW FALLBACK AFTER ERROR:",
-          JSON.stringify(vworldRaw, null, 2)
-        );
-
         coordinates = extractVWorldPoint(vworldRaw);
       }
     }
@@ -238,13 +212,11 @@ export async function POST(req: NextRequest) {
       buildingName,
     });
 
-    if (kaptData?.kaptCode) {
-  transactionData =
-    await getRecentTransactionPrices(
-      kaptData.kaptCode
-    );
-}
-    
+    transactionData = await getRecentTransactionPrices({
+      lawdCd: "11710",
+      dealYmd: "202605",
+    });
+
     return NextResponse.json({
       success: true,
 
