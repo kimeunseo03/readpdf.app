@@ -3,7 +3,6 @@ import { randomUUID } from "crypto";
 import { validatePdfFile } from "@backend/pdf/validatePdf";
 import { extractTextFromPdf } from "@backend/pdf/extractText";
 import { parseRegistryText } from "@backend/pdf/parseRegistryPdf";
-import { toValuationInput } from "@backend/pdf/normalizeRegistryData";
 import { getCompliancePolicy } from "@backend/compliance/dataSourcePolicy";
 
 export const runtime = "nodejs";
@@ -34,12 +33,9 @@ export async function POST(request: Request) {
       pageCount: extracted.pageCount
     });
 
-    const valuationInput = toValuationInput(parseResult);
-
     return NextResponse.json({
       validation,
       parseResult,
-      valuation: createValuationPlaceholder(valuationInput),
       compliance: getCompliancePolicy()
     });
   } catch (error) {
