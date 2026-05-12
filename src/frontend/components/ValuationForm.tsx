@@ -140,7 +140,7 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
   }
 
   return (
-    <div className="mx-auto w-full max-w-[1280px] space-y-6">
+    <div className="report-page print-report space-y-6">
       <section className="card-surface p-6">
         <div className="mb-5">
           <p className="text-xs font-semibold tracking-wide text-blue-600">
@@ -258,7 +258,7 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
       </section>
 
       {result && (
-        <section className="space-y-6">
+        <section className="report-section space-y-6">
           <div className="rounded-3xl border border-slate-200 bg-white p-7 shadow-sm">
             <div className="mb-5 flex items-center justify-between border-b border-slate-100 pb-4">
               <div>
@@ -358,7 +358,7 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
               </div>
 
               <div className="overflow-hidden rounded-2xl border border-slate-200">
-                <table className="w-full table-fixed text-left text-sm">
+                <table className="report-table text-left text-sm">
                   <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
                     <tr>
                       <th className="w-[105px] px-4 py-3 font-semibold">
