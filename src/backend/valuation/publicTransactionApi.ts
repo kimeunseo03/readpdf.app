@@ -2,7 +2,7 @@ import type { PublicTransactionApiParams, TransactionItem } from "./types";
 import type { ExtractedRegion } from "./extractRegion";
 import { geocodeAddress } from "./geocodeApi";
 import { calculateDistanceMeters } from "./distance";
-import { findApartmentKaptCodeInLegalDong } from "./apartmentBasisInfoApi";
+import { findApartmentKaptCodeInLegalDong, fetchApartmentBasisInfo} from "./apartmentBasisInfoApi";
 
 interface FetchParams {
   buildingName?: string;
@@ -327,6 +327,10 @@ async function fetchApartmentTradeApi(
         legalDongCode: params.legalDongCode,
         apartmentName: aptNm
       });
+
+      const transactionBasisInfo = transactionKaptCode
+        ? await fetchApartmentBasisInfo(transactionKaptCode)
+        : undefined;
       
       const isSameApartmentByKaptCode =
         !!params.targetKaptCode &&
@@ -425,7 +429,7 @@ const isSameApartment = isSameApartmentByKaptCode || isSameApartmentByName;
 
       const householdScale = getHouseholdScaleScore({
         targetHouseholdCount: params.targetHouseholdCount,
-        transactionHouseholdCount: undefined
+        transactionHouseholdCount: transactionBasisInfo?.householdCount
       });
 
       if (householdScale.reason) {
