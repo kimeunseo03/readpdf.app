@@ -18,6 +18,10 @@ interface FetchParams {
   targetKaptCode?: string;
 }
 
+type ApartmentTradeApiParams = PublicTransactionApiParams & {
+  region?: ExtractedRegion;
+};
+
 function getRecentDealYearMonths(monthCount = 12): string[] {
   const result: string[] = [];
   const now = new Date();
@@ -222,7 +226,7 @@ function applyGeneralBuildYearScore(params: {
 }
 
 async function fetchApartmentTradeApi(
-  params: PublicTransactionApiParams
+  params: ApartmentTradeApiParams
 ): Promise<TransactionItem[]> {
   try {
     if (!params.legalDongCode) return [];
