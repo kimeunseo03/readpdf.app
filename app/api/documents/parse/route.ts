@@ -4,7 +4,6 @@ import { validatePdfFile } from "@backend/pdf/validatePdf";
 import { extractTextFromPdf } from "@backend/pdf/extractText";
 import { parseRegistryText } from "@backend/pdf/parseRegistryPdf";
 import { toValuationInput } from "@backend/pdf/normalizeRegistryData";
-import { createValuationPlaceholder } from "@backend/valuation/placeholderValuationEngine";
 import { getCompliancePolicy } from "@backend/compliance/dataSourcePolicy";
 
 export const runtime = "nodejs";
