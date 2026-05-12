@@ -61,11 +61,22 @@ async function getKaptCode(params: {
   jibunAddress: string;
   buildingName: string;
 }) {
-  // 공동주택 단지목록 API 호출
-  // roadAddress/buildingName 기준 후보 필터링
-  // kaptCode 반환
-}
+  const { roadAddress, jibunAddress, buildingName } = params;
 
+  const searchBaseAddress = roadAddress || jibunAddress;
+
+  const normalizedBuildingName = buildingName
+    .replace(/\s/g, "")
+    .toLowerCase();
+
+  return {
+    matched: false,
+    kaptCode: null,
+    searchBaseAddress,
+    normalizedBuildingName,
+    candidates: [],
+  };
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -92,6 +103,7 @@ export async function POST(req: NextRequest) {
 
     let vworldRaw: any = null;
     let coordinates = null;
+    let kaptData = null;
 
     let addressType: VWorldAddressType = roadAddress ? "road" : "parcel";
 
@@ -128,6 +140,12 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    kaptData = await getKaptCode({
+      roadAddress,
+      jibunAddress,
+      buildingName,
+    });
+
     return NextResponse.json({
       success: true,
       input: {
@@ -150,6 +168,7 @@ export async function POST(req: NextRequest) {
           error: vworldRaw?.response?.error ?? null,
           result: vworldRaw?.response?.result ?? null,
         },
+        kapt: kaptData,
       },
       nextRequiredData: [
         "kaptCode",
