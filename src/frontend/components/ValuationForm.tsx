@@ -299,10 +299,10 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
         </button>
       </div>
 
-      <div className="grid grid-cols-5 gap-4">
+      <div className="grid grid-cols-5 gap-6 min-w-[1400px]">
         <div className="rounded-2xl border border-green-100 bg-green-50/60 p-5">
           <p className="text-xs font-semibold text-green-700">보정 평균가</p>
-          <p className="mt-2 whitespace-pre-line text-2xl font-bold leading-snug tabular-nums text-green-700">
+          <p className="mt-2 whitespace-nowrap text-2xl font-bold leading-snug tabular-nums text-green-700">
             {formatKoreanPrice(result.averagePrice)}
           </p>
           <p className="mt-2 text-xs text-slate-500">
@@ -310,9 +310,9 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
           </p>
         </div>
 
-        <div className="rounded-2xl border border-red-100 bg-red-50/60 p-5">
+        <div className="rounded-2xl border border-red-100 bg-red-50/60 p-7">
           <p className="text-xs font-semibold text-red-700">권리 반영가</p>
-          <p className="mt-2 whitespace-pre-line text-2xl font-bold leading-snug tabular-nums text-red-700">
+          <p className="mt-2 whitespace-nowrap text-2xl font-bold leading-snug tabular-nums text-red-700">
             {formatKoreanPrice(result.riskAdjustedPrice)}
           </p>
           <p className="mt-2 text-xs text-slate-500">
@@ -320,23 +320,23 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
           </p>
         </div>
 
-        <div className="rounded-2xl border border-blue-100 bg-blue-50/60 p-5">
+        <div className="rounded-2xl border border-blue-100 bg-blue-50/60 p-7">
           <p className="text-xs font-semibold text-blue-700">최저 거래가</p>
-          <p className="mt-2 whitespace-pre-line text-2xl font-bold leading-snug tabular-nums text-blue-700">
+          <p className="mt-2 whitespace-nowrap text-2xl font-bold leading-snug tabular-nums text-blue-700">
             {formatKoreanPrice(result.conservativePrice)}
           </p>
           <p className="mt-2 text-xs text-slate-500">비교군 하단값</p>
         </div>
 
-        <div className="rounded-2xl border border-orange-100 bg-orange-50/60 p-5">
+        <div className="rounded-2xl border border-orange-100 bg-orange-50/60 p-7">
           <p className="text-xs font-semibold text-orange-700">최고 거래가</p>
-          <p className="mt-2 whitespace-pre-line text-2xl font-bold leading-snug tabular-nums text-orange-700">
+          <p className="mt-2 whitespace-nowrap text-2xl font-bold leading-snug tabular-nums text-orange-700">
             {formatKoreanPrice(result.upperReferencePrice)}
           </p>
           <p className="mt-2 text-xs text-slate-500">비교군 상단값</p>
         </div>
 
-        <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+        <div className="rounded-2xl border border-slate-200 bg-slate-50 p-7">
           <p className="text-xs font-semibold text-slate-600">평가 신뢰도</p>
           <p className="mt-2 text-3xl font-bold text-blue-700">
             {result.overallConfidence ?? "-"}
