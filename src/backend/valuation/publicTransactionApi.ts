@@ -307,10 +307,11 @@ async function fetchApartmentTradeApi(
         }
       }
 
-      if (floorSimilarity.reason) {
+            if (floorSimilarity.reason) {
         similarityReason += ` · ${floorSimilarity.reason}`;
+      }
 
-       if (dealType.includes("직거래")) {
+      if (dealType.includes("직거래")) {
         similarityScore -= 8;
         similarityReason += " · 직거래 감점";
       }
@@ -364,6 +365,7 @@ async function fetchApartmentTradeApi(
                 : `법정동 fallback 거래(±${areaToleranceM2}㎡)`
             : `법정동 fallback 거래(±${areaToleranceM2}㎡)`
       });
+    }
 
     console.log("filtered_transaction_count", transactions.length);
 
