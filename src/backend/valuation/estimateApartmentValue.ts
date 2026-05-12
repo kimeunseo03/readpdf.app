@@ -385,12 +385,16 @@ const transactions = await fetchPublicTransactions({
       "동일단지 우선 비교",
       "유사 면적 비교",
       "층수 유사도 반영",
-      ...(targetCoordinate
-        ? ["거리 기반 비교 반영"]
+      ...(targetCoordinate ? ["거리 기반 비교 반영"] : []),
+      ...(apartmentMeta?.basis?.kaptCode
+        ? ["공동주택 단지코드 기반 동일단지 검증"]
+        : []),
+      ...(apartmentMeta?.basis?.buildYear
+        ? ["사용승인연도 유사도 반영"]
+        : []),
+      ...(apartmentMeta?.basis?.householdCount
+        ? ["세대수 규모 유사도 반영"]
         : [])
-      ...(apartmentMeta?.basis?.kaptCode ? ["공동주택 단지코드 기반 동일단지 검증"] : []),
-      ...(apartmentMeta?.basis?.buildYear ? ["사용승인연도 유사도 반영"] : []),
-      ...(apartmentMeta?.basis?.householdCount ? ["세대수 규모 유사도 반영"] : [])
     ],
 
     overallConfidence,
