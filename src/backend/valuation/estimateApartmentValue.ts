@@ -100,9 +100,7 @@ if (!apartmentMeta?.basis?.kaptCode) {
     "공동주택 단지코드(kaptCode)를 찾지 못해 세대수·사용승인일 기반 보정이 제한됩니다."
   );
 }
-  const targetCoordinate = await geocodeAddress(
-  normalized.normalizedAddress
-);
+  const targetCoordinate = undefined;
 
   if (!normalized.normalizedAddress) {
     warnings.push("주소 정보가 부족합니다.");
@@ -112,11 +110,11 @@ if (!apartmentMeta?.basis?.kaptCode) {
     warnings.push("전용면적 정보가 부족합니다.");
   }
 
-  if (!targetCoordinate) {
+ /* if (!targetCoordinate) {
   warnings.push(
     "주소 좌표 변환에 실패하여 거리 기반 비교가 제한됩니다."
   );
-}
+} */
   
   if (!legalDongCode) {
     warnings.push(
