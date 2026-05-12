@@ -276,80 +276,77 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
         )}
       </section>
 
-      {result && (
-        <section className="mt-6 space-y-5">
-          <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-            <div className="mb-5 flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-4">
-              <div>
-                <p className="text-xs font-semibold tracking-wide text-blue-600">
-                  VALUATION RESULT
-                </p>
+{result && (
+  <section className="mt-6 space-y-5">
+    <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+      <div className="mb-5 flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-4">
+        <div>
+          <p className="text-xs font-semibold tracking-wide text-blue-600">
+            VALUATION RESULT
+          </p>
 
-                <h2 className="mt-1 text-xl font-bold tracking-tight text-slate-900">
-                  가치평가 결과
-                </h2>
-              </div>
+          <h2 className="mt-1 text-xl font-bold tracking-tight text-slate-900">
+            가치평가 결과
+          </h2>
+        </div>
 
-              <button
-                type="button"
-                onClick={printReport}
-                className="no-print rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50"
-              >
-                PDF 저장
-              </button>
-            </div>
+        <button
+          type="button"
+          onClick={printReport}
+          className="no-print rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50"
+        >
+          PDF 저장
+        </button>
+      </div>
 
-<div className="grid grid-cols-5 gap-4">
-  <div className="rounded-2xl border border-green-100 bg-green-50/60 p-5">
-    <p className="text-xs font-semibold text-green-700">보정 평균가</p>
-    <p className="mt-2 whitespace-pre-line text-2xl font-bold leading-snug tabular-nums text-green-700">
-      {formatKoreanPrice(result.averagePrice)}
-    </p>
-    <p className="mt-2 text-xs text-slate-500">
-      유사도/이상치 보정 반영
-    </p>
-  </div>
+      <div className="grid grid-cols-5 gap-4">
+        <div className="rounded-2xl border border-green-100 bg-green-50/60 p-5">
+          <p className="text-xs font-semibold text-green-700">보정 평균가</p>
+          <p className="mt-2 whitespace-pre-line text-2xl font-bold leading-snug tabular-nums text-green-700">
+            {formatKoreanPrice(result.averagePrice)}
+          </p>
+          <p className="mt-2 text-xs text-slate-500">
+            유사도/이상치 보정 반영
+          </p>
+        </div>
 
-  <div className="rounded-2xl border border-red-100 bg-red-50/60 p-5">
-    <p className="text-xs font-semibold text-red-700">권리 반영가</p>
-    <p className="mt-2 whitespace-pre-line text-2xl font-bold leading-snug tabular-nums text-red-700">
-      {formatKoreanPrice(result.riskAdjustedPrice)}
-    </p>
-    <p className="mt-2 text-xs text-slate-500">
-      근저당/보증금 차감 후
-    </p>
-  </div>
+        <div className="rounded-2xl border border-red-100 bg-red-50/60 p-5">
+          <p className="text-xs font-semibold text-red-700">권리 반영가</p>
+          <p className="mt-2 whitespace-pre-line text-2xl font-bold leading-snug tabular-nums text-red-700">
+            {formatKoreanPrice(result.riskAdjustedPrice)}
+          </p>
+          <p className="mt-2 text-xs text-slate-500">
+            근저당/보증금 차감 후
+          </p>
+        </div>
 
-  <div className="rounded-2xl border border-blue-100 bg-blue-50/60 p-5">
-    <p className="text-xs font-semibold text-blue-700">최저 거래가</p>
-    <p className="mt-2 whitespace-pre-line text-2xl font-bold leading-snug tabular-nums text-blue-700">
-      {formatKoreanPrice(result.conservativePrice)}
-    </p>
-    <p className="mt-2 text-xs text-slate-500">
-      비교군 하단값
-    </p>
-  </div>
+        <div className="rounded-2xl border border-blue-100 bg-blue-50/60 p-5">
+          <p className="text-xs font-semibold text-blue-700">최저 거래가</p>
+          <p className="mt-2 whitespace-pre-line text-2xl font-bold leading-snug tabular-nums text-blue-700">
+            {formatKoreanPrice(result.conservativePrice)}
+          </p>
+          <p className="mt-2 text-xs text-slate-500">비교군 하단값</p>
+        </div>
 
-  <div className="rounded-2xl border border-orange-100 bg-orange-50/60 p-5">
-    <p className="text-xs font-semibold text-orange-700">최고 거래가</p>
-    <p className="mt-2 whitespace-pre-line text-2xl font-bold leading-snug tabular-nums text-orange-700">
-      {formatKoreanPrice(result.upperReferencePrice)}
-    </p>
-    <p className="mt-2 text-xs text-slate-500">
-      비교군 상단값
-    </p>
-  </div>
+        <div className="rounded-2xl border border-orange-100 bg-orange-50/60 p-5">
+          <p className="text-xs font-semibold text-orange-700">최고 거래가</p>
+          <p className="mt-2 whitespace-pre-line text-2xl font-bold leading-snug tabular-nums text-orange-700">
+            {formatKoreanPrice(result.upperReferencePrice)}
+          </p>
+          <p className="mt-2 text-xs text-slate-500">비교군 상단값</p>
+        </div>
 
-  <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
-    <p className="text-xs font-semibold text-slate-600">평가 신뢰도</p>
-    <p className="mt-2 text-3xl font-bold text-blue-700">
-      {result.overallConfidence ?? "-"}
-    </p>
-    <p className="mt-2 text-xs text-slate-500">
-      비교 거래 {result.comparableCount}건 기준
-    </p>
-  </div>
-          </div>
+        <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+          <p className="text-xs font-semibold text-slate-600">평가 신뢰도</p>
+          <p className="mt-2 text-3xl font-bold text-blue-700">
+            {result.overallConfidence ?? "-"}
+          </p>
+          <p className="mt-2 text-xs text-slate-500">
+            비교 거래 {result.comparableCount}건 기준
+          </p>
+        </div>
+      </div>
+    </div>
             
           {result.recentTransactions.length > 0 && (
             <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
