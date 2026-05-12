@@ -6,7 +6,7 @@ import { formatKoreanPrice } from "../../backend/valuation/formatKoreanPrice";
 interface MortgageItem {
   rank: number;
   creditor: string;
-  amount: number; // 원
+  amount: number;
   targetOwner?: string;
 }
 
@@ -83,25 +83,6 @@ function parseAccountingInput(value: string) {
   return numeric ? Number(numeric) : undefined;
 }
 
-function riskLabel(level?: "SAFE" | "CAUTION" | "DANGER") {
-  if (level === "SAFE") return "안전";
-  if (level === "CAUTION") return "주의";
-  if (level === "DANGER") return "위험";
-  return "-";
-}
-
-function riskCardClass(level?: "SAFE" | "CAUTION" | "DANGER") {
-  if (level === "SAFE") {
-    return "rounded-2xl border border-green-100 bg-green-50/60 p-5";
-  }
-
-  if (level === "CAUTION") {
-    return "rounded-2xl border border-yellow-100 bg-yellow-50/60 p-5";
-  }
-
-  return "rounded-2xl border border-red-100 bg-red-50/60 p-5";
-}
-
 export function ValuationForm({ initialValue }: ValuationFormProps) {
   const [managerName, setManagerName] = useState("");
   const [tenantDepositAmount, setTenantDepositAmount] = useState("");
@@ -159,7 +140,7 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
   }
 
   return (
-    <>
+    <div className="mx-auto w-full max-w-[1280px] space-y-6">
       <section className="card-surface p-6">
         <div className="mb-5">
           <p className="text-xs font-semibold tracking-wide text-blue-600">
@@ -171,8 +152,8 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
           </h2>
         </div>
 
-        <div className="grid gap-4 md:grid-cols-2">
-          <label className="block md:col-span-2">
+        <div className="grid grid-cols-2 gap-4">
+          <label className="block col-span-2">
             <span className="mb-1 block text-sm font-medium text-slate-700">
               주소
             </span>
@@ -262,7 +243,7 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
               type="button"
               onClick={runValuation}
               disabled={loading}
-              className="w-fit rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+              className="rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {loading ? "평가 중..." : "자동 평가 실행"}
             </button>
@@ -276,85 +257,96 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
         )}
       </section>
 
-{result && (
-  <section className="mt-6 space-y-6 w-full min-w-[1600px]">
-    <div className="w-full rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
-      <div className="mb-5 flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-4">
-        <div>
-          <p className="text-xs font-semibold tracking-wide text-blue-600">
-            VALUATION RESULT
-          </p>
+      {result && (
+        <section className="space-y-6">
+          <div className="rounded-3xl border border-slate-200 bg-white p-7 shadow-sm">
+            <div className="mb-5 flex items-center justify-between border-b border-slate-100 pb-4">
+              <div>
+                <p className="text-xs font-semibold tracking-wide text-blue-600">
+                  VALUATION RESULT
+                </p>
 
-          <h2 className="mt-1 text-xl font-bold tracking-tight text-slate-900">
-            가치평가 결과
-          </h2>
-        </div>
+                <h2 className="mt-1 text-xl font-bold tracking-tight text-slate-900">
+                  가치평가 결과
+                </h2>
+              </div>
 
-        <button
-          type="button"
-          onClick={printReport}
-          className="no-print rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50"
-        >
-          PDF 저장
-        </button>
-      </div>
+              <button
+                type="button"
+                onClick={printReport}
+                className="no-print rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50"
+              >
+                PDF 저장
+              </button>
+            </div>
 
-      <div className="grid grid-cols-5 gap-8 min-w-[1650px]">
-        <div className="rounded-2xl border border-green-100 bg-green-50/60 p-5">
-          <p className="text-xs font-semibold text-green-700">보정 평균가</p>
-          <p className="mt-2 whitespace-nowrap text-2xl font-bold leading-snug tabular-nums text-green-700">
-            {formatKoreanPrice(result.averagePrice)}
-          </p>
-          <p className="mt-2 text-xs text-slate-500">
-            유사도/이상치 보정 반영
-          </p>
-        </div>
+            <div className="grid grid-cols-5 gap-4">
+              <div className="rounded-2xl border border-green-100 bg-green-50/60 p-5">
+                <p className="text-xs font-semibold text-green-700">
+                  보정 평균가
+                </p>
+                <p className="mt-2 text-xl font-bold leading-snug tabular-nums text-green-700">
+                  {formatKoreanPrice(result.averagePrice)}
+                </p>
+                <p className="mt-2 text-xs text-slate-500">
+                  유사도/이상치 보정 반영
+                </p>
+              </div>
 
-        <div className="rounded-2xl border border-red-100 bg-red-50/60 p-7">
-          <p className="text-xs font-semibold text-red-700">권리 반영가</p>
-          <p className="mt-2 whitespace-nowrap text-2xl font-bold leading-snug tabular-nums text-red-700">
-            {formatKoreanPrice(result.riskAdjustedPrice)}
-          </p>
-          <p className="mt-2 text-xs text-slate-500">
-            근저당/보증금 차감 후
-          </p>
-        </div>
+              <div className="rounded-2xl border border-red-100 bg-red-50/60 p-5">
+                <p className="text-xs font-semibold text-red-700">
+                  권리 반영가
+                </p>
+                <p className="mt-2 text-xl font-bold leading-snug tabular-nums text-red-700">
+                  {formatKoreanPrice(result.riskAdjustedPrice)}
+                </p>
+                <p className="mt-2 text-xs text-slate-500">
+                  근저당/보증금 차감 후
+                </p>
+              </div>
 
-        <div className="rounded-2xl border border-blue-100 bg-blue-50/60 p-7">
-          <p className="text-xs font-semibold text-blue-700">최저 거래가</p>
-          <p className="mt-2 whitespace-nowrap text-2xl font-bold leading-snug tabular-nums text-blue-700">
-            {formatKoreanPrice(result.conservativePrice)}
-          </p>
-          <p className="mt-2 text-xs text-slate-500">비교군 하단값</p>
-        </div>
+              <div className="rounded-2xl border border-blue-100 bg-blue-50/60 p-5">
+                <p className="text-xs font-semibold text-blue-700">
+                  최저 거래가
+                </p>
+                <p className="mt-2 text-xl font-bold leading-snug tabular-nums text-blue-700">
+                  {formatKoreanPrice(result.conservativePrice)}
+                </p>
+                <p className="mt-2 text-xs text-slate-500">비교군 하단값</p>
+              </div>
 
-        <div className="rounded-2xl border border-orange-100 bg-orange-50/60 p-7">
-          <p className="text-xs font-semibold text-orange-700">최고 거래가</p>
-          <p className="mt-2 whitespace-nowrap text-2xl font-bold leading-snug tabular-nums text-orange-700">
-            {formatKoreanPrice(result.upperReferencePrice)}
-          </p>
-          <p className="mt-2 text-xs text-slate-500">비교군 상단값</p>
-        </div>
+              <div className="rounded-2xl border border-orange-100 bg-orange-50/60 p-5">
+                <p className="text-xs font-semibold text-orange-700">
+                  최고 거래가
+                </p>
+                <p className="mt-2 text-xl font-bold leading-snug tabular-nums text-orange-700">
+                  {formatKoreanPrice(result.upperReferencePrice)}
+                </p>
+                <p className="mt-2 text-xs text-slate-500">비교군 상단값</p>
+              </div>
 
-        <div className="rounded-2xl border border-slate-200 bg-slate-50 p-7">
-          <p className="text-xs font-semibold text-slate-600">평가 신뢰도</p>
-          <p className="mt-2 text-3xl font-bold text-blue-700">
-            {result.overallConfidence ?? "-"}
-          </p>
-          <p className="mt-2 text-xs text-slate-500">
-            비교 거래 {result.comparableCount}건 기준
-          </p>
-        </div>
-      </div>
-    </div>
-            
+              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+                <p className="text-xs font-semibold text-slate-600">
+                  평가 신뢰도
+                </p>
+                <p className="mt-2 text-3xl font-bold text-blue-700">
+                  {result.overallConfidence ?? "-"}
+                </p>
+                <p className="mt-2 text-xs text-slate-500">
+                  비교 거래 {result.comparableCount}건 기준
+                </p>
+              </div>
+            </div>
+          </div>
+
           {result.recentTransactions.length > 0 && (
-            <div className="w-full rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
+            <div className="rounded-3xl border border-slate-200 bg-white p-7 shadow-sm">
               <div className="mb-4 flex items-center justify-between gap-3">
                 <div>
                   <p className="text-xs font-semibold tracking-wide text-blue-600">
                     COMPARABLE SALES
                   </p>
+
                   <h3 className="mt-1 text-lg font-bold tracking-tight text-slate-900">
                     비교 거래 내역
                   </h3>
@@ -365,18 +357,30 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
                 </span>
               </div>
 
-              <div className="overflow-x-auto rounded-2xl border border-slate-200">
-                <table className="min-w-[980px] w-full text-left text-sm">
+              <div className="overflow-hidden rounded-2xl border border-slate-200">
+                <table className="w-full table-fixed text-left text-sm">
                   <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
                     <tr>
-                      <th className="px-4 py-3 font-semibold">거래일</th>
-                      <th className="px-4 py-3 font-semibold">거래금액</th>
-                      <th className="px-4 py-3 font-semibold">전용면적</th>
-                      <th className="px-4 py-3 font-semibold">층</th>
-                      <th className="px-4 py-3 font-semibold">비교군</th>
-                      <th className="px-4 py-3 font-semibold">유사도</th>
+                      <th className="w-[105px] px-4 py-3 font-semibold">
+                        거래일
+                      </th>
+                      <th className="w-[145px] px-4 py-3 font-semibold">
+                        거래금액
+                      </th>
+                      <th className="w-[95px] px-4 py-3 font-semibold">
+                        전용면적
+                      </th>
+                      <th className="w-[70px] px-4 py-3 font-semibold">층</th>
+                      <th className="w-[130px] px-4 py-3 font-semibold">
+                        비교군
+                      </th>
+                      <th className="w-[190px] px-4 py-3 font-semibold">
+                        유사도
+                      </th>
                       <th className="px-4 py-3 font-semibold">선정 기준</th>
-                      <th className="px-4 py-3 font-semibold">신뢰도</th>
+                      <th className="w-[80px] px-4 py-3 font-semibold">
+                        신뢰도
+                      </th>
                     </tr>
                   </thead>
 
@@ -386,17 +390,16 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
                         key={`${tx.dealYear}-${tx.dealMonth}-${tx.dealDay}-${tx.dealAmount}-${index}`}
                         className={
                           index === 0
-                            ? "border-b bg-green-50"
+                            ? "border-b bg-green-50/60"
                             : "border-b hover:bg-slate-50"
                         }
                       >
                         <td className="px-4 py-3 text-slate-700">
-                          {tx.dealYear}.
-                          {String(tx.dealMonth).padStart(2, "0")}.
+                          {tx.dealYear}.{String(tx.dealMonth).padStart(2, "0")}.
                           {String(tx.dealDay).padStart(2, "0")}
                         </td>
 
-                        <td className="whitespace-pre-line px-4 py-3 font-medium tabular-nums text-slate-700">
+                        <td className="px-4 py-3 font-medium leading-5 tabular-nums text-slate-700">
                           {formatKoreanPrice(tx.dealAmount * 10000)}
                         </td>
 
@@ -424,14 +427,14 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
                           </div>
                         </td>
 
-                        <td className="px-4 py-3 text-slate-700">
+                        <td className="px-4 py-3 leading-5 text-slate-700">
                           {tx.similarityScore ?? "-"}점
                           {tx.similarityReason
                             ? ` · ${tx.similarityReason}`
                             : ""}
                         </td>
 
-                        <td className="px-4 py-3 text-slate-700">
+                        <td className="px-4 py-3 leading-5 text-slate-700">
                           {tx.selectionReason ?? "-"}
                         </td>
 
@@ -456,9 +459,9 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
             </div>
           )}
 
-          <div className="grid gap-5 lg:grid-cols-2">
+          <div className="grid grid-cols-2 gap-5">
             {result.finalComment && (
-              <div className="w-full rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
+              <div className="rounded-3xl border border-slate-200 bg-white p-7 shadow-sm">
                 <p className="text-xs font-semibold tracking-wide text-slate-500">
                   FINAL COMMENT
                 </p>
@@ -474,7 +477,7 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
             )}
 
             {result.warnings.length > 0 && (
-              <div className="rounded-3xl border border-amber-200 bg-amber-50/70 p-6 shadow-sm">
+              <div className="rounded-3xl border border-amber-200 bg-amber-50/70 p-7 shadow-sm">
                 <p className="text-xs font-semibold tracking-wide text-amber-700">
                   WARNINGS
                 </p>
@@ -483,10 +486,10 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
                   주의사항
                 </h3>
 
-                <ul className="mt-3 space-y-2 text-sm text-amber-900">
+                <ul className="mt-3 space-y-2 text-sm leading-6 text-amber-900">
                   {[...new Set(result.warnings)].map((warning) => (
                     <li key={warning} className="flex items-start gap-2">
-                      <span className="mt-1.5 h-1.5 w-1.5 rounded-full bg-amber-500" />
+                      <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-amber-500" />
                       <span>{warning}</span>
                     </li>
                   ))}
@@ -496,6 +499,6 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
           </div>
         </section>
       )}
-    </>
+    </div>
   );
 }
