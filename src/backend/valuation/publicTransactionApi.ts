@@ -15,6 +15,34 @@ interface FetchParams {
   };
 }
 
+interface FallbackRule {
+  monthCount: number;
+  areaToleranceM2: number;
+  minimumComparableCount: number;
+  label: string;
+}
+
+const FALLBACK_RULES: FallbackRule[] = [
+  {
+    monthCount: 12,
+    areaToleranceM2: 3,
+    minimumComparableCount: 3,
+    label: "최근 12개월 · 전용면적 ±3㎡"
+  },
+  {
+    monthCount: 24,
+    areaToleranceM2: 5,
+    minimumComparableCount: 3,
+    label: "최근 24개월 · 전용면적 ±5㎡"
+  },
+  {
+    monthCount: 36,
+    areaToleranceM2: 10,
+    minimumComparableCount: 2,
+    label: "최근 36개월 · 전용면적 ±10㎡"
+  }
+];
+
 function getRecentDealYearMonths(monthCount = 12): string[] {
   const result: string[] = [];
   const now = new Date();
@@ -58,22 +86,6 @@ function buildApartmentSearchAddress(params: {
   return parts.join(" ");
 }
 
-function getDistanceTier(distanceMeters?: number) {
-  if (distanceMeters === undefined) {
-    return "unknown";
-  }
-
-  if (distanceMeters <= 500) {
-    return "500m";
-  }
-
-  if (distanceMeters <= 1000) {
-    return "1km";
-  }
-
-  return "fallback";
-}
-
 function getFloorSimilarityScore(params: {
   targetFloor?: number;
   transactionFloor?: number;
@@ -92,14 +104,14 @@ function getFloorSimilarityScore(params: {
   if (floorDifference <= 2) {
     return {
       score: 14,
-      reason: `유사층(±2층)`
+      reason: "유사층(±2층)"
     };
   }
 
   if (floorDifference <= 5) {
     return {
       score: 8,
-      reason: `인접층(±5층)`
+      reason: "인접층(±5층)"
     };
   }
 
@@ -118,14 +130,44 @@ function getFloorSimilarityScore(params: {
 
 function getFloorPenalty(floor?: number) {
   if (!floor) return 0;
-
   if (floor <= 2) return -8;
-
   return 0;
 }
 
+function transactionSort(a: TransactionItem, b: TransactionItem) {
+  const sameA = a.isSameApartment ? 1 : 0;
+  const sameB = b.isSameApartment ? 1 : 0;
+
+  if (sameB !== sameA) return sameB - sameA;
+
+  const tierPriority = (tx: TransactionItem) => {
+    if (tx.isSameApartment) return 0;
+    if ((tx.distanceMeters ?? 999999) <= 500) return 1;
+    if ((tx.distanceMeters ?? 999999) <= 1000) return 2;
+    return 3;
+  };
+
+  const tierA = tierPriority(a);
+  const tierB = tierPriority(b);
+
+  if (tierA !== tierB) return tierA - tierB;
+
+  const scoreA = a.similarityScore ?? 0;
+  const scoreB = b.similarityScore ?? 0;
+
+  if (scoreB !== scoreA) return scoreB - scoreA;
+
+  const dateA = a.dealYear * 10000 + a.dealMonth * 100 + a.dealDay;
+  const dateB = b.dealYear * 10000 + b.dealMonth * 100 + b.dealDay;
+
+  return dateB - dateA;
+}
+
 async function fetchApartmentTradeApi(
-  params: PublicTransactionApiParams
+  params: PublicTransactionApiParams & {
+    region?: ExtractedRegion;
+    fallbackLabel?: string;
+  }
 ): Promise<TransactionItem[]> {
   try {
     if (!params.legalDongCode) return [];
@@ -193,9 +235,7 @@ async function fetchApartmentTradeApi(
         itemXml.match(/<dealDay>(.*?)<\/dealDay>/)?.[1] ?? 0
       );
 
-      const floor = Number(
-        itemXml.match(/<floor>(.*?)<\/floor>/)?.[1] ?? 0
-      );
+      const floor = Number(itemXml.match(/<floor>(.*?)<\/floor>/)?.[1] ?? 0);
 
       const buildYear = Number(
         itemXml.match(/<buildYear>(.*?)<\/buildYear>/)?.[1] ?? 0
@@ -209,14 +249,12 @@ async function fetchApartmentTradeApi(
       if (!dealAmount || !area || !dealYear || !dealMonth) continue;
 
       const areaToleranceM2 = params.areaToleranceM2 ?? 3;
-
       const areaDifferenceM2 = params.exclusiveAreaM2
         ? Math.abs(area - params.exclusiveAreaM2)
         : undefined;
 
       const isSimilarArea =
-        areaDifferenceM2 === undefined ||
-        areaDifferenceM2 <= areaToleranceM2;
+        areaDifferenceM2 === undefined || areaDifferenceM2 <= areaToleranceM2;
 
       if (!isSimilarArea) continue;
 
@@ -225,12 +263,13 @@ async function fetchApartmentTradeApi(
 
       const isSameApartment =
         normalizedTargetName.length > 0 &&
-        (
-          normalizedApiName.includes(normalizedTargetName) ||
-          normalizedTargetName.includes(normalizedApiName)
-        );
+        (normalizedApiName.includes(normalizedTargetName) ||
+          normalizedTargetName.includes(normalizedApiName));
 
       const monthsAgo = getMonthsAgo(dealYear, dealMonth, dealDay);
+      const allowedMonths = params.allowedMonths ?? 12;
+
+      if (monthsAgo > allowedMonths) continue;
 
       const transactionCoordinate = await geocodeAddress(
         buildApartmentSearchAddress({
@@ -244,9 +283,6 @@ async function fetchApartmentTradeApi(
         transactionCoordinate
       );
 
-      // 12개월 초과 거래는 비교군에서 제외
-      if (monthsAgo > 12) continue;
-
       let similarityScore = 35;
       let similarityReason = "동일 법정동 유사 면적";
 
@@ -256,29 +292,24 @@ async function fetchApartmentTradeApi(
       }
 
       if (areaDifferenceM2 !== undefined) {
-        if (areaDifferenceM2 <= 1) {
-          similarityScore += 15;
-        } else if (areaDifferenceM2 <= 2) {
-          similarityScore += 8;
-        } else {
-          similarityScore += 3;
-        }
+        if (areaDifferenceM2 <= 1) similarityScore += 15;
+        else if (areaDifferenceM2 <= 2) similarityScore += 8;
+        else if (areaDifferenceM2 <= 5) similarityScore += 3;
+        else similarityScore -= 5;
       }
 
-  if (distanceMeters !== undefined) {
-    if (distanceMeters <= 500) {
-      similarityScore += 18;
-      similarityReason += " · 반경 500m 이내";
-    } else if (distanceMeters <= 1000) {
-      similarityScore += 8;
-      similarityReason += " · 반경 1km 이내";
-    } else if (!isSameApartment) {
-      similarityScore -= 20;
-      similarityReason += " · fallback 비교";
-    }
-  }
-
-      // 최근거래는 정렬에서만 우선하고, 점수에는 가산하지 않음
+      if (distanceMeters !== undefined) {
+        if (distanceMeters <= 500) {
+          similarityScore += 18;
+          similarityReason += " · 반경 500m 이내";
+        } else if (distanceMeters <= 1000) {
+          similarityScore += 8;
+          similarityReason += " · 반경 1km 이내";
+        } else if (!isSameApartment) {
+          similarityScore -= 20;
+          similarityReason += " · 법정동 fallback";
+        }
+      }
 
       const floorSimilarity = getFloorSimilarityScore({
         targetFloor: params.targetFloor,
@@ -291,7 +322,7 @@ async function fetchApartmentTradeApi(
       if (buildYear > 0) {
         const currentYear = new Date().getFullYear();
         const buildingAge = currentYear - buildYear;
-      
+
         if (buildingAge <= 10) {
           similarityScore += 10;
           similarityReason += " · 준공 10년 이하";
@@ -307,13 +338,23 @@ async function fetchApartmentTradeApi(
         }
       }
 
-            if (floorSimilarity.reason) {
+      if (floorSimilarity.reason) {
         similarityReason += ` · ${floorSimilarity.reason}`;
       }
 
       if (dealType.includes("직거래")) {
         similarityScore -= 8;
         similarityReason += " · 직거래 감점";
+      }
+
+      if ((params.allowedMonths ?? 12) > 12) {
+        similarityScore -= 4;
+        similarityReason += ` · 기간확장(${params.allowedMonths}개월)`;
+      }
+
+      if ((params.areaToleranceM2 ?? 3) > 3) {
+        similarityScore -= 4;
+        similarityReason += ` · 면적확장(±${params.areaToleranceM2}㎡)`;
       }
 
       similarityScore = Math.max(0, Math.min(100, similarityScore));
@@ -329,16 +370,12 @@ async function fetchApartmentTradeApi(
       ].join("|");
 
       if (seenTransactionKeys.has(transactionKey)) continue;
-
       seenTransactionKeys.add(transactionKey);
 
       let reliabilityGrade: "A" | "B" | "C" = "C";
 
-      if (similarityScore >= 85) {
-        reliabilityGrade = "A";
-      } else if (similarityScore >= 65) {
-        reliabilityGrade = "B";
-      }
+      if (similarityScore >= 85) reliabilityGrade = "A";
+      else if (similarityScore >= 65) reliabilityGrade = "B";
 
       transactions.push({
         dealAmount,
@@ -356,18 +393,16 @@ async function fetchApartmentTradeApi(
         similarityReason,
         reliabilityGrade,
         selectionReason: isSameApartment
-          ? "동일 단지 거래"
+          ? `동일 단지 거래 · ${params.fallbackLabel}`
           : distanceMeters !== undefined
             ? distanceMeters <= 500
-              ? `반경 500m 유사 거래(±${areaToleranceM2}㎡)`
+              ? `반경 500m 유사 거래 · ${params.fallbackLabel}`
               : distanceMeters <= 1000
-                ? `반경 1km 유사 거래(±${areaToleranceM2}㎡)`
-                : `법정동 fallback 거래(±${areaToleranceM2}㎡)`
-            : `법정동 fallback 거래(±${areaToleranceM2}㎡)`
+                ? `반경 1km 유사 거래 · ${params.fallbackLabel}`
+                : `법정동 fallback 거래 · ${params.fallbackLabel}`
+            : `법정동 fallback 거래 · ${params.fallbackLabel}`
       });
     }
-
-    console.log("filtered_transaction_count", transactions.length);
 
     return transactions;
   } catch (error) {
@@ -382,10 +417,10 @@ export async function fetchPublicTransactions(
   console.log("valuation_region_json", JSON.stringify(params.region));
   console.log("valuation_legalDongCode", params.legalDongCode ?? "undefined");
 
-  const recentMonths = getRecentDealYearMonths(12);
-  const areaTolerances = [3, 5];
+  const seenGlobalKeys = new Set<string>();
 
-  for (const areaToleranceM2 of areaTolerances) {
+  for (const rule of FALLBACK_RULES) {
+    const recentMonths = getRecentDealYearMonths(rule.monthCount);
     const apiTransactions: TransactionItem[] = [];
 
     for (const dealYearMonth of recentMonths) {
@@ -394,67 +429,48 @@ export async function fetchPublicTransactions(
         dealYearMonth,
         buildingName: params.buildingName,
         exclusiveAreaM2: params.exclusiveAreaM2,
-        areaToleranceM2,
+        areaToleranceM2: rule.areaToleranceM2,
+        allowedMonths: rule.monthCount,
         targetFloor: params.targetFloor,
         targetCoordinate: params.targetCoordinate,
-        region: params.region
+        region: params.region,
+        fallbackLabel: rule.label
       });
 
-      apiTransactions.push(...monthlyTransactions);
+      for (const tx of monthlyTransactions) {
+        const key = [
+          tx.dealAmount,
+          tx.dealYear,
+          tx.dealMonth,
+          tx.dealDay,
+          tx.area,
+          tx.floor,
+          tx.selectionReason
+        ].join("|");
+
+        if (seenGlobalKeys.has(key)) continue;
+        seenGlobalKeys.add(key);
+        apiTransactions.push(tx);
+      }
 
       const sameApartmentCount = apiTransactions.filter(
         (tx) => tx.isSameApartment
       ).length;
 
-      if (sameApartmentCount >= 3 || apiTransactions.length >= 5) {
+      if (
+        sameApartmentCount >= rule.minimumComparableCount ||
+        apiTransactions.length >= 5
+      ) {
         break;
       }
     }
 
-    if (apiTransactions.length > 0) {
-      return apiTransactions
-        .sort((a, b) => {
-          const sameA = a.isSameApartment ? 1 : 0;
-          const sameB = b.isSameApartment ? 1 : 0;
+    if (apiTransactions.length >= rule.minimumComparableCount) {
+      return apiTransactions.sort(transactionSort).slice(0, 5);
+    }
 
-          if (sameB !== sameA) {
-            return sameB - sameA;
-          }
-          
-          const tierPriority = (tx: TransactionItem) => {
-            if (tx.isSameApartment) return 0;
-          
-            if ((tx.distanceMeters ?? 999999) <= 500) {
-              return 1;
-            }
-          
-            if ((tx.distanceMeters ?? 999999) <= 1000) {
-              return 2;
-            }
-          
-            return 3;
-          };
-          
-          const tierA = tierPriority(a);
-          const tierB = tierPriority(b);
-          
-          if (tierA !== tierB) {
-            return tierA - tierB;
-          }
-                    
-          const scoreA = a.similarityScore ?? 0;
-          const scoreB = b.similarityScore ?? 0;
-
-          if (scoreB !== scoreA) {
-            return scoreB - scoreA;
-          }
-
-          const dateA = a.dealYear * 10000 + a.dealMonth * 100 + a.dealDay;
-          const dateB = b.dealYear * 10000 + b.dealMonth * 100 + b.dealDay;
-
-          return dateB - dateA;
-        })
-        .slice(0, 5);
+    if (rule === FALLBACK_RULES[FALLBACK_RULES.length - 1] && apiTransactions.length > 0) {
+      return apiTransactions.sort(transactionSort).slice(0, 5);
     }
   }
 
