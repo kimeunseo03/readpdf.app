@@ -1,7 +1,5 @@
 import type { PublicTransactionApiParams, TransactionItem } from "./types";
 import type { ExtractedRegion } from "./extractRegion";
-import { geocodeAddress } from "./geocodeApi";
-import { calculateDistanceMeters } from "./distance";
 import {
   findApartmentKaptCodeInLegalDong,
   fetchApartmentBasisInfo,
@@ -55,20 +53,6 @@ function getMonthsAgo(year: number, month: number, day: number) {
     (now.getFullYear() - dealDate.getFullYear()) * 12 +
     (now.getMonth() - dealDate.getMonth())
   );
-}
-
-function buildApartmentSearchAddress(params: {
-  region?: ExtractedRegion;
-  apartmentName?: string;
-}) {
-  const parts = [
-    params.region?.sido,
-    params.region?.sigungu,
-    params.region?.eupmyeondong,
-    params.apartmentName
-  ].filter(Boolean);
-
-  return parts.join(" ");
 }
 
 function getFloorSimilarityScore(params: {
@@ -309,6 +293,17 @@ async function fetchApartmentTradeApi(
 
     const transactions: TransactionItem[] = [];
     const seenTransactionKeys = new Set<string>();
+    const kaptCodeCache = new Map<string, string | undefined>();
+
+    const basisInfoCache = new Map<
+      string,
+      Awaited<ReturnType<typeof fetchApartmentBasisInfo>>
+    >();
+    
+    const detailInfoCache = new Map<
+      string,
+      Awaited<ReturnType<typeof fetchApartmentDetailInfo>>
+    >();
 
     for (const match of itemMatches) {
       const itemXml = match[1];
@@ -366,18 +361,41 @@ async function fetchApartmentTradeApi(
       const normalizedApiName = normalizeApartmentName(aptNm);
       const normalizedTargetName = normalizeApartmentName(params.buildingName);
       
-      const transactionKaptCode = await findApartmentKaptCodeInLegalDong({
-        legalDongCode: params.legalDongCode,
-        apartmentName: aptNm
-      });
+      let transactionKaptCode = kaptCodeCache.get(aptNm);
 
-      const transactionBasisInfo = transactionKaptCode
-        ? await fetchApartmentBasisInfo(transactionKaptCode)
-        : undefined;
+      if (transactionKaptCode === undefined) {
+        transactionKaptCode =
+          await findApartmentKaptCodeInLegalDong({
+            legalDongCode: params.legalDongCode,
+            apartmentName: aptNm
+          });
       
-      const transactionDetailInfo = transactionKaptCode
-        ? await fetchApartmentDetailInfo(transactionKaptCode)
-        : undefined;
+        kaptCodeCache.set(aptNm, transactionKaptCode);
+      }
+      
+      let transactionBasisInfo:
+        | Awaited<ReturnType<typeof fetchApartmentBasisInfo>>
+        | undefined;
+      
+      let transactionDetailInfo:
+        | Awaited<ReturnType<typeof fetchApartmentDetailInfo>>
+        | undefined;
+      
+      if (transactionKaptCode) {
+        if (basisInfoCache.has(transactionKaptCode)) {
+          transactionBasisInfo = basisInfoCache.get(transactionKaptCode);
+        } else {
+          transactionBasisInfo = await fetchApartmentBasisInfo(transactionKaptCode);
+          basisInfoCache.set(transactionKaptCode, transactionBasisInfo);
+        }
+      
+        if (detailInfoCache.has(transactionKaptCode)) {
+          transactionDetailInfo = detailInfoCache.get(transactionKaptCode);
+        } else {
+          transactionDetailInfo = await fetchApartmentDetailInfo(transactionKaptCode);
+          detailInfoCache.set(transactionKaptCode, transactionDetailInfo);
+        }
+      }
             
       const transactionWalkMinutes =
         transactionDetailInfo?.subwayWalkingMinutes;
