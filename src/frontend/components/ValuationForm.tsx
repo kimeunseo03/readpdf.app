@@ -15,6 +15,7 @@ interface ValuationFormProps {
     addressRaw?: string;
     buildingName?: string;
     exclusiveAreaM2?: number;
+    floor?: number;
     rightsRisk?: {
       riskLevel?: "SAFE" | "CAUTION" | "DANGER";
       summary?: string;
@@ -94,7 +95,10 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
   const [exclusiveAreaM2, setExclusiveAreaM2] = useState(
     initialValue.exclusiveAreaM2?.toString() ?? ""
   );
-
+  
+  const [floor, setFloor] = useState(initialValue.floor?.toString() ?? "");
+  const [hasRentalInfo, setHasRentalInfo] = useState(false);
+  
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<ValuationResult | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -113,15 +117,19 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          addressRaw,
-          buildingName,
-          exclusiveAreaM2: Number(exclusiveAreaM2),
-          tenantDepositAmount: parseAccountingInput(tenantDepositAmount),
-          tenantMonthlyRent: parseAccountingInput(tenantMonthlyRent),
-          rightsRisk: initialValue.rightsRisk
-        })
-      });
-
+        addressRaw,
+        buildingName,
+        exclusiveAreaM2: Number(exclusiveAreaM2),
+        floor: floor ? Number(floor) : undefined,
+        tenantDepositAmount: hasRentalInfo
+          ? parseAccountingInput(tenantDepositAmount)
+          : undefined,
+        tenantMonthlyRent: hasRentalInfo
+          ? parseAccountingInput(tenantMonthlyRent)
+          : undefined,
+        rightsRisk: initialValue.rightsRisk
+      })
+          
       if (!res.ok) {
         throw new Error("가치평가 API 호출에 실패했습니다.");
       }
