@@ -277,8 +277,8 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
       </section>
 
 {result && (
-  <section className="mt-6 space-y-5">
-    <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+  <section className="mt-6 space-y-6 w-full min-w-[1600px]">
+    <div className="w-full rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
       <div className="mb-5 flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-4">
         <div>
           <p className="text-xs font-semibold tracking-wide text-blue-600">
@@ -299,7 +299,7 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
         </button>
       </div>
 
-      <div className="grid grid-cols-5 gap-6 min-w-[1400px]">
+      <div className="grid grid-cols-5 gap-8 min-w-[1650px]">
         <div className="rounded-2xl border border-green-100 bg-green-50/60 p-5">
           <p className="text-xs font-semibold text-green-700">보정 평균가</p>
           <p className="mt-2 whitespace-nowrap text-2xl font-bold leading-snug tabular-nums text-green-700">
@@ -349,7 +349,7 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
     </div>
             
           {result.recentTransactions.length > 0 && (
-            <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+            <div className="w-full rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
               <div className="mb-4 flex items-center justify-between gap-3">
                 <div>
                   <p className="text-xs font-semibold tracking-wide text-blue-600">
@@ -458,7 +458,7 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
 
           <div className="grid gap-5 lg:grid-cols-2">
             {result.finalComment && (
-              <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+              <div className="w-full rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
                 <p className="text-xs font-semibold tracking-wide text-slate-500">
                   FINAL COMMENT
                 </p>
