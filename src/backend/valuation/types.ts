@@ -89,12 +89,15 @@ export interface PublicTransactionApiParams {
   areaToleranceM2?: number;
 
   targetFloor?: number;
+  targetCoordinate?: Coordinate;
 
   targetBuildYear?: number;
 
   targetHouseholdCount?: number;
 
   targetKaptCode?: string;
+
+  region?: unknown;
 }
 
 export interface ValuationResult {
