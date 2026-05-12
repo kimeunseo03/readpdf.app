@@ -7,7 +7,10 @@ type PublicDataRequest = {
   exclusiveAreaM2?: number;
 };
 
-async function getVWorldCoord(address: string, type: "road" | "parcel") {
+async function getVWorldCoord(
+  address: string,
+  type: "road" | "parcel"
+) {
   const key = process.env.VWORLD_API_KEY;
 
   if (!key) {
@@ -15,10 +18,14 @@ async function getVWorldCoord(address: string, type: "road" | "parcel") {
   }
 
   const url = new URL("https://api.vworld.kr/req/address");
+
   url.searchParams.set("service", "address");
   url.searchParams.set("request", "getCoord");
+  url.searchParams.set("version", "2.0");
   url.searchParams.set("format", "json");
   url.searchParams.set("crs", "epsg:4326");
+  url.searchParams.set("refine", "true");
+  url.searchParams.set("simple", "false");
   url.searchParams.set("type", type);
   url.searchParams.set("address", address);
   url.searchParams.set("key", key);
@@ -36,15 +43,17 @@ async function getVWorldCoord(address: string, type: "road" | "parcel") {
 }
 
 function extractVWorldPoint(data: any) {
+  const status = data?.response?.status;
   const point = data?.response?.result?.point;
 
-  if (!point?.x || !point?.y) {
+  if (status !== "OK" || !point?.x || !point?.y) {
     return null;
   }
 
   return {
     longitude: Number(point.x),
     latitude: Number(point.y),
+    crs: "EPSG:4326",
   };
 }
 
@@ -55,8 +64,11 @@ export async function POST(req: NextRequest) {
     const jibunAddress = body.jibunAddress?.trim() || "";
     const roadAddress = body.roadAddress?.trim() || "";
     const buildingName = body.buildingName?.trim() || "";
+
     const exclusiveAreaM2 =
-      typeof body.exclusiveAreaM2 === "number" ? body.exclusiveAreaM2 : null;
+      typeof body.exclusiveAreaM2 === "number"
+        ? body.exclusiveAreaM2
+        : null;
 
     const primaryAddress = roadAddress || jibunAddress;
 
@@ -70,41 +82,98 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    let vworldRaw = null;
+    let vworldRaw: any = null;
+
     let coordinates = null;
-    let addressType: "road" | "parcel" = roadAddress ? "road" : "parcel";
+
+    let addressType: "road" | "parcel" =
+      roadAddress ? "road" : "parcel";
 
     try {
-      vworldRaw = await getVWorldCoord(primaryAddress, addressType);
+      // 1차 시도
+      vworldRaw = await getVWorldCoord(
+        primaryAddress,
+        addressType
+      );
+
+      console.log(
+        "VWORLD RAW PRIMARY:",
+        JSON.stringify(vworldRaw, null, 2)
+      );
+
       coordinates = extractVWorldPoint(vworldRaw);
-    } catch {
+
+      // 좌표 없으면 지번 fallback
+      if (!coordinates && jibunAddress && roadAddress) {
+        addressType = "parcel";
+
+        vworldRaw = await getVWorldCoord(
+          jibunAddress,
+          "parcel"
+        );
+
+        console.log(
+          "VWORLD RAW FALLBACK:",
+          JSON.stringify(vworldRaw, null, 2)
+        );
+
+        coordinates = extractVWorldPoint(vworldRaw);
+      }
+    } catch (error) {
+      console.error("VWORLD ERROR:", error);
+
+      // API 에러 시 fallback
       if (jibunAddress && roadAddress) {
         addressType = "parcel";
-        vworldRaw = await getVWorldCoord(jibunAddress, "parcel");
+
+        vworldRaw = await getVWorldCoord(
+          jibunAddress,
+          "parcel"
+        );
+
+        console.log(
+          "VWORLD RAW FALLBACK AFTER ERROR:",
+          JSON.stringify(vworldRaw, null, 2)
+        );
+
         coordinates = extractVWorldPoint(vworldRaw);
       }
     }
 
     return NextResponse.json({
       success: true,
+
       input: {
         jibunAddress,
         roadAddress,
         buildingName,
         exclusiveAreaM2,
       },
+
       normalizedAddress: {
         primaryAddress,
         usedAddressType: addressType,
         jibunAddress,
         roadAddress,
       },
+
       coordinates,
+
       publicData: {
         vworld: {
           matched: Boolean(coordinates),
+
+          status:
+            vworldRaw?.response?.status ?? null,
+
+          error:
+            vworldRaw?.response?.error ?? null,
+
+          result:
+            vworldRaw?.response?.result ?? null,
         },
       },
+
       nextRequiredData: [
         "kaptCode",
         "recentTransactionPrices",
@@ -112,9 +181,12 @@ export async function POST(req: NextRequest) {
       ],
     });
   } catch (error) {
+    console.error("ROUTE ERROR:", error);
+
     return NextResponse.json(
       {
         success: false,
+
         error:
           error instanceof Error
             ? error.message
