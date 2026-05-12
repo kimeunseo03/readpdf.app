@@ -374,3 +374,32 @@ export async function fetchApartmentMetaInfoByLegalDong(params: {
 
   return fetchApartmentMetaInfo(kaptCode);
 }
+
+export async function findApartmentKaptCodeInLegalDong(params: {
+  legalDongCode?: string;
+  apartmentName?: string;
+}): Promise<string | undefined> {
+  const candidates = await fetchLegalDongApartmentList({
+    legalDongCode: params.legalDongCode
+  });
+
+  if (!candidates.length) return undefined;
+
+  const scored = candidates
+    .map((candidate) => ({
+      candidate,
+      score: calculateNameSimilarity(
+        params.apartmentName,
+        candidate.kaptName
+      )
+    }))
+    .sort((a, b) => b.score - a.score);
+
+  const best = scored[0];
+
+  if (!best || best.score < 60) {
+    return undefined;
+  }
+
+  return best.candidate.kaptCode;
+}
