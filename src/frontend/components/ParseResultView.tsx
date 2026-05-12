@@ -123,7 +123,7 @@ export function ParseResultView({ response }: { response: ParseApiResponse }) {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="mx-auto w-full max-w-[1440px] space-y-6 px-2 xl:px-0">
       <section className="rounded-3xl border bg-white p-6 shadow-sm">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
@@ -162,7 +162,7 @@ export function ParseResultView({ response }: { response: ParseApiResponse }) {
           </button>
         </div>
 
-        <div className="grid gap-5 xl:grid-cols-[420px_minmax(0,1fr)]">
+        <div className="grid gap-6 xl:grid-cols-[minmax(360px,520px)_minmax(640px,1fr)] xl:items-start">
           <div className="rounded-2xl border border-slate-200 bg-slate-50/60 p-5">
             <div className="mb-4 flex items-center justify-between gap-3">
               <div>
@@ -213,7 +213,9 @@ export function ParseResultView({ response }: { response: ParseApiResponse }) {
             )}
           </div>
 
-          <ValuationForm initialValue={valuationInitialValue} />
+          <div className="min-w-0">
+            <ValuationForm initialValue={valuationInitialValue} />
+          </div>
         </div>
       </section>
 
