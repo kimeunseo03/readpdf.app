@@ -15,6 +15,7 @@ interface ValuationFormProps {
     addressRaw?: string;
     buildingName?: string;
     exclusiveAreaM2?: number;
+    floor?: number;
     rightsRisk?: {
       riskLevel?: "SAFE" | "CAUTION" | "DANGER";
       summary?: string;
@@ -83,6 +84,11 @@ function parseAccountingInput(value: string) {
   return numeric ? Number(numeric) : undefined;
 }
 
+function parseOptionalNumber(value: string) {
+  const numeric = Number(value);
+  return Number.isFinite(numeric) && numeric > 0 ? numeric : undefined;
+}
+
 function riskLabel(level?: "SAFE" | "CAUTION" | "DANGER") {
   if (level === "SAFE") return "안전";
   if (level === "CAUTION") return "주의";
@@ -113,6 +119,7 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
   const [exclusiveAreaM2, setExclusiveAreaM2] = useState(
     initialValue.exclusiveAreaM2?.toString() ?? ""
   );
+  const [floor, setFloor] = useState(initialValue.floor?.toString() ?? "");
 
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<ValuationResult | null>(null);
@@ -134,7 +141,8 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
         body: JSON.stringify({
           addressRaw,
           buildingName,
-          exclusiveAreaM2: Number(exclusiveAreaM2),
+          exclusiveAreaM2: parseOptionalNumber(exclusiveAreaM2),
+          floor: parseOptionalNumber(floor),
           tenantDepositAmount: parseAccountingInput(tenantDepositAmount),
           tenantMonthlyRent: parseAccountingInput(tenantMonthlyRent),
           rightsRisk: initialValue.rightsRisk
@@ -207,6 +215,20 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
               value={exclusiveAreaM2}
               onChange={(e) => setExclusiveAreaM2(e.target.value)}
               className="w-full rounded-xl border border-slate-200 bg-white p-3 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-4 focus:ring-blue-100"
+            />
+          </label>
+
+          <label className="block">
+            <span className="mb-1 block text-sm font-medium text-slate-700">
+              층
+            </span>
+
+            <input
+              type="number"
+              value={floor}
+              onChange={(e) => setFloor(e.target.value)}
+              className="w-full rounded-xl border border-slate-200 bg-white p-3 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-4 focus:ring-blue-100"
+              placeholder="예: 12"
             />
           </label>
 
@@ -381,15 +403,15 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
                         <td className="px-4 py-3 text-slate-700">
                           {mortgage.rank}
                         </td>
-                      
+
                         <td className="px-4 py-3 font-medium text-slate-900">
                           {mortgage.creditor || "-"}
                         </td>
-                      
+
                         <td className="px-4 py-3 text-right font-semibold tabular-nums text-slate-900">
                           {mortgage.amount.toLocaleString()}원
                         </td>
-                      
+
                         <td className="px-4 py-3 text-slate-700">
                           {mortgage.targetOwner || "-"}
                         </td>
@@ -487,7 +509,7 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
               </div>
 
               <div className="overflow-x-auto rounded-2xl border border-slate-200">
-                <table className="min-w-[980px] w-full text-left text-sm">
+                <table className="w-full min-w-[980px] text-left text-sm">
                   <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
                     <tr>
                       <th className="px-4 py-3 font-semibold">거래일</th>
