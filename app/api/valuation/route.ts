@@ -6,14 +6,15 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
 
-    const result = await estimateApartmentValue({
-      addressRaw: body.addressRaw,
-      buildingName: body.buildingName,
-      exclusiveAreaM2: body.exclusiveAreaM2,
-      tenantDepositAmount: body.tenantDepositAmount,
-      tenantMonthlyRent: body.tenantMonthlyRent,
-      rightsRisk: body.rightsRisk
-    });
+const result = await estimateApartmentValue({
+  addressRaw: body.addressRaw,
+  buildingName: body.buildingName,
+  exclusiveAreaM2: body.exclusiveAreaM2,
+  floor: body.floor,
+  tenantDepositAmount: body.tenantDepositAmount,
+  tenantMonthlyRent: body.tenantMonthlyRent,
+  rightsRisk: body.rightsRisk
+});
 
     return NextResponse.json(result);
   } catch (error) {
