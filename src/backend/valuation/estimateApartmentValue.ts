@@ -87,16 +87,6 @@ export async function estimateApartmentValue(
     buildingName: normalized.buildingName
   });
   
-  if (!apartmentMeta?.basis?.kaptCode) {
-    warnings.push(
-      "공동주택 단지코드(kaptCode)를 찾지 못해 세대수·사용승인일 기반 보정이 제한됩니다."
-    );
-  }
-  const apartmentMeta = await fetchApartmentMetaInfoByLegalDong({
-  legalDongCode,
-  buildingName: normalized.buildingName
-});
-
 if (!apartmentMeta?.basis?.kaptCode) {
   warnings.push(
     "공동주택 단지코드(kaptCode)를 찾지 못해 세대수·사용승인일 기반 보정이 제한됩니다."
