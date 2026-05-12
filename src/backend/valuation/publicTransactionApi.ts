@@ -322,11 +322,23 @@ async function fetchApartmentTradeApi(
 
       const normalizedApiName = normalizeApartmentName(aptNm);
       const normalizedTargetName = normalizeApartmentName(params.buildingName);
-
-      const isSameApartment =
+      
+      const transactionKaptCode = await findApartmentKaptCodeInLegalDong({
+        legalDongCode: params.legalDongCode,
+        apartmentName: aptNm
+      });
+      
+      const isSameApartmentByKaptCode =
+        !!params.targetKaptCode &&
+        !!transactionKaptCode &&
+        params.targetKaptCode === transactionKaptCode;
+      
+      const isSameApartmentByName =
         normalizedTargetName.length > 0 &&
         (normalizedApiName.includes(normalizedTargetName) ||
-          normalizedTargetName.includes(normalizedApiName));
+    normalizedTargetName.includes(normalizedApiName));
+
+const isSameApartment = isSameApartmentByKaptCode || isSameApartmentByName;
 
       const monthsAgo = getMonthsAgo(dealYear, dealMonth, dealDay);
 
