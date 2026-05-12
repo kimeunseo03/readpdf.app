@@ -3,11 +3,8 @@ import { fetchPublicTransactions } from "./publicTransactionApi";
 import { extractRegion } from "./extractRegion";
 import { findLegalDongCode } from "./legalDongCode";
 import { geocodeAddress } from "./geocodeApi";
-
-import type {
-  ValuationInput,
-  ValuationResult
-} from "./types";
+import { fetchApartmentMetaInfoByLegalDong } from "./apartmentBasisInfoApi";
+import type { ValuationInput, ValuationResult } from "./types";
 
 function average(numbers: number[]) {
   if (!numbers.length) return 0;
@@ -85,6 +82,16 @@ export async function estimateApartmentValue(
   const region = extractRegion(normalized.normalizedAddress);
   const legalDongCode = findLegalDongCode(region);
   const warnings: string[] = [];
+  const apartmentMeta = await fetchApartmentMetaInfoByLegalDong({
+  legalDongCode,
+  buildingName: normalized.buildingName
+});
+
+if (!apartmentMeta?.basis?.kaptCode) {
+  warnings.push(
+    "공동주택 단지코드(kaptCode)를 찾지 못해 세대수·사용승인일 기반 보정이 제한됩니다."
+  );
+}
   const targetCoordinate = await geocodeAddress(
   normalized.normalizedAddress
 );
@@ -109,15 +116,18 @@ export async function estimateApartmentValue(
     );
   }
 
-  const transactions = await fetchPublicTransactions({
-    buildingName: normalized.buildingName,
-    exclusiveAreaM2: normalized.area,
-    region,
-    legalDongCode,
-    targetFloor: input.floor,
-    targetCoordinate
-  });
-
+const transactions = await fetchPublicTransactions({
+  buildingName: normalized.buildingName,
+  exclusiveAreaM2: normalized.area,
+  region,
+  legalDongCode,
+  targetFloor: input.floor,
+  targetCoordinate,
+  targetBuildYear: apartmentMeta?.basis?.buildYear,
+  targetHouseholdCount: apartmentMeta?.basis?.householdCount,
+  targetKaptCode: apartmentMeta?.basis?.kaptCode
+});
+  
   const usedExpandedAreaRange = transactions.some((tx) =>
     tx.selectionReason?.includes("±5㎡")
   );
@@ -367,6 +377,9 @@ export async function estimateApartmentValue(
       ...(targetCoordinate
         ? ["거리 기반 비교 반영"]
         : [])
+      ...(apartmentMeta?.basis?.kaptCode ? ["공동주택 단지코드 기반 동일단지 검증"] : []),
+      ...(apartmentMeta?.basis?.buildYear ? ["사용승인연도 유사도 반영"] : []),
+      ...(apartmentMeta?.basis?.householdCount ? ["세대수 규모 유사도 반영"] : [])
     ],
 
     overallConfidence,
