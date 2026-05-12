@@ -1,4 +1,7 @@
-import { formatKoreanPrice } from "../../backend/valuation/formatKoreanPrice";
+import {
+  formatKoreanPrice,
+  formatKoreanPriceInline
+} from "../../backend/valuation/formatKoreanPrice";
 
 interface MortgageItem {
   rank: number;
@@ -69,8 +72,7 @@ interface ValuationReportProps {
 }
 
 function formatWon(value?: number) {
-  if (value === undefined || value === null) return "-";
-  return `${value.toLocaleString()}원`;
+  return formatKoreanPriceInline(value);
 }
 
 function riskLabel(level?: "SAFE" | "CAUTION" | "DANGER") {
@@ -375,7 +377,7 @@ export function ValuationReport({ input, result }: ValuationReportProps) {
                     {String(tx.dealDay).padStart(2, "0")}
                   </td>
 
-                  <td className="whitespace-pre-line px-4 py-3 font-medium tabular-nums text-slate-700">
+                  <td className="whitespace-pre-line px-4 py-3 text-right font-semibold leading-5 tabular-nums text-slate-900">
                     {formatKoreanPrice(tx.dealAmount * 10000)}
                   </td>
 
@@ -401,8 +403,15 @@ export function ValuationReport({ input, result }: ValuationReportProps) {
                     </div>
                   </td>
 
-                  <td className="px-4 py-3 text-slate-700">
-                    {tx.similarityScore ?? "-"}점
+                  <td className="px-4 py-3 leading-5 text-slate-700">
+                    <p className="font-semibold text-slate-900">
+                      {tx.similarityScore ?? "-"}점
+                    </p>
+                    {tx.similarityReason && (
+                      <p className="mt-1 text-xs leading-5 text-slate-500">
+                        {tx.similarityReason}
+                      </p>
+                    )}
                   </td>
 
                   <td className="px-4 py-3 text-slate-700">
