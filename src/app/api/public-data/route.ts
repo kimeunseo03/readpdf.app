@@ -61,30 +61,19 @@ async function getKaptCode(params: {
   jibunAddress: string;
   buildingName: string;
 }) {
-  const { roadAddress, jibunAddress, buildingName } = params;
-
   const serviceKey = process.env.PUBLIC_DATA_API_KEY;
 
   if (!serviceKey) {
     throw new Error("PUBLIC_DATA_API_KEY가 설정되지 않았습니다.");
   }
 
-  const searchBaseAddress = roadAddress || jibunAddress;
-  const addressParts = searchBaseAddress.split(" ");
-
-  const sido = addressParts[0] || "";
-  const sigungu = addressParts[1] || "";
-
   const url = new URL(
-    "https://apis.data.go.kr/1613000/AptListService2/getTotalAptList"
+    "https://apis.data.go.kr/1613000/AptBasisInfoServiceV3/getAphusBassInfo"
   );
 
   url.searchParams.set("serviceKey", serviceKey);
-  url.searchParams.set("pageNo", "1");
-  url.searchParams.set("numOfRows", "300");
+  url.searchParams.set("kaptCode", "A13822003");
   url.searchParams.set("_type", "json");
-  url.searchParams.set("sido", sido);
-  url.searchParams.set("sigungu", sigungu);
 
   const res = await fetch(url.toString(), {
     method: "GET",
@@ -97,23 +86,13 @@ async function getKaptCode(params: {
 
   const data = await res.json();
 
-  const rawItems = data?.response?.body?.items?.item ?? [];
-  const items = Array.isArray(rawItems) ? rawItems : [rawItems];
+  console.log("KAPT BASIS RAW:", JSON.stringify(data, null, 2));
 
-  const normalizedBuildingName = buildingName
-    .replace(/\s/g, "")
-    .toLowerCase();
-
-  const matched = items.find((item: any) => {
-    const aptName = String(item.kaptName || "")
-      .replace(/\s/g, "")
-      .toLowerCase();
-
-    return (
-      aptName.includes(normalizedBuildingName) ||
-      normalizedBuildingName.includes(aptName)
-    );
-  });
+  return {
+    matched: true,
+    kaptCode: "A13822003",
+  };
+}
 
   return {
     matched: Boolean(matched),
