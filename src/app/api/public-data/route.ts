@@ -71,8 +71,10 @@ async function getKaptCode(params: {
 
   const searchBaseAddress = roadAddress || jibunAddress;
 
-  const sido = searchBaseAddress.split(" ")[0] || "";
-  const sigungu = searchBaseAddress.split(" ")[1] || "";
+  const addressParts = searchBaseAddress.split(" ");
+
+  const sido = addressParts[0] || "";
+  const sigungu = addressParts[1] || "";
 
   const url = new URL(
     "https://apis.data.go.kr/1613000/AptListService2/getTotalAptList"
@@ -80,7 +82,7 @@ async function getKaptCode(params: {
 
   url.searchParams.set("serviceKey", serviceKey);
   url.searchParams.set("pageNo", "1");
-  url.searchParams.set("numOfRows", "200");
+  url.searchParams.set("numOfRows", "300");
   url.searchParams.set("_type", "json");
   url.searchParams.set("sido", sido);
   url.searchParams.set("sigungu", sigungu);
@@ -96,12 +98,16 @@ async function getKaptCode(params: {
 
   const data = await res.json();
 
+  console.log(
+    "KAPT RAW:",
+    JSON.stringify(data, null, 2)
+  );
+
   const items =
     data?.response?.body?.items?.item ?? [];
 
-  const normalizedBuildingName = buildingName
-    .replace(/\s/g, "")
-    .toLowerCase();
+  const normalizedBuildingName =
+    buildingName.replace(/\s/g, "").toLowerCase();
 
   const matched = items.find((item: any) => {
     const aptName = String(item.kaptName || "")
