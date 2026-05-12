@@ -6,34 +6,108 @@
   color-scheme: light;
 }
 
+html,
 body {
+  margin: 0;
+  padding: 0;
   background: #f5f7fb;
   color: #0f172a;
+}
+
+body {
+  min-height: 100vh;
+  overflow-x: hidden;
+  font-feature-settings:
+    "tnum" 1,
+    "lnum" 1;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+table {
+  border-collapse: collapse;
 }
 
 .card-surface {
   border: 1px solid #e2e8f0;
   background: #ffffff;
-  border-radius: 1.25rem;
-  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.04);
+  border-radius: 1.5rem;
+  box-shadow:
+    0 1px 2px rgba(15, 23, 42, 0.04),
+    0 10px 30px rgba(15, 23, 42, 0.04);
+}
+
+.report-page {
+  width: 100%;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 32px;
+}
+
+.report-section {
+  break-inside: avoid;
+}
+
+.report-table {
+  width: 100%;
+  table-layout: fixed;
+}
+
+.report-table th {
+  white-space: nowrap;
+}
+
+.report-table th,
+.report-table td {
+  vertical-align: middle;
 }
 
 @media print {
+  @page {
+    size: A4 landscape;
+    margin: 10mm;
+  }
+
+  html,
   body {
     background: white !important;
+  }
+
+  body {
+    overflow: visible !important;
   }
 
   .no-print {
     display: none !important;
   }
 
-  .print-report {
+  .card-surface {
+    box-shadow: none !important;
+    border: 1px solid #dbe2ea;
+  }
+
+  .print-report,
+  .report-page {
     display: block !important;
+    width: 100% !important;
+    max-width: none !important;
     margin: 0 !important;
     padding: 0 !important;
     border: 0 !important;
     box-shadow: none !important;
-    font-size: 12px;
+  }
+
+  .print-report {
+    font-size: 11px;
   }
 
   .print-report table {
@@ -46,8 +120,14 @@ body {
   }
 
   .print-report section,
-  .print-report div {
+  .print-report div,
+  .report-section {
     break-inside: avoid;
+  }
+
+  * {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
   }
 }
 
