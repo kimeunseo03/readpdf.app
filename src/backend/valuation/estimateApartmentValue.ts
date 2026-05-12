@@ -5,7 +5,6 @@ import { findLegalDongCode } from "./legalDongCode";
 import { geocodeAddress } from "./geocodeApi";
 import { fetchApartmentMetaInfoByLegalDong } from "./apartmentBasisInfoApi";
 import type { ValuationInput, ValuationResult } from "./types";
-import { fetchApartmentMetaInfoByLegalDong } from "./apartmentBasisInfoApi";
 
 function average(numbers: number[]) {
   if (!numbers.length) return 0;
