@@ -10,6 +10,7 @@ interface FetchParams {
   exclusiveAreaM2?: number;
   region?: ExtractedRegion;
   legalDongCode?: string;
+  targetFloor?: number;
 }
 
 function getRecentDealYearMonths(monthCount = 12): string[] {
@@ -39,6 +40,56 @@ function getMonthsAgo(year: number, month: number, day: number) {
     (now.getFullYear() - dealDate.getFullYear()) * 12 +
     (now.getMonth() - dealDate.getMonth())
   );
+}
+
+function getFloorSimilarityScore(params: {
+  targetFloor?: number;
+  transactionFloor?: number;
+}) {
+  const { targetFloor, transactionFloor } = params;
+
+  if (!targetFloor || !transactionFloor) {
+    return {
+      score: 0,
+      reason: undefined as string | undefined
+    };
+  }
+
+  const floorDifference = Math.abs(targetFloor - transactionFloor);
+
+  if (floorDifference <= 2) {
+    return {
+      score: 14,
+      reason: `유사층(±2층)`
+    };
+  }
+
+  if (floorDifference <= 5) {
+    return {
+      score: 8,
+      reason: `인접층(±5층)`
+    };
+  }
+
+  if (floorDifference <= 10) {
+    return {
+      score: 3,
+      reason: `층수 차이 ${floorDifference}층`
+    };
+  }
+
+  return {
+    score: -8,
+    reason: `층수 차이 큼(${floorDifference}층)`
+  };
+}
+
+function getFloorPenalty(floor?: number) {
+  if (!floor) return 0;
+
+  if (floor <= 2) return -8;
+
+  return 0;
 }
 
 async function fetchApartmentTradeApi(
@@ -172,13 +223,13 @@ async function fetchApartmentTradeApi(
 
       // 최근거래는 정렬에서만 우선하고, 점수에는 가산하지 않음
 
-      if (floor >= 10) {
-        similarityScore += 8;
-      } else if (floor >= 6) {
-        similarityScore += 4;
-      } else if (floor <= 2) {
-        similarityScore -= 8;
-      }
+      const floorSimilarity = getFloorSimilarityScore({
+        targetFloor: params.targetFloor,
+        transactionFloor: floor
+      });
+
+      similarityScore += floorSimilarity.score;
+      similarityScore += getFloorPenalty(floor);
 
       if (buildYear > 0) {
         const currentYear = new Date().getFullYear();
@@ -193,8 +244,12 @@ async function fetchApartmentTradeApi(
         }
       }
 
-      if (dealType.includes("직거래")) {
+      if (floorSimilarity.reason) {
+        similarityReason += ` · ${floorSimilarity.reason}`;
+
+       if (dealType.includes("직거래")) {
         similarityScore -= 8;
+        similarityReason += " · 직거래 감점";
       }
 
       similarityScore = Math.max(0, Math.min(100, similarityScore));
@@ -268,7 +323,8 @@ export async function fetchPublicTransactions(
         dealYearMonth,
         buildingName: params.buildingName,
         exclusiveAreaM2: params.exclusiveAreaM2,
-        areaToleranceM2
+        areaToleranceM2,
+        targetFloor: params.targetFloor
       });
 
       apiTransactions.push(...monthlyTransactions);
