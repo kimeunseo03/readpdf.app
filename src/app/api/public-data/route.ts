@@ -162,14 +162,13 @@ export async function POST(req: NextRequest) {
       },
       coordinates,
       publicData: {
-        vworld: {
-          matched: Boolean(coordinates),
-          status: vworldRaw?.response?.status ?? null,
-          error: vworldRaw?.response?.error ?? null,
-          result: vworldRaw?.response?.result ?? null,
-        },
-        kapt: kaptData,
+      vworld: {
+        matched: Boolean(coordinates),
+        status: vworldRaw?.response?.status ?? null,
       },
+    
+      kapt: kaptData,
+    },
       nextRequiredData: [
         "kaptCode",
         "recentTransactionPrices",
