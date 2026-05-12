@@ -349,7 +349,7 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
       비교 거래 {result.comparableCount}건 기준
     </p>
   </div>
-</div>
+          </div>
             
           {result.recentTransactions.length > 0 && (
             <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
