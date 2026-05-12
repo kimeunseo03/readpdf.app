@@ -398,18 +398,8 @@ const isSameApartment = isSameApartmentByKaptCode || isSameApartmentByName;
 
       if (monthsAgo > 12) continue;
 
-      const transactionCoordinate = await geocodeAddress(
-        buildApartmentSearchAddress({
-          region: params.region,
-          apartmentName: aptNm
-        })
-      );
-
-      const distanceMeters = calculateDistanceMeters(
-        params.targetCoordinate,
-        transactionCoordinate
-      );
-
+      const distanceMeters = undefined;
+      
       let similarityScore = 20;
       let similarityReason = "동일 법정동 유사 면적";
 
