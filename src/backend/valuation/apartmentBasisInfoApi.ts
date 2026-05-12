@@ -412,6 +412,58 @@ export async function fetchApartmentMetaInfoByLegalDong(params: {
   return fetchApartmentMetaInfo(kaptCode);
 }
 
+function calculateApartmentSimilarity(params: {
+  targetName?: string;
+  candidateName?: string;
+  targetBuildYear?: number;
+  candidateBuildYear?: number;
+  targetHouseholdCount?: number;
+  candidateHouseholdCount?: number;
+}) {
+  let score = calculateNameSimilarity(
+    params.targetName,
+    params.candidateName
+  );
+
+  if (
+    params.targetBuildYear &&
+    params.candidateBuildYear
+  ) {
+    const diff = Math.abs(
+      params.targetBuildYear -
+      params.candidateBuildYear
+    );
+
+    if (diff <= 1) {
+      score += 15;
+    } else if (diff <= 3) {
+      score += 8;
+    } else if (diff >= 10) {
+      score -= 10;
+    }
+  }
+
+  if (
+    params.targetHouseholdCount &&
+    params.candidateHouseholdCount
+  ) {
+    const ratio =
+      Math.abs(
+        params.targetHouseholdCount -
+        params.candidateHouseholdCount
+      ) / params.targetHouseholdCount;
+
+    if (ratio <= 0.2) {
+      score += 10;
+    } else if (ratio >= 0.8) {
+      score -= 8;
+    }
+  }
+
+  return Math.max(0, Math.min(100, score));
+}
+
+
 export async function findApartmentKaptCodeInLegalDong(params: {
   legalDongCode?: string;
   apartmentName?: string;
