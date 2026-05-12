@@ -35,8 +35,13 @@ async function getVWorldCoord(address: string, type: VWorldAddressType) {
   });
 
   if (!res.ok) {
-    throw new Error(`VWorld API 호출 실패: ${res.status}`);
-  }
+  console.error(`KAPT API 호출 실패: ${res.status}`);
+
+  return {
+    matched: false,
+    kaptCode: null,
+  };
+}
 
   return res.json();
 }
@@ -84,15 +89,17 @@ async function getKaptCode(params: {
     throw new Error(`KAPT API 호출 실패: ${res.status}`);
   }
 
+try {
   const data = await res.json();
-
   console.log("KAPT BASIS RAW:", JSON.stringify(data, null, 2));
-
-  return {
-    matched: true,
-    kaptCode: "A13822003",
-  };
+} catch (error) {
+  console.error("KAPT JSON PARSE ERROR:", error);
 }
+
+return {
+  matched: false,
+  kaptCode: null,
+};
 
   return {
     matched: Boolean(matched),
