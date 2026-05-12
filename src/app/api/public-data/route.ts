@@ -245,28 +245,25 @@ export async function POST(req: NextRequest) {
     );
 }
     
-return NextResponse.json({
-  success: true,
+    return NextResponse.json({
+      success: true,
 
-  coordinates,
+      coordinates,
 
-  publicData: {
-  vworld: {
-    matched: Boolean(coordinates),
-    status:
-      vworldRaw?.response?.status ?? null,
-  },
+      publicData: {
+        vworld: {
+          matched: Boolean(coordinates),
+          status: vworldRaw?.response?.status ?? null,
+        },
 
-  kapt: {
-    matched:
-      kaptData?.matched ?? false,
-    kaptCode:
-      kaptData?.kaptCode ?? null,
-  },
+        kapt: {
+          matched: kaptData?.matched ?? false,
+          kaptCode: kaptData?.kaptCode ?? null,
+        },
 
-  transactions: transactionData,
-},
-    
+        transactions: transactionData,
+      },
+    });
   } catch (error) {
     console.error("ROUTE ERROR:", error);
 
