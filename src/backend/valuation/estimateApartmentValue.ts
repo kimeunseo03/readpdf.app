@@ -2,6 +2,7 @@ import { normalizeAddress } from "./normalizeAddress";
 import { fetchPublicTransactions } from "./publicTransactionApi";
 import { extractRegion } from "./extractRegion";
 import { findLegalDongCode } from "./legalDongCode";
+import { geocodeAddress } from "./geocodeApi";
 
 import type {
   ValuationInput,
@@ -84,6 +85,9 @@ export async function estimateApartmentValue(
   const region = extractRegion(normalized.normalizedAddress);
   const legalDongCode = findLegalDongCode(region);
   const warnings: string[] = [];
+  const targetCoordinate = await geocodeAddress(
+  normalized.normalizedAddress
+);
 
   if (!normalized.normalizedAddress) {
     warnings.push("주소 정보가 부족합니다.");
@@ -93,6 +97,12 @@ export async function estimateApartmentValue(
     warnings.push("전용면적 정보가 부족합니다.");
   }
 
+  if (!targetCoordinate) {
+  warnings.push(
+    "주소 좌표 변환에 실패하여 거리 기반 비교가 제한됩니다."
+  );
+}
+  
   if (!legalDongCode) {
     warnings.push(
       "법정동코드를 찾을 수 없어 실거래가 조회 정확도가 낮습니다. 주소 또는 법정동코드 매핑을 확인하세요."
@@ -104,7 +114,8 @@ export async function estimateApartmentValue(
     exclusiveAreaM2: normalized.area,
     region,
     legalDongCode,
-    targetFloor: input.floor
+    targetFloor: input.floor,
+    targetCoordinate
   });
 
   const usedExpandedAreaRange = transactions.some((tx) =>
@@ -348,7 +359,15 @@ export async function estimateApartmentValue(
 
     recentTransactions: transactions,
 
-    valuationBasis: [],
+    valuationBasis: [
+      "동일 법정동 실거래 비교",
+      "동일단지 우선 비교",
+      "유사 면적 비교",
+      "층수 유사도 반영",
+      ...(targetCoordinate
+        ? ["거리 기반 비교 반영"]
+        : [])
+    ],
 
     overallConfidence,
     finalComment,
