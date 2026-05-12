@@ -2,6 +2,7 @@ import type { PublicTransactionApiParams, TransactionItem } from "./types";
 import type { ExtractedRegion } from "./extractRegion";
 import { geocodeAddress } from "./geocodeApi";
 import { calculateDistanceMeters } from "./distance";
+import { findApartmentKaptCodeInLegalDong } from "./apartmentBasisInfoApi";
 
 interface FetchParams {
   buildingName?: string;
