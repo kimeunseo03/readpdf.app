@@ -196,9 +196,9 @@ function applyGeneralBuildYearScore(params: {
   const { buildYear } = params;
   let { similarityScore, similarityReason } = params;
 
-  if (buildYear > 0) {
+  if ((buildYear ?? 0) > 0) {
     const currentYear = new Date().getFullYear();
-    const buildingAge = currentYear - buildYear;
+    const buildingAge = currentYear - (buildYear ?? 0);
 
     if (buildingAge <= 10) {
       similarityScore += 10;
