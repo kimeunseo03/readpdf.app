@@ -1,9 +1,7 @@
-import type {
-  PublicTransactionApiParams,
-  TransactionItem
-} from "./types";
-
+import type { PublicTransactionApiParams, TransactionItem } from "./types";
 import type { ExtractedRegion } from "./extractRegion";
+import { geocodeAddress } from "./geocodeApi";
+import { calculateDistanceMeters } from "./distance";
 
 interface FetchParams {
   buildingName?: string;
@@ -11,6 +9,10 @@ interface FetchParams {
   region?: ExtractedRegion;
   legalDongCode?: string;
   targetFloor?: number;
+  targetCoordinate?: {
+    latitude: number;
+    longitude: number;
+  };
 }
 
 function getRecentDealYearMonths(monthCount = 12): string[] {
@@ -40,6 +42,36 @@ function getMonthsAgo(year: number, month: number, day: number) {
     (now.getFullYear() - dealDate.getFullYear()) * 12 +
     (now.getMonth() - dealDate.getMonth())
   );
+}
+
+function buildApartmentSearchAddress(params: {
+  region?: ExtractedRegion;
+  apartmentName?: string;
+}) {
+  const parts = [
+    params.region?.sido,
+    params.region?.sigungu,
+    params.region?.eupmyeondong,
+    params.apartmentName
+  ].filter(Boolean);
+
+  return parts.join(" ");
+}
+
+function getDistanceTier(distanceMeters?: number) {
+  if (distanceMeters === undefined) {
+    return "unknown";
+  }
+
+  if (distanceMeters <= 500) {
+    return "500m";
+  }
+
+  if (distanceMeters <= 1000) {
+    return "1km";
+  }
+
+  return "fallback";
 }
 
 function getFloorSimilarityScore(params: {
@@ -200,6 +232,18 @@ async function fetchApartmentTradeApi(
 
       const monthsAgo = getMonthsAgo(dealYear, dealMonth, dealDay);
 
+      const transactionCoordinate = await geocodeAddress(
+        buildApartmentSearchAddress({
+          region: params.region,
+          apartmentName: aptNm
+        })
+      );
+
+      const distanceMeters = calculateDistanceMeters(
+        params.targetCoordinate,
+        transactionCoordinate
+      );
+
       // 12개월 초과 거래는 비교군에서 제외
       if (monthsAgo > 12) continue;
 
@@ -221,6 +265,19 @@ async function fetchApartmentTradeApi(
         }
       }
 
+  if (distanceMeters !== undefined) {
+    if (distanceMeters <= 500) {
+      similarityScore += 18;
+      similarityReason += " · 반경 500m 이내";
+    } else if (distanceMeters <= 1000) {
+      similarityScore += 8;
+      similarityReason += " · 반경 1km 이내";
+    } else if (!isSameApartment) {
+      similarityScore -= 20;
+      similarityReason += " · fallback 비교";
+    }
+  }
+
       // 최근거래는 정렬에서만 우선하고, 점수에는 가산하지 않음
 
       const floorSimilarity = getFloorSimilarityScore({
@@ -234,13 +291,19 @@ async function fetchApartmentTradeApi(
       if (buildYear > 0) {
         const currentYear = new Date().getFullYear();
         const buildingAge = currentYear - buildYear;
-
+      
         if (buildingAge <= 10) {
           similarityScore += 10;
+          similarityReason += " · 준공 10년 이하";
         } else if (buildingAge <= 20) {
           similarityScore += 5;
+          similarityReason += " · 준공 20년 이하";
+        } else if (buildingAge >= 35) {
+          similarityScore -= 12;
+          similarityReason += " · 준공 35년 이상";
         } else if (buildingAge >= 30) {
-          similarityScore -= 5;
+          similarityScore -= 7;
+          similarityReason += " · 준공 30년 이상";
         }
       }
 
@@ -287,12 +350,19 @@ async function fetchApartmentTradeApi(
         isSameApartment,
         areaDifferenceM2,
         monthsAgo,
+        distanceMeters,
         similarityScore,
         similarityReason,
         reliabilityGrade,
         selectionReason: isSameApartment
           ? "동일 단지 거래"
-          : `동일 법정동 유사 면적 거래(±${areaToleranceM2}㎡)`
+          : distanceMeters !== undefined
+            ? distanceMeters <= 500
+              ? `반경 500m 유사 거래(±${areaToleranceM2}㎡)`
+              : distanceMeters <= 1000
+                ? `반경 1km 유사 거래(±${areaToleranceM2}㎡)`
+                : `법정동 fallback 거래(±${areaToleranceM2}㎡)`
+            : `법정동 fallback 거래(±${areaToleranceM2}㎡)`
       });
     }
 
@@ -324,7 +394,9 @@ export async function fetchPublicTransactions(
         buildingName: params.buildingName,
         exclusiveAreaM2: params.exclusiveAreaM2,
         areaToleranceM2,
-        targetFloor: params.targetFloor
+        targetFloor: params.targetFloor,
+        targetCoordinate: params.targetCoordinate,
+        region: params.region
       });
 
       apiTransactions.push(...monthlyTransactions);
@@ -347,7 +419,28 @@ export async function fetchPublicTransactions(
           if (sameB !== sameA) {
             return sameB - sameA;
           }
-
+          
+          const tierPriority = (tx: TransactionItem) => {
+            if (tx.isSameApartment) return 0;
+          
+            if ((tx.distanceMeters ?? 999999) <= 500) {
+              return 1;
+            }
+          
+            if ((tx.distanceMeters ?? 999999) <= 1000) {
+              return 2;
+            }
+          
+            return 3;
+          };
+          
+          const tierA = tierPriority(a);
+          const tierB = tierPriority(b);
+          
+          if (tierA !== tierB) {
+            return tierA - tierB;
+          }
+                    
           const scoreA = a.similarityScore ?? 0;
           const scoreB = b.similarityScore ?? 0;
 
