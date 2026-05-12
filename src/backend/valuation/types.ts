@@ -92,6 +92,7 @@ export interface PublicTransactionApiParams {
   targetBuildYear?: number;
   targetHouseholdCount?: number;
   targetKaptCode?: string;
+  targetSubwayWalkMinutes?: number;
 }
 
 export interface ValuationResult {
