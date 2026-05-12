@@ -63,18 +63,57 @@ async function getKaptCode(params: {
 }) {
   const { roadAddress, jibunAddress, buildingName } = params;
 
+  const serviceKey = process.env.PUBLIC_DATA_API_KEY;
+
+  if (!serviceKey) {
+    throw new Error("PUBLIC_DATA_API_KEY가 설정되지 않았습니다.");
+  }
+
   const searchBaseAddress = roadAddress || jibunAddress;
+
+  const sido = searchBaseAddress.split(" ")[0] || "";
+  const sigungu = searchBaseAddress.split(" ")[1] || "";
+
+  const url = new URL(
+    "https://apis.data.go.kr/1613000/AptListService2/getTotalAptList"
+  );
+
+  url.searchParams.set("serviceKey", serviceKey);
+  url.searchParams.set("pageNo", "1");
+  url.searchParams.set("numOfRows", "200");
+  url.searchParams.set("_type", "json");
+  url.searchParams.set("sido", sido);
+  url.searchParams.set("sigungu", sigungu);
+
+  const res = await fetch(url.toString(), {
+    method: "GET",
+    cache: "no-store",
+  });
+
+  if (!res.ok) {
+    throw new Error(`KAPT API 호출 실패: ${res.status}`);
+  }
+
+  const data = await res.json();
+
+  const items =
+    data?.response?.body?.items?.item ?? [];
 
   const normalizedBuildingName = buildingName
     .replace(/\s/g, "")
     .toLowerCase();
 
+  const matched = items.find((item: any) => {
+    const aptName = String(item.kaptName || "")
+      .replace(/\s/g, "")
+      .toLowerCase();
+
+    return aptName.includes(normalizedBuildingName);
+  });
+
   return {
-    matched: false,
-    kaptCode: null,
-    searchBaseAddress,
-    normalizedBuildingName,
-    candidates: [],
+    matched: Boolean(matched),
+    kaptCode: matched?.kaptCode ?? null,
   };
 }
 
