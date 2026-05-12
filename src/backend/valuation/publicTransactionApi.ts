@@ -88,21 +88,21 @@ function getFloorSimilarityScore(params: {
 
   if (floorDifference <= 2) {
     return {
-      score: 14,
+      score: 12,
       reason: "유사층(±2층)"
     };
   }
 
   if (floorDifference <= 5) {
     return {
-      score: 8,
+      score: 6,
       reason: "인접층(±5층)"
     };
   }
 
   if (floorDifference <= 10) {
     return {
-      score: 3,
+      score: 2,
       reason: `층수 차이 ${floorDifference}층`
     };
   }
@@ -136,21 +136,21 @@ function getBuildYearSimilarityScore(params: {
 
   if (difference <= 3) {
     return {
-      score: 12,
+      score: 10,
       reason: "준공연도 유사(±3년)"
     };
   }
 
   if (difference <= 5) {
     return {
-      score: 8,
+      score: 6,
       reason: "준공연도 유사(±5년)"
     };
   }
 
   if (difference <= 10) {
     return {
-      score: 3,
+      score: 2,
       reason: `준공연도 차이 ${difference}년`
     };
   }
@@ -180,20 +180,20 @@ function getHouseholdScaleScore(params: {
 
   if (ratio <= 0.2) {
     return {
-      score: 8,
+      score: 5,
       reason: "세대수 규모 유사"
     };
   }
 
   if (ratio <= 0.5) {
     return {
-      score: 3,
+      score: 2,
       reason: "세대수 규모 일부 유사"
     };
   }
 
   return {
-    score: -6,
+    score: -4,
     reason: "세대수 규모 차이 큼"
   };
 }
@@ -410,11 +410,11 @@ const isSameApartment = isSameApartmentByKaptCode || isSameApartmentByName;
         transactionCoordinate
       );
 
-      let similarityScore = 35;
+      let similarityScore = 20;
       let similarityReason = "동일 법정동 유사 면적";
 
       if (isSameApartment) {
-        similarityScore += 45;
+        similarityScore += 35;
         similarityReason = isSameApartmentByKaptCode
           ? "동일 단지(kaptCode 일치)"
           : "동일 단지(단지명 일치)";
@@ -435,13 +435,13 @@ const isSameApartment = isSameApartmentByKaptCode || isSameApartmentByName;
 
       if (distanceMeters !== undefined) {
         if (distanceMeters <= 500) {
-          similarityScore += 18;
+          similarityScore += 10;
           similarityReason += " · 반경 500m 이내";
         } else if (distanceMeters <= 1000) {
-          similarityScore += 8;
+          similarityScore += 4;
           similarityReason += " · 반경 1km 이내";
         } else if (!isSameApartment) {
-          similarityScore -= 20;
+          similarityScore -= 12;
           similarityReason += " · fallback 비교";
         }
       }
