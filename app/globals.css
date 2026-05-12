@@ -1,0 +1,33 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+}
+
+body {
+  background: #f8fafc;
+}
+
+@media print {
+  body {
+    background: white;
+  }
+
+  button,
+  input,
+  textarea,
+  .no-print {
+    display: none !important;
+  }
+
+  .print-only {
+    display: block !important;
+  }
+
+  main,
+  section {
+    box-shadow: none !important;
+  }
+}
