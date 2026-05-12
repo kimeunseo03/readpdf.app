@@ -2,7 +2,11 @@ import type { PublicTransactionApiParams, TransactionItem } from "./types";
 import type { ExtractedRegion } from "./extractRegion";
 import { geocodeAddress } from "./geocodeApi";
 import { calculateDistanceMeters } from "./distance";
-import { findApartmentKaptCodeInLegalDong, fetchApartmentBasisInfo} from "./apartmentBasisInfoApi";
+import {
+  findApartmentKaptCodeInLegalDong,
+  fetchApartmentBasisInfo,
+  fetchApartmentDetailInfo
+} from "./apartmentBasisInfoApi";
 
 interface FetchParams {
   buildingName?: string;
@@ -10,6 +14,7 @@ interface FetchParams {
   region?: ExtractedRegion;
   legalDongCode?: string;
   targetFloor?: number;
+  targetSubwayWalkMinutes?: number;
   targetCoordinate?: {
     latitude: number;
     longitude: number;
@@ -193,6 +198,44 @@ function getHouseholdScaleScore(params: {
   };
 }
 
+function getSubwayAccessibilityScore(params: {
+  targetWalkMinutes?: number;
+  transactionWalkMinutes?: number;
+}) {
+  const { targetWalkMinutes, transactionWalkMinutes } = params;
+
+  if (
+    targetWalkMinutes === undefined ||
+    transactionWalkMinutes === undefined
+  ) {
+    return {
+      score: 0,
+      reason: undefined as string | undefined
+    };
+  }
+
+  const difference = Math.abs(targetWalkMinutes - transactionWalkMinutes);
+
+  if (difference <= 3) {
+    return {
+      score: 8,
+      reason: "역세권 접근성 유사"
+    };
+  }
+
+  if (difference <= 7) {
+    return {
+      score: 3,
+      reason: "역 접근성 일부 유사"
+    };
+  }
+
+  return {
+    score: -6,
+    reason: "역세권 차이 큼"
+  };
+}
+
 function applyGeneralBuildYearScore(params: {
   buildYear?: number;
   similarityScore: number;
@@ -332,6 +375,13 @@ async function fetchApartmentTradeApi(
         ? await fetchApartmentBasisInfo(transactionKaptCode)
         : undefined;
       
+      const transactionDetailInfo = transactionKaptCode
+        ? await fetchApartmentDetailInfo(transactionKaptCode)
+        : undefined;
+            
+      const transactionWalkMinutes =
+        transactionDetailInfo?.subwayWalkingMinutes;
+            
       const isSameApartmentByKaptCode =
         !!params.targetKaptCode &&
         !!transactionKaptCode &&
