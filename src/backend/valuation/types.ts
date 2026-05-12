@@ -39,6 +39,7 @@ export interface ValuationInput {
   buildingName?: string;
   exclusiveAreaM2?: number;
   floor?: number;
+  coordinate?: Coordinate;
 
   tenantDepositAmount?: number;
 
@@ -71,6 +72,10 @@ export interface TransactionItem {
   similarityScore?: number;
   similarityReason?: string;
   reliabilityGrade?: ReliabilityGrade;
+  /**
+   * 대상 물건과 거래 단지 간 거리. 미터 단위.
+   */
+  distanceMeters?: number;
 }
 
 export interface PublicTransactionApiParams {
@@ -80,6 +85,7 @@ export interface PublicTransactionApiParams {
   exclusiveAreaM2?: number;
   areaToleranceM2?: number;
   targetFloor?: number;
+  targetCoordinate?: Coordinate;
 }
 
 export interface ValuationResult {
@@ -120,4 +126,9 @@ export interface ValuationResult {
   overallConfidence?: ReliabilityGrade;
   warnings: string[];
   finalComment?: string;
+}
+
+export interface Coordinate {
+  latitude: number;
+  longitude: number;
 }
