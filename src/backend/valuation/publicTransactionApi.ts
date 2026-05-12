@@ -361,7 +361,9 @@ const isSameApartment = isSameApartmentByKaptCode || isSameApartmentByName;
 
       if (isSameApartment) {
         similarityScore += 45;
-        similarityReason = "동일 단지";
+        similarityReason = isSameApartmentByKaptCode
+          ? "동일 단지(kaptCode 일치)"
+          : "동일 단지(단지명 일치)";
       }
 
       if (areaDifferenceM2 !== undefined) {
