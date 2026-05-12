@@ -86,6 +86,14 @@ export async function estimateApartmentValue(
     legalDongCode,
     buildingName: normalized.buildingName
   });
+
+  console.log("apartment_meta_lookup_result", {
+    legalDongCode,
+    buildingName: normalized.buildingName,
+    kaptCode: apartmentMeta?.basis?.kaptCode,
+    kaptName: apartmentMeta?.basis?.kaptName,
+    householdCount: apartmentMeta?.basis?.householdCount
+  });
   
 if (!apartmentMeta?.basis?.kaptCode) {
   warnings.push(
