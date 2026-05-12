@@ -80,11 +80,9 @@ export interface TransactionItem {
 
 export interface PublicTransactionApiParams {
   legalDongCode?: string;
-
   dealYearMonth: string;
 
   buildingName?: string;
-
   exclusiveAreaM2?: number;
   areaToleranceM2?: number;
 
@@ -92,12 +90,8 @@ export interface PublicTransactionApiParams {
   targetCoordinate?: Coordinate;
 
   targetBuildYear?: number;
-
   targetHouseholdCount?: number;
-
   targetKaptCode?: string;
-
-  region?: unknown;
 }
 
 export interface ValuationResult {
