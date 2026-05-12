@@ -56,6 +56,17 @@ function extractVWorldPoint(data: any) {
   };
 }
 
+async function getKaptCode(params: {
+  roadAddress: string;
+  jibunAddress: string;
+  buildingName: string;
+}) {
+  // 공동주택 단지목록 API 호출
+  // roadAddress/buildingName 기준 후보 필터링
+  // kaptCode 반환
+}
+
+
 export async function POST(req: NextRequest) {
   try {
     const body = (await req.json()) as PublicDataRequest;
