@@ -104,13 +104,32 @@ async function requestPublicDataItem<T>(
       return undefined;
     }
 
-    const json = await response.json();
+const json = await response.json();
 
-    const item = json?.response?.body?.item;
+const body = json?.response?.body ?? json?.body;
+const item =
+  body?.item ??
+  body?.items?.item ??
+  body?.items;
 
-    if (!item) return undefined;
+if (!item) {
+  console.log("apartment_item_empty_response", {
+    endpoint,
+    params,
+    resultCode:
+      json?.response?.header?.resultCode ??
+      json?.header?.resultCode,
+    resultMsg:
+      json?.response?.header?.resultMsg ??
+      json?.header?.resultMsg,
+    bodyKeys: Object.keys(body ?? {}),
+    sampleBody: JSON.stringify(body ?? {}).slice(0, 500)
+  });
 
-    return item as T;
+  return undefined;
+}
+
+return Array.isArray(item) ? (item[0] as T) : (item as T);
   } catch (error) {
     console.error("requestPublicDataItem_error", error);
     return undefined;
@@ -295,10 +314,31 @@ async function requestPublicDataItems<T>(
       return [];
     }
 
-    const json = await response.json();
-    const item = json?.response?.body?.items?.item ?? json?.response?.body?.item;
+const json = await response.json();
 
-    return normalizeItems<T>(item);
+console.log("apartment_list_raw_response", {
+  endpoint,
+  params,
+  resultCode:
+    json?.response?.header?.resultCode ??
+    json?.header?.resultCode,
+  resultMsg:
+    json?.response?.header?.resultMsg ??
+    json?.header?.resultMsg,
+  bodyKeys: Object.keys(json?.response?.body ?? json?.body ?? {}),
+  sampleBody: JSON.stringify(json?.response?.body ?? json?.body ?? {}).slice(
+    0,
+    500
+  )
+});
+
+const body = json?.response?.body ?? json?.body;
+const item =
+  body?.items?.item ??
+  body?.item ??
+  body?.items;
+
+return normalizeItems<T>(item);
   } catch (error) {
     console.error("requestPublicDataItems_error", error);
     return [];
