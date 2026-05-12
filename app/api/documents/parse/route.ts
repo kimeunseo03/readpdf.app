@@ -4,11 +4,25 @@ import { validatePdfFile } from "@backend/pdf/validatePdf";
 import { extractTextFromPdf } from "@backend/pdf/extractText";
 import { parseRegistryText } from "@backend/pdf/parseRegistryPdf";
 import { toValuationInput } from "@backend/pdf/normalizeRegistryData";
-import { createValuationPlaceholder } from "@backend/valuation/placeholderValuationEngine";
 import { getCompliancePolicy } from "@backend/compliance/dataSourcePolicy";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+
+function createValuationPlaceholder(input: ReturnType<typeof toValuationInput>) {
+  if (!input) {
+    return {
+      isReady: false,
+      message: "주소 또는 전용면적이 부족하여 가치평가 입력값을 만들 수 없습니다."
+    };
+  }
+
+  return {
+    isReady: true,
+    message: "가치평가 입력값 생성이 완료되었습니다. 화면에서 추출값을 확인하거나 수정한 뒤 자동 평가를 실행하세요.",
+    input
+  };
+}
 
 export async function POST(request: Request) {
   try {
@@ -16,12 +30,18 @@ export async function POST(request: Request) {
     const file = formData.get("file");
 
     if (!(file instanceof File)) {
-      return NextResponse.json({ error: "file 필드에 PDF 파일을 첨부해야 합니다." }, { status: 400 });
+      return NextResponse.json(
+        { error: "file 필드에 PDF 파일을 첨부해야 합니다." },
+        { status: 400 }
+      );
     }
 
     const validation = validatePdfFile(file);
     if (!validation.isValidPdf) {
-      return NextResponse.json({ error: "PDF 파일 검증에 실패했습니다.", validation }, { status: 400 });
+      return NextResponse.json(
+        { error: "PDF 파일 검증에 실패했습니다.", validation },
+        { status: 400 }
+      );
     }
 
     const arrayBuffer = await file.arrayBuffer();
@@ -44,7 +64,9 @@ export async function POST(request: Request) {
       compliance: getCompliancePolicy()
     });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "알 수 없는 오류가 발생했습니다.";
+    const message =
+      error instanceof Error ? error.message : "알 수 없는 오류가 발생했습니다.";
+
     return NextResponse.json(
       {
         error: "PDF 판독 중 오류가 발생했습니다.",
