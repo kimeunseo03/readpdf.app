@@ -384,7 +384,7 @@ const transactions = await fetchPublicTransactions({
         : []),
       ...(apartmentMeta?.basis?.householdCount
         ? ["세대수 규모 유사도 반영"]
-        : [])
+        : []),
       ...(apartmentMeta?.detail?.subwayWalkingMinutes
         ? ["역세권 접근성 유사도 반영"]
         : [])
