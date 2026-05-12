@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { XMLParser } from "fast-xml-parser";
 
 type PublicDataRequest = {
   jibunAddress?: string;
@@ -68,6 +69,52 @@ async function getKaptCode(params: {
   if (!serviceKey) {
     throw new Error("PUBLIC_DATA_API_KEY가 설정되지 않았습니다.");
   }
+
+  async function getRecentTransactionPrices(
+  kaptCode: string
+) {
+  const serviceKey = process.env.PUBLIC_DATA_API_KEY;
+
+  if (!serviceKey) {
+    throw new Error(
+      "PUBLIC_DATA_API_KEY가 설정되지 않았습니다."
+    );
+  }
+
+  if (!kaptCode) {
+    return [];
+  }
+
+  const url = new URL(
+    "https://apis.data.go.kr/1613000/RTMSDataSvcAptTradeDev/getRTMSDataSvcAptTradeDev"
+  );
+
+  url.searchParams.set("serviceKey", serviceKey);
+  url.searchParams.set("kaptCode", kaptCode);
+  url.searchParams.set("LAWD_CD", "11710");
+  url.searchParams.set("DEAL_YMD", "202605");
+  url.searchParams.set("_type", "json");
+
+  const res = await fetch(url.toString(), {
+    method: "GET",
+    cache: "no-store",
+  });
+
+  if (!res.ok) {
+    throw new Error(
+      `실거래 API 호출 실패: ${res.status}`
+    );
+  }
+
+  const data = await res.json();
+
+  console.log(
+    "TRANSACTION RAW:",
+    JSON.stringify(data, null, 2)
+  );
+
+  return data;
+}
 
   const searchBaseAddress = roadAddress || jibunAddress;
 
@@ -149,6 +196,7 @@ export async function POST(req: NextRequest) {
     let vworldRaw: any = null;
     let coordinates = null;
     let kaptData = null;
+    let transactionData = null;
 
     let addressType: VWorldAddressType = roadAddress ? "road" : "parcel";
 
@@ -191,23 +239,34 @@ export async function POST(req: NextRequest) {
       buildingName,
     });
 
+    if (kaptData?.kaptCode) {
+  transactionData =
+    await getRecentTransactionPrices(
+      kaptData.kaptCode
+    );
+}
+    
 return NextResponse.json({
   success: true,
 
   coordinates,
 
   publicData: {
-    vworld: {
-      matched: Boolean(coordinates),
-      status: vworldRaw?.response?.status ?? null,
-    },
-
-    kapt: {
-      matched: kaptData?.matched ?? false,
-      kaptCode: kaptData?.kaptCode ?? null,
-    },
+  vworld: {
+    matched: Boolean(coordinates),
+    status:
+      vworldRaw?.response?.status ?? null,
   },
-});
+
+  kapt: {
+    matched:
+      kaptData?.matched ?? false,
+    kaptCode:
+      kaptData?.kaptCode ?? null,
+  },
+
+  transactions: transactionData,
+},
     
   } catch (error) {
     console.error("ROUTE ERROR:", error);
