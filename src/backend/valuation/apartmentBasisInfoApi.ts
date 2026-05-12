@@ -85,9 +85,8 @@ async function requestPublicDataItem<T>(
 
     const url = new URL(endpoint);
 
-    url.searchParams.set("serviceKey", apiKey);
-    url.searchParams.set("_type", "json");
-
+    url.search = `?serviceKey=${apiKey}&_type=json`;
+    
     Object.entries(params).forEach(([key, value]) => {
       if (value !== undefined && value !== "") {
         url.searchParams.set(key, String(value));
@@ -295,8 +294,7 @@ async function requestPublicDataItems<T>(
 
     const url = new URL(endpoint);
 
-    url.searchParams.set("serviceKey", apiKey);
-    url.searchParams.set("_type", "json");
+    url.search = `?serviceKey=${apiKey}&_type=json`;
 
     Object.entries(params).forEach(([key, value]) => {
       if (value !== undefined && value !== "") {
