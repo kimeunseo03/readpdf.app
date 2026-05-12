@@ -383,6 +383,12 @@ export async function findApartmentKaptCodeInLegalDong(params: {
     legalDongCode: params.legalDongCode
   });
 
+  console.log("kapt_lookup_input", {
+    legalDongCode: params.legalDongCode,
+    apartmentName: params.apartmentName,
+    candidateCount: candidates.length
+  });
+
   if (!candidates.length) return undefined;
 
   const scored = candidates
@@ -394,6 +400,17 @@ export async function findApartmentKaptCodeInLegalDong(params: {
       )
     }))
     .sort((a, b) => b.score - a.score);
+
+  console.log(
+    "kapt_lookup_candidates",
+    scored.slice(0, 5).map((item) => ({
+      score: item.score,
+      kaptCode: item.candidate.kaptCode,
+      kaptName: item.candidate.kaptName,
+      kaptAddr: item.candidate.kaptAddr,
+      bjdCode: item.candidate.bjdCode
+    }))
+  );
 
   const best = scored[0];
 
