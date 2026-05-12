@@ -146,35 +146,24 @@ export async function POST(req: NextRequest) {
       buildingName,
     });
 
-    return NextResponse.json({
-      success: true,
-      input: {
-        jibunAddress,
-        roadAddress,
-        buildingName,
-        exclusiveAreaM2,
-      },
-      normalizedAddress: {
-        primaryAddress,
-        usedAddressType: addressType,
-        jibunAddress,
-        roadAddress,
-      },
-      coordinates,
-      publicData: {
-      vworld: {
-        matched: Boolean(coordinates),
-        status: vworldRaw?.response?.status ?? null,
-      },
-    
-      kapt: kaptData,
+return NextResponse.json({
+  success: true,
+
+  coordinates,
+
+  publicData: {
+    vworld: {
+      matched: Boolean(coordinates),
+      status: vworldRaw?.response?.status ?? null,
     },
-      nextRequiredData: [
-        "kaptCode",
-        "recentTransactionPrices",
-        "officialPrice",
-      ],
-    });
+
+    kapt: {
+      matched: kaptData?.matched ?? false,
+      kaptCode: kaptData?.kaptCode ?? null,
+    },
+  },
+});
+    
   } catch (error) {
     console.error("ROUTE ERROR:", error);
 
