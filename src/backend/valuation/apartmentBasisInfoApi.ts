@@ -309,11 +309,13 @@ async function requestPublicDataItems<T>(
       cache: "no-store"
     });
 
-    if (!response.ok) {
-      console.warn("apartment_list_api_failed", response.status);
-      return [];
-    }
-
+  if (!response.ok) {
+    console.warn("apartment_list_api_failed", {
+      status: response.status,
+      url: url.toString()
+    });
+    return [];
+  }
 const json = await response.json();
 
 console.log("apartment_list_raw_response", {
