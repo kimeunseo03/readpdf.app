@@ -103,7 +103,8 @@ export async function estimateApartmentValue(
     buildingName: normalized.buildingName,
     exclusiveAreaM2: normalized.area,
     region,
-    legalDongCode
+    legalDongCode,
+    targetFloor: input.floor
   });
 
   const usedExpandedAreaRange = transactions.some((tx) =>
@@ -112,7 +113,7 @@ export async function estimateApartmentValue(
 
   if (usedExpandedAreaRange) {
     warnings.push(
-      "동일 조건 거래가 부족하여 전용면적 비교 범위를 ±5㎡까지 자동 확장했습니다."
+      "동일단지·유사층 거래가 부족하여 전용면적 비교 범위를 ±5㎡까지 자동 확장했습니다."
     );
   }
 
