@@ -364,7 +364,6 @@ async function fetchApartmentTradeApi(
                 : `법정동 fallback 거래(±${areaToleranceM2}㎡)`
             : `법정동 fallback 거래(±${areaToleranceM2}㎡)`
       });
-    }
 
     console.log("filtered_transaction_count", transactions.length);
 
