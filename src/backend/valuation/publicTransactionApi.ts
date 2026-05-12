@@ -487,6 +487,16 @@ const isSameApartment = isSameApartmentByKaptCode || isSameApartmentByName;
         similarityReason += ` · ${householdScale.reason}`;
       }
 
+      const subwayAccessibility = getSubwayAccessibilityScore({
+        targetWalkMinutes: params.targetSubwayWalkMinutes,
+        transactionWalkMinutes
+      });
+      
+      if (subwayAccessibility.reason) {
+        similarityScore += subwayAccessibility.score;
+        similarityReason += ` · ${subwayAccessibility.reason}`;
+      }
+
       if (dealType.includes("직거래")) {
         similarityScore -= 8;
         similarityReason += " · 직거래 감점";
@@ -575,6 +585,7 @@ export async function fetchPublicTransactions(
         targetCoordinate: params.targetCoordinate,
         targetBuildYear: params.targetBuildYear,
         targetHouseholdCount: params.targetHouseholdCount,
+        targetSubwayWalkMinutes: params.targetSubwayWalkMinutes,
         targetKaptCode: params.targetKaptCode,
         region: params.region
       });
