@@ -35,13 +35,8 @@ async function getVWorldCoord(address: string, type: VWorldAddressType) {
   });
 
   if (!res.ok) {
-  console.error(`KAPT API 호출 실패: ${res.status}`);
-
-  return {
-    matched: false,
-    kaptCode: null,
-  };
-}
+    throw new Error(`VWorld API 호출 실패: ${res.status}`);
+  }
 
   return res.json();
 }
@@ -69,42 +64,50 @@ async function getKaptCode(params: {
   const serviceKey = process.env.PUBLIC_DATA_API_KEY;
 
   if (!serviceKey) {
-    throw new Error("PUBLIC_DATA_API_KEY가 설정되지 않았습니다.");
+    return {
+      matched: false,
+      kaptCode: null,
+    };
   }
 
-  const url = new URL(
-    "https://apis.data.go.kr/1613000/AptBasisInfoServiceV3/getAphusBassInfo"
-  );
+  try {
+    const url = new URL(
+      "https://apis.data.go.kr/1613000/AptBasisInfoServiceV3/getAphusBassInfo"
+    );
 
-  url.searchParams.set("serviceKey", serviceKey);
-  url.searchParams.set("kaptCode", "A13822003");
-  url.searchParams.set("_type", "json");
+    url.searchParams.set("serviceKey", serviceKey);
+    url.searchParams.set("kaptCode", "A13822003");
+    url.searchParams.set("_type", "json");
 
-  const res = await fetch(url.toString(), {
-    method: "GET",
-    cache: "no-store",
-  });
+    const res = await fetch(url.toString(), {
+      method: "GET",
+      cache: "no-store",
+    });
 
-  if (!res.ok) {
-    throw new Error(`KAPT API 호출 실패: ${res.status}`);
+    if (!res.ok) {
+      console.error(`KAPT API 호출 실패: ${res.status}`);
+
+      return {
+        matched: false,
+        kaptCode: null,
+      };
+    }
+
+    const text = await res.text();
+    console.log("KAPT BASIS RAW:", text.slice(0, 1000));
+
+    return {
+      matched: true,
+      kaptCode: "A13822003",
+    };
+  } catch (error) {
+    console.error("KAPT ERROR:", error);
+
+    return {
+      matched: false,
+      kaptCode: null,
+    };
   }
-
-try {
-  const data = await res.json();
-  console.log("KAPT BASIS RAW:", JSON.stringify(data, null, 2));
-} catch (error) {
-  console.error("KAPT JSON PARSE ERROR:", error);
-}
-
-return {
-  matched: false,
-  kaptCode: null,
-};
-
-  return {
-    matched: Boolean(matched),
-    kaptCode: matched?.kaptCode ?? null,
-  };
 }
 
 async function getRecentTransactionPrices(params: {
@@ -138,7 +141,7 @@ async function getRecentTransactionPrices(params: {
 
   const text = await res.text();
 
-  console.log("TRANSACTION RAW:", text);
+  console.log("TRANSACTION RAW:", text.slice(0, 1000));
 
   return {
     raw: text.slice(0, 2000),
@@ -152,9 +155,6 @@ export async function POST(req: NextRequest) {
     const jibunAddress = body.jibunAddress?.trim() || "";
     const roadAddress = body.roadAddress?.trim() || "";
     const buildingName = body.buildingName?.trim() || "";
-
-    const exclusiveAreaM2 =
-      typeof body.exclusiveAreaM2 === "number" ? body.exclusiveAreaM2 : null;
 
     const primaryAddress = roadAddress || jibunAddress;
 
