@@ -117,35 +117,63 @@ async function getRecentTransactionPrices(params: {
   const serviceKey = process.env.PUBLIC_DATA_API_KEY;
 
   if (!serviceKey) {
-    throw new Error("PUBLIC_DATA_API_KEY가 설정되지 않았습니다.");
+    return {
+      ok: false,
+      status: null,
+      error: "PUBLIC_DATA_API_KEY가 설정되지 않았습니다.",
+      raw: "",
+    };
   }
 
-  const url = new URL(
-    "https://apis.data.go.kr/1613000/RTMSDataSvcAptTradeDev/getRTMSDataSvcAptTradeDev"
-  );
+  try {
+    const url = new URL(
+      "https://apis.data.go.kr/1613000/RTMSDataSvcAptTradeDev/getRTMSDataSvcAptTradeDev"
+    );
 
-  url.searchParams.set("serviceKey", serviceKey);
-  url.searchParams.set("LAWD_CD", params.lawdCd);
-  url.searchParams.set("DEAL_YMD", params.dealYmd);
-  url.searchParams.set("pageNo", "1");
-  url.searchParams.set("numOfRows", "30");
+    url.searchParams.append("serviceKey", serviceKey);
+    url.searchParams.set("LAWD_CD", params.lawdCd);
+    url.searchParams.set("DEAL_YMD", params.dealYmd);
+    url.searchParams.set("pageNo", "1");
+    url.searchParams.set("numOfRows", "30");
 
-  const res = await fetch(url.toString(), {
-    method: "GET",
-    cache: "no-store",
-  });
+    const res = await fetch(url.toString(), {
+      method: "GET",
+      cache: "no-store",
+    });
 
-  if (!res.ok) {
-    throw new Error(`실거래 API 호출 실패: ${res.status}`);
+    const text = await res.text();
+
+    console.log("TRANSACTION STATUS:", res.status);
+    console.log("TRANSACTION RAW:", text.slice(0, 1000));
+
+    if (!res.ok) {
+      return {
+        ok: false,
+        status: res.status,
+        error: `실거래 API 호출 실패: ${res.status}`,
+        raw: text.slice(0, 1000),
+      };
+    }
+
+    return {
+      ok: true,
+      status: res.status,
+      error: null,
+      raw: text.slice(0, 2000),
+    };
+  } catch (error) {
+    console.error("TRANSACTION ERROR:", error);
+
+    return {
+      ok: false,
+      status: null,
+      error:
+        error instanceof Error
+          ? error.message
+          : "실거래 API 처리 중 오류가 발생했습니다.",
+      raw: "",
+    };
   }
-
-  const text = await res.text();
-
-  console.log("TRANSACTION RAW:", text.slice(0, 1000));
-
-  return {
-    raw: text.slice(0, 2000),
-  };
 }
 
 export async function POST(req: NextRequest) {
