@@ -7,10 +7,9 @@ type PublicDataRequest = {
   exclusiveAreaM2?: number;
 };
 
-async function getVWorldCoord(
-  address: string,
-  type: "road" | "parcel"
-) {
+type VWorldAddressType = "road" | "parcel";
+
+async function getVWorldCoord(address: string, type: VWorldAddressType) {
   const key = process.env.VWORLD_API_KEY;
 
   if (!key) {
@@ -66,9 +65,7 @@ export async function POST(req: NextRequest) {
     const buildingName = body.buildingName?.trim() || "";
 
     const exclusiveAreaM2 =
-      typeof body.exclusiveAreaM2 === "number"
-        ? body.exclusiveAreaM2
-        : null;
+      typeof body.exclusiveAreaM2 === "number" ? body.exclusiveAreaM2 : null;
 
     const primaryAddress = roadAddress || jibunAddress;
 
@@ -83,53 +80,33 @@ export async function POST(req: NextRequest) {
     }
 
     let vworldRaw: any = null;
-
     let coordinates = null;
 
-    let addressType: "road" | "parcel" =
-      roadAddress ? "road" : "parcel";
+    let addressType: VWorldAddressType = roadAddress ? "road" : "parcel";
 
     try {
-      // 1차 시도
-      vworldRaw = await getVWorldCoord(
-        primaryAddress,
-        addressType
-      );
+      vworldRaw = await getVWorldCoord(primaryAddress, addressType);
 
-      console.log(
-        "VWORLD RAW PRIMARY:",
-        JSON.stringify(vworldRaw, null, 2)
-      );
+      console.log("VWORLD RAW PRIMARY:", JSON.stringify(vworldRaw, null, 2));
 
       coordinates = extractVWorldPoint(vworldRaw);
 
-      // 좌표 없으면 지번 fallback
       if (!coordinates && jibunAddress && roadAddress) {
         addressType = "parcel";
 
-        vworldRaw = await getVWorldCoord(
-          jibunAddress,
-          "parcel"
-        );
+        vworldRaw = await getVWorldCoord(jibunAddress, "parcel");
 
-        console.log(
-          "VWORLD RAW FALLBACK:",
-          JSON.stringify(vworldRaw, null, 2)
-        );
+        console.log("VWORLD RAW FALLBACK:", JSON.stringify(vworldRaw, null, 2));
 
         coordinates = extractVWorldPoint(vworldRaw);
       }
     } catch (error) {
       console.error("VWORLD ERROR:", error);
 
-      // API 에러 시 fallback
       if (jibunAddress && roadAddress) {
         addressType = "parcel";
 
-        vworldRaw = await getVWorldCoord(
-          jibunAddress,
-          "parcel"
-        );
+        vworldRaw = await getVWorldCoord(jibunAddress, "parcel");
 
         console.log(
           "VWORLD RAW FALLBACK AFTER ERROR:",
@@ -142,38 +119,27 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       success: true,
-
       input: {
         jibunAddress,
         roadAddress,
         buildingName,
         exclusiveAreaM2,
       },
-
       normalizedAddress: {
         primaryAddress,
         usedAddressType: addressType,
         jibunAddress,
         roadAddress,
       },
-
       coordinates,
-
       publicData: {
         vworld: {
           matched: Boolean(coordinates),
-
-          status:
-            vworldRaw?.response?.status ?? null,
-
-          error:
-            vworldRaw?.response?.error ?? null,
-
-          result:
-            vworldRaw?.response?.result ?? null,
+          status: vworldRaw?.response?.status ?? null,
+          error: vworldRaw?.response?.error ?? null,
+          result: vworldRaw?.response?.result ?? null,
         },
       },
-
       nextRequiredData: [
         "kaptCode",
         "recentTransactionPrices",
@@ -186,7 +152,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(
       {
         success: false,
-
         error:
           error instanceof Error
             ? error.message
