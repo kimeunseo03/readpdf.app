@@ -26,7 +26,7 @@ type ApartmentTradeApiParams = PublicTransactionApiParams & {
   region?: ExtractedRegion;
 };
 
-function getRecentDealYearMonths(monthCount = 12): string[] {
+function getRecentDealYearMonths(monthCount = 24): string[] {
   const result: string[] = [];
   const now = new Date();
 
@@ -414,7 +414,7 @@ const isSameApartment = isSameApartmentByKaptCode || isSameApartmentByName;
 
       const monthsAgo = getMonthsAgo(dealYear, dealMonth, dealDay);
 
-      if (monthsAgo > 12) continue;
+      if (monthsAgo > 24) continue;
 
       const distanceMeters = undefined;
       
@@ -576,7 +576,7 @@ export async function fetchPublicTransactions(
   console.log("valuation_region_json", JSON.stringify(params.region));
   console.log("valuation_legalDongCode", params.legalDongCode ?? "undefined");
 
-  const recentMonths = getRecentDealYearMonths(12);
+  const recentMonths = getRecentDealYearMonths(24);
   const areaTolerances = [3, 5];
 
   for (const areaToleranceM2 of areaTolerances) {
