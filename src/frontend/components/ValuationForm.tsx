@@ -39,11 +39,7 @@ interface ValuationResult {
   normalizedAddress?: string;
   buildingName?: string;
   comparableCount: number;
-  lowestPrice?: number;
-  highestPrice?: number;
   averagePrice?: number;
-  conservativePrice?: number;
-  upperReferencePrice?: number;
   riskAdjustedPrice?: number;
   seniorDebtAmount?: number;
   seniorMortgageAmount?: number;
@@ -82,6 +78,18 @@ function formatAccountingInput(value: string) {
 function parseAccountingInput(value: string) {
   const numeric = value.replace(/[^0-9]/g, "");
   return numeric ? Number(numeric) : undefined;
+}
+
+function formatCompactProperty(initialValue: ValuationFormProps["initialValue"]) {
+  const parts = [
+    initialValue.buildingName,
+    initialValue.exclusiveAreaM2
+      ? `전용 ${initialValue.exclusiveAreaM2}㎡`
+      : undefined,
+    initialValue.floor ? `${initialValue.floor}층` : undefined
+  ].filter(Boolean);
+
+  return parts.length ? parts.join(" · ") : "평가 기준 물건 정보 확인 필요";
 }
 
 export function ValuationForm({ initialValue }: ValuationFormProps) {
@@ -153,6 +161,10 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
     ? Math.max(...transactionPrices)
     : undefined;
 
+  const seniorMortgageAmount = result?.seniorMortgageAmount ?? 0;
+  const tenantDeposit = result?.tenantDepositAmount ?? 0;
+  const totalDeductedAmount = seniorMortgageAmount + tenantDeposit;
+
   return (
     <div className="report-page print-report space-y-6">
       <section className="card-surface p-6">
@@ -167,6 +179,20 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
 
           <p className="mt-2 text-sm leading-6 text-slate-500">
             왼쪽 물건 정보의 최종 수정값을 기준으로 가치평가를 실행합니다.
+          </p>
+        </div>
+
+        <div className="mb-5 rounded-2xl border border-blue-100 bg-blue-50/60 p-4">
+          <p className="text-xs font-semibold text-blue-700">
+            평가 기준 물건
+          </p>
+
+          <p className="mt-2 text-sm font-semibold text-slate-900">
+            {initialValue.addressRaw ?? "주소 정보 확인 필요"}
+          </p>
+
+          <p className="mt-2 text-sm text-slate-600">
+            {formatCompactProperty(initialValue)}
           </p>
         </div>
 
@@ -186,7 +212,7 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
 
           <label className="flex items-end">
             <span className="flex w-full cursor-pointer items-center justify-between rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm font-semibold text-slate-700 shadow-sm">
-              <span>임대인 있음</span>
+              <span>임차인 있음</span>
               <input
                 type="checkbox"
                 checked={hasRentalInfo}
@@ -278,7 +304,7 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
               </button>
             </div>
 
-            <div className="grid gap-4 md:grid-cols-3">
+            <div className="grid gap-4 xl:grid-cols-4">
               <div className="rounded-2xl border border-green-100 bg-green-50/60 p-5">
                 <p className="text-xs font-semibold text-green-700">
                   보정 평균가
@@ -287,7 +313,7 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
                   {formatKoreanPrice(result.averagePrice)}
                 </p>
                 <p className="mt-2 text-xs text-slate-500">
-                  유사도/이상치 보정 반영
+                  실거래 유사도 보정 기준
                 </p>
               </div>
 
@@ -299,7 +325,7 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
                   {formatKoreanPrice(result.riskAdjustedPrice)}
                 </p>
                 <p className="mt-2 text-xs text-slate-500">
-                  근저당/보증금 차감 후
+                  선순위 권리 차감 후 기준
                 </p>
               </div>
 
@@ -312,6 +338,20 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
                 </p>
                 <p className="mt-2 text-xs text-slate-500">
                   비교 거래 {result.comparableCount}건 기준
+                </p>
+              </div>
+
+              <div className="rounded-2xl border border-blue-100 bg-blue-50/60 p-5">
+                <p className="text-xs font-semibold text-blue-700">
+                  권리 반영 요약
+                </p>
+                <p className="mt-2 text-sm font-semibold leading-6 text-slate-900">
+                  {totalDeductedAmount > 0
+                    ? `차감 반영 ${formatKoreanPrice(totalDeductedAmount)}`
+                    : "차감 반영 금액 없음"}
+                </p>
+                <p className="mt-2 text-xs leading-5 text-slate-500">
+                  근저당 채권최고액과 임차보증금을 기준으로 반영합니다.
                 </p>
               </div>
             </div>
@@ -340,6 +380,9 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
                   <span className="rounded-full bg-orange-100 px-3 py-1 text-orange-700">
                     최고 거래
                   </span>
+                  <span className="rounded-full bg-slate-100 px-3 py-1 text-slate-600">
+                    대체비교
+                  </span>
                 </div>
               </div>
 
@@ -353,20 +396,19 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
                       <th className="w-[145px] px-4 py-3 font-semibold">
                         거래금액
                       </th>
-                      <th className="w-[95px] px-4 py-3 font-semibold">
-                        전용면적
+                      <th className="w-[115px] px-4 py-3 font-semibold">
+                        면적/층
                       </th>
-                      <th className="w-[70px] px-4 py-3 font-semibold">층</th>
-                      <th className="w-[130px] px-4 py-3 font-semibold">
-                        비교군
+                      <th className="w-[150px] px-4 py-3 font-semibold">
+                        비교유형
                       </th>
-                      <th className="w-[190px] px-4 py-3 font-semibold">
+                      <th className="w-[90px] px-4 py-3 font-semibold">
                         유사도
                       </th>
-                      <th className="px-4 py-3 font-semibold">선정 기준</th>
                       <th className="w-[80px] px-4 py-3 font-semibold">
                         신뢰도
                       </th>
+                      <th className="px-4 py-3 font-semibold">선정 사유</th>
                     </tr>
                   </thead>
 
@@ -395,7 +437,7 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
                             {String(tx.dealDay).padStart(2, "0")}
                           </td>
 
-                          <td className="px-4 py-3 font-medium leading-5 tabular-nums text-slate-700">
+                          <td className="px-4 py-3 font-semibold leading-5 tabular-nums text-slate-900">
                             <div>{formatKoreanPrice(price)}</div>
                             <div className="mt-1 flex flex-wrap gap-1">
                               {index === 0 && (
@@ -417,11 +459,7 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
                           </td>
 
                           <td className="px-4 py-3 text-slate-700">
-                            {tx.area}㎡
-                          </td>
-
-                          <td className="px-4 py-3 text-slate-700">
-                            {tx.floor ?? "-"}층
+                            {tx.area}㎡ / {tx.floor ?? "-"}층
                           </td>
 
                           <td className="px-4 py-3 text-slate-700">
@@ -444,15 +482,8 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
                             </div>
                           </td>
 
-                          <td className="px-4 py-3 leading-5 text-slate-700">
+                          <td className="px-4 py-3 font-semibold text-slate-700">
                             {tx.similarityScore ?? "-"}점
-                            {tx.similarityReason
-                              ? ` · ${tx.similarityReason}`
-                              : ""}
-                          </td>
-
-                          <td className="px-4 py-3 leading-5 text-slate-700">
-                            {tx.selectionReason ?? "-"}
                           </td>
 
                           <td className="px-4 py-3 text-slate-700">
@@ -468,6 +499,15 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
                               {tx.reliabilityGrade ?? "-"}
                             </span>
                           </td>
+
+                          <td className="px-4 py-3 leading-5 text-slate-600">
+                            <div>{tx.selectionReason ?? "-"}</div>
+                            {tx.similarityReason && (
+                              <div className="mt-1 text-xs text-slate-400">
+                                {tx.similarityReason}
+                              </div>
+                            )}
+                          </td>
                         </tr>
                       );
                     })}
@@ -477,7 +517,7 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
             </div>
           )}
 
-          <div className="grid grid-cols-2 gap-5">
+          <div className="grid gap-5 xl:grid-cols-2">
             {result.finalComment && (
               <div className="rounded-3xl border border-slate-200 bg-white p-7 shadow-sm">
                 <p className="text-xs font-semibold tracking-wide text-slate-500">
