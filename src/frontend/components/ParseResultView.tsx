@@ -177,7 +177,7 @@ export function ParseResultView({ response }: { response: ParseApiResponse }) {
         </div>
 
         <div className="grid gap-5 xl:grid-cols-[420px_minmax(0,1fr)]">
-          <div className="rounded-2xl border border-slate-200 bg-slate-50/60 p-5">
+          <div className="rounded-2xl border border-slate-200 bg-slate-50/60 p-5 xl:sticky xl:top-6 xl:self-start">
             <div className="mb-3">
               <p className="text-xs font-semibold tracking-wide text-slate-500">
                 PROPERTY INFO
