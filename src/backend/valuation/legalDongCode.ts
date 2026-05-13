@@ -101,68 +101,42 @@ async function fetchLegalDongCodeFromApi(
     const apiKey = process.env.PUBLIC_DATA_API_KEY;
     if (!apiKey) return undefined;
 
-    // 읍면동명으로 검색
-    const query = region.eupmyeondong ?? "";
-    if (!query) return undefined;
+    const sido = region.sido ?? "";
+    const sigungu = region.sigungu ?? "";
+    const eupmyeondong = region.eupmyeondong ?? "";
+    if (!eupmyeondong) return undefined;
+
+    const fullAddr = `${sido} ${sigungu} ${eupmyeondong}`.trim();
 
     const url = new URL("https://apis.data.go.kr/1741000/StanReginCd/getStanReginCdList");
     url.searchParams.set("serviceKey", apiKey);
     url.searchParams.set("type", "json");
     url.searchParams.set("pageNo", "1");
-    url.searchParams.set("numOfRows", "30");
-    url.searchParams.set("flag", "Y");          // 현행 코드만
-    url.searchParams.set("locatadd_nm", query); // 읍면동명 검색
+    url.searchParams.set("numOfRows", "10");
+    url.searchParams.set("flag", "Y");
+    url.searchParams.set("locatadd_nm", fullAddr);
 
     const res = await fetch(url.toString(), {
       cache: "no-store",
       signal: AbortSignal.timeout(6000),
     });
-    if (!res.ok) {
-      console.warn("legal_dong_api_failed", { status: res.status });
-      return undefined;
-    }
+    if (!res.ok) return undefined;
 
     const json = await res.json();
     const rows: Record<string, string>[] = json?.StanReginCd?.[1]?.row ?? [];
+    if (!rows.length) return undefined;
 
-    if (!rows.length) {
-      console.warn("legal_dong_api_empty", { query });
-      return undefined;
-    }
+    const dongRow = rows.find(
+      (r) => r.umd_cd && r.umd_cd !== "000" && r.ri_cd === "00"
+    ) ?? rows[0];
 
-    // 시도 + 시군구 + 읍면동 모두 매칭되는 것 우선
-    const sido = region.sido ?? "";
-    const sigungu = region.sigungu ?? "";
-
-    // 정확도 순 정렬: 시도·시군구 포함 여부로 점수 부여
-    const scored = rows
-      .filter((row) => {
-        const addr = row.locatadd_nm ?? "";
-        // 읍면동이 포함된 행만
-        return addr.includes(query);
-      })
-      .map((row) => {
-        const addr = row.locatadd_nm ?? "";
-        let score = 0;
-        if (sido && addr.includes(sido)) score += 2;
-        if (sigungu && addr.includes(sigungu)) score += 2;
-        // 정확히 동일하면 최고점
-        if (addr.trim() === `${sido} ${sigungu} ${query}`.trim()) score += 10;
-        return { row, score };
-      })
-      .sort((a, b) => b.score - a.score);
-
-    const best = scored[0];
-    if (!best) return undefined;
-
-    const code: string = best.row.region_cd ?? "";
+    const code = dongRow?.region_cd ?? "";
     if (!code) return undefined;
 
     console.log("legal_dong_api_found", {
-      query,
-      addr: best.row.locatadd_nm,
+      fullAddr,
+      matched: dongRow?.locatadd_nm,
       code,
-      score: best.score,
     });
 
     return code;
