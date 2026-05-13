@@ -1,6 +1,5 @@
 import type { ExtractedRegion } from "./extractRegion";
 
-// ─── 폴백용 하드코딩 ─────────────────────────────────────────────────────────
 const LEGAL_DONG_CODES: Record<string, string> = {
   "서울특별시 동대문구 답십리동": "1123010500",
   "경기도 용인시 기흥구 보정동": "4146311800",
@@ -84,7 +83,7 @@ const LEGAL_DONG_CODES: Record<string, string> = {
   "부산광역시 해운대구 중동": "2635010200",
   "부산광역시 해운대구 좌동": "2635010300",
   "부산광역시 수영구 광안동": "2650010200",
-  "부산광역시 연제구 거제동": "2644010100",
+  "부산광역시 연제구 거거동": "2644010100",
   "부산광역시 동래구 온천동": "2638010400",
   "대구광역시 수성구 범어동": "2726010100",
   "대구광역시 수성구 만촌동": "2726010400",
@@ -93,20 +92,22 @@ const LEGAL_DONG_CODES: Record<string, string> = {
   "대전광역시 서구 둔산동": "3017010800",
 };
 
-// ─── 행정안전부 법정동코드 API로 조회 ────────────────────────────────────────
 async function fetchLegalDongCodeFromApi(
   region: ExtractedRegion
 ): Promise<string | undefined> {
   try {
     const apiKey = process.env.PUBLIC_DATA_API_KEY;
-    if (!apiKey) return undefined;
-
+    if (!apiKey) {
+      console.warn("legal_dong_api_no_key");
+      return undefined;
+    }
     const sido = region.sido ?? "";
     const sigungu = region.sigungu ?? "";
     const eupmyeondong = region.eupmyeondong ?? "";
     if (!eupmyeondong) return undefined;
 
     const fullAddr = `${sido} ${sigungu} ${eupmyeondong}`.trim();
+    console.log("legal_dong_api_requesting", { fullAddr });
 
     const url = new URL("https://apis.data.go.kr/1741000/StanReginCd/getStanReginCdList");
     url.searchParams.set("serviceKey", apiKey);
@@ -120,11 +121,20 @@ async function fetchLegalDongCodeFromApi(
       cache: "no-store",
       signal: AbortSignal.timeout(6000),
     });
-    if (!res.ok) return undefined;
+
+    if (!res.ok) {
+      console.warn("legal_dong_api_http_error", { status: res.status });
+      return undefined;
+    }
 
     const json = await res.json();
+    console.log("legal_dong_api_raw", JSON.stringify(json).slice(0, 300));
+
     const rows: Record<string, string>[] = json?.StanReginCd?.[1]?.row ?? [];
-    if (!rows.length) return undefined;
+    if (!rows.length) {
+      console.warn("legal_dong_api_no_rows", { fullAddr });
+      return undefined;
+    }
 
     const dongRow = rows.find(
       (r) => r.umd_cd && r.umd_cd !== "000" && r.ri_cd === "00"
@@ -146,36 +156,26 @@ async function fetchLegalDongCodeFromApi(
   }
 }
 
-// ─── 하드코딩 맵 텍스트 매칭 ────────────────────────────────────────────────
-function lookupFromText(text: string): string | undefined {
-  const sorted = Object.keys(LEGAL_DONG_CODES).sort((a, b) => b.length - a.length);
-  for (const key of sorted) {
-    if (text.includes(key) || key.split(" ").every((part) => text.includes(part))) {
-      return LEGAL_DONG_CODES[key];
-    }
-  }
-  return undefined;
-}
-
-// ─── public: 하드코딩 → 행정안전부 API 순으로 시도 ──────────────────────────
 export async function findLegalDongCode(
   region?: ExtractedRegion
 ): Promise<string | undefined> {
   if (!region?.sido || !region?.sigungu || !region?.eupmyeondong) {
+    console.warn("legal_dong_region_missing", { region });
     return undefined;
   }
 
   const key = getLegalDongCodeKey(region);
   if (!key) return undefined;
 
-  // 1. 하드코딩 맵 즉시 반환
+  console.log("legal_dong_lookup_start", { key });
+
   const hardCoded = LEGAL_DONG_CODES[key];
   if (hardCoded) {
     console.log("legal_dong_code_hardcoded", { key, code: hardCoded });
     return hardCoded;
   }
 
-  // 2. 행정안전부 법정동코드 API
+  console.log("legal_dong_api_calling", { key });
   const apiCode = await fetchLegalDongCodeFromApi(region);
   if (apiCode) return apiCode;
 
