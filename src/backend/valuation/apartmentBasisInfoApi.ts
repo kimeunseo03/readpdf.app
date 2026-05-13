@@ -286,7 +286,7 @@ export async function fetchLegalDongApartmentList(params: {
     if (!params.legalDongCode) return [];
 
     const url = createPublicDataUrl(
-      "https://apis.data.go.kr/1611000/AptBasisInfoService/getLegaldongAptList3",
+      "https://apis.data.go.kr/1611000/AptBasisInfoService/getLegaldongAptList",
       {
         bjdCode: params.legalDongCode
       },
