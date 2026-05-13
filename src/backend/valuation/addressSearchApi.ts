@@ -5,6 +5,7 @@ export interface KakaoAddressResult {
   jibunAddress?: string;
   roadAddress?: string;
   buildingName?: string;
+  legalDongCode?: string;
   longitude?: number;
   latitude?: number;
 }
@@ -56,6 +57,7 @@ export async function searchAddressByKakao(
       jibunAddress: address?.address_name,
       roadAddress: roadAddress?.address_name,
       buildingName: roadAddress?.building_name,
+      legalDongCode: address?.b_code,
       longitude: document.x ? Number(document.x) : undefined,
       latitude: document.y ? Number(document.y) : undefined
     };
