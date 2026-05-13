@@ -38,7 +38,6 @@ export interface ApartmentListItem {
   doroJuso?: string;
   bjdCode?: string;
 }
-
 function toNumber(value: unknown): number | undefined {
   if (value === undefined || value === null || value === "") return undefined;
   const parsed = Number(String(value).replace(/[^0-9.]/g, ""));
@@ -134,7 +133,6 @@ async function requestPublicDataItem<T>(
   }
 }
 
-// ✅ BUG 1 수정: getAphusBassInfo → getAphusBassInfoV4
 export async function fetchApartmentBasisInfo(
   kaptCode: string
 ): Promise<ApartmentBasisInfo | undefined> {
@@ -161,7 +159,6 @@ export async function fetchApartmentBasisInfo(
   };
 }
 
-// ✅ BUG 2 수정: BassInfo URL → DtlInfoV4 로 변경
 export async function fetchApartmentDetailInfo(
   kaptCode: string
 ): Promise<ApartmentDetailInfo | undefined> {
@@ -199,36 +196,48 @@ export async function fetchApartmentMetaInfo(
   return { basis, detail };
 }
 
-// ✅ BUG 3 수정: AptBasisInfoServiceV4/getLegaldongAptList → AptListService2/getLegaldongAptList3
+// ✅ JSON 파싱 + 5자리/10자리 둘 다 시도
 export async function fetchLegalDongApartmentList(params: {
   legalDongCode?: string;
 }): Promise<ApartmentListItem[]> {
   try {
     if (!params.legalDongCode) return [];
-    const url = createPublicDataUrl(
-      "https://apis.data.go.kr/1613000/AptListService2/getLegaldongAptList3",
-      { bjdCode: params.legalDongCode },
-      { json: false }
-    );
-    if (!url) { console.warn("PUBLIC_DATA_API_KEY is missing."); return []; }
-    const response = await fetch(url.toString(), { method: "GET", cache: "no-store" });
-    const xml = await response.text();
-    if (!response.ok) {
-      console.warn("apartment_list_api_failed", { status: response.status, url: url.toString(), body: xml.slice(0, 500) });
-      return [];
+
+    const codes = [
+      params.legalDongCode.slice(0, 5),
+      params.legalDongCode,
+    ].filter((v, i, arr) => arr.indexOf(v) === i);
+
+    for (const bjdCode of codes) {
+      const url = createPublicDataUrl(
+        "https://apis.data.go.kr/1613000/AptListService3/getLegaldongAptList3",
+        { bjdCode, numOfRows: "100", pageNo: "1" },
+        { json: true }
+      );
+      if (!url) { console.warn("PUBLIC_DATA_API_KEY is missing."); return []; }
+
+      const response = await fetch(url.toString(), { method: "GET", cache: "no-store" });
+      if (!response.ok) {
+        console.warn("apartment_list_api_failed", { status: response.status, bjdCode });
+        continue;
+      }
+
+      const json = await response.json();
+      const items = json?.response?.body?.items;
+      const list = Array.isArray(items) ? items : [];
+
+      console.log("apartment_legal_dong_result", { bjdCode, count: list.length });
+
+      if (list.length > 0) {
+        return list.map((item: Record<string, string>) => ({
+          kaptCode: item.kaptCode || undefined,
+          kaptName: item.kaptName || undefined,
+          kaptAddr: [item.as1, item.as2, item.as3, item.as4].filter(Boolean).join(" ") || undefined,
+          bjdCode: item.bjdCode || undefined,
+        }));
+      }
     }
-    console.log("apartment_legal_dong_raw", { status: response.status, legalDongCode: params.legalDongCode, sample: xml.slice(0, 300) });
-    const itemMatches = [...xml.matchAll(/<item>([\s\S]*?)<\/item>/g)];
-    return itemMatches.map((match) => {
-      const itemXml = match[1];
-      return {
-        kaptCode: itemXml.match(/<kaptCode>(.*?)<\/kaptCode>/)?.[1]?.trim() || undefined,
-        kaptName: itemXml.match(/<kaptName>(.*?)<\/kaptName>/)?.[1]?.trim() || undefined,
-        kaptAddr: itemXml.match(/<kaptAddr>(.*?)<\/kaptAddr>/)?.[1]?.trim() || undefined,
-        doroJuso: itemXml.match(/<doroJuso>(.*?)<\/doroJuso>/)?.[1]?.trim() || undefined,
-        bjdCode:  itemXml.match(/<bjdCode>(.*?)<\/bjdCode>/)?.[1]?.trim()  || undefined
-      };
-    });
+    return [];
   } catch (error) {
     console.error("fetchLegalDongApartmentList_error", error);
     return [];
