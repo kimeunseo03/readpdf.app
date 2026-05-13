@@ -204,7 +204,7 @@ export async function fetchApartmentBasisInfo(
   kaptCode: string
 ): Promise<ApartmentBasisInfo | undefined> {
   const item = await requestPublicDataItem<Record<string, unknown>>(
-    "https://apis.data.go.kr/1611000/AptBasisInfoService/getAphusBassInfo",
+    "https://apis.data.go.kr/1613000/AptBasisInfoServiceV4/getAphusBassInfo",
     { kaptCode }
   );
 
@@ -236,7 +236,7 @@ export async function fetchApartmentDetailInfo(
   kaptCode: string
 ): Promise<ApartmentDetailInfo | undefined> {
   const item = await requestPublicDataItem<Record<string, unknown>>(
-    "https://apis.data.go.kr/1611000/AptBasisInfoService/getAphusDtlInfo",
+    "https://apis.data.go.kr/1613000/AptBasisInfoServiceV4/getAphusBassInfo",
     { kaptCode }
   );
 
@@ -286,7 +286,7 @@ export async function fetchLegalDongApartmentList(params: {
     if (!params.legalDongCode) return [];
 
     const url = createPublicDataUrl(
-      "https://apis.data.go.kr/1611000/AptBasisInfoService/getLegaldongAptList",
+      "https://apis.data.go.kr/1613000/AptBasisInfoServiceV4/getLegaldongAptList",
       {
         bjdCode: params.legalDongCode
       },
