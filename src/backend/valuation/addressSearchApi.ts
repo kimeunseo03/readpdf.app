@@ -5,7 +5,7 @@ export interface KakaoAddressResult {
   jibunAddress?: string;
   roadAddress?: string;
   buildingName?: string;
-  legalDongCode?: string;  // 카카오 b_code (법정동코드 10자리)
+  legalDongCode?: string;
   longitude?: number;
   latitude?: number;
 }
@@ -20,6 +20,7 @@ export async function searchAddressByKakao(
       console.warn("KAKAO_REST_API_KEY is missing.");
       return undefined;
     }
+
     const url = new URL("https://dapi.kakao.com/v2/local/search/address.json");
     url.searchParams.set("query", rawAddress);
 
@@ -28,31 +29,43 @@ export async function searchAddressByKakao(
       headers: { Authorization: `KakaoAK ${apiKey}` },
       cache: "no-store",
     });
+
     if (!response.ok) {
-      console.warn("kakao_address_search_failed", {
-        status: response.status,
-        body: await response.text(),
-      });
+      console.warn("kakao_address_search_failed", { status: response.status });
       return undefined;
     }
 
     const json = await response.json();
-    const document = json?.documents?.[0];
-    if (!document) return undefined;
+    const doc = json?.documents?.[0];
+    if (!doc) {
+      console.warn("kakao_address_no_result", { rawAddress });
+      return undefined;
+    }
 
-    const address = document.address;
-    const roadAddress = document.road_address;
+    const address = doc.address;
+    const roadAddress = doc.road_address;
 
-    return {
+    // address(지번) 없고 road_address만 있는 경우 처리
+    const legalDongCode = address?.b_code ?? roadAddress?.zone_no ?? undefined;
+
+    console.log("kakao_address_result", {
+      rawAddress,
+      legalDongCode,
       sido: address?.region_1depth_name,
       sigungu: address?.region_2depth_name,
       eupmyeondong: address?.region_3depth_name,
+    });
+
+    return {
+      sido: address?.region_1depth_name ?? roadAddress?.region_1depth_name,
+      sigungu: address?.region_2depth_name ?? roadAddress?.region_2depth_name,
+      eupmyeondong: address?.region_3depth_name ?? roadAddress?.region_3depth_name,
       jibunAddress: address?.address_name,
       roadAddress: roadAddress?.address_name,
       buildingName: roadAddress?.building_name,
-      legalDongCode: address?.b_code,  // 법정동코드 10자리
-      longitude: document.x ? Number(document.x) : undefined,
-      latitude: document.y ? Number(document.y) : undefined,
+      legalDongCode,
+      longitude: doc.x ? Number(doc.x) : undefined,
+      latitude: doc.y ? Number(doc.y) : undefined,
     };
   } catch (error) {
     console.error("searchAddressByKakao_error", error);
