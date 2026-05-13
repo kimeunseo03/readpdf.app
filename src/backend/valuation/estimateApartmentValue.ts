@@ -80,7 +80,7 @@ export async function estimateApartmentValue(
 ): Promise<ValuationResult> {
   const normalized = normalizeAddress(input);
   const region = extractRegion(normalized.normalizedAddress);
-  const legalDongCode = findLegalDongCode(region);
+  const legalDongCode = await findLegalDongCode(region);
   const warnings: string[] = [];
   const apartmentMeta = await fetchApartmentMetaInfoByLegalDong({
     legalDongCode,
