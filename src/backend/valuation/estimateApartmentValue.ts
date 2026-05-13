@@ -84,7 +84,7 @@ export async function estimateApartmentValue(
   addressRaw: normalized.normalizedAddress,
   region,
   });
-  const legalDongCode = await findLegalDongCode(region);
+  const legalDongCode = await findLegalDongCode(region, normalized.normalizedAddress);
   const warnings: string[] = [];
   const apartmentMeta = await fetchApartmentMetaInfoByLegalDong({
     legalDongCode,
