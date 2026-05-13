@@ -130,23 +130,22 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
   const totalDeductedAmount = seniorMortgageAmount + tenantDeposit;
   const conf = result?.overallConfidence ? confidenceConfig[result.overallConfidence] : null;
 
+  // 근저당 목록: result에서 우선, 없으면 등기부 추출값 사용
+  const mortgages = result?.mortgages?.length
+    ? result.mortgages
+    : (initialValue.rightsRisk?.mortgages ?? []);
+
   return (
     <div className="report-page print-report space-y-5">
       {/* 가치평가 실행 카드 */}
       <section className="card-surface p-6">
         <p className="text-[11px] font-bold tracking-widest text-blue-500 uppercase">Valuation Action</p>
         <h2 className="mt-0.5 text-lg font-bold text-slate-900 mb-4">가치평가 실행</h2>
-
-        {/* 평가 기준 물건 */}
         <div className="mb-5 rounded-2xl border border-blue-100 bg-blue-50/50 px-5 py-4">
           <p className="text-[11px] font-bold text-blue-500 uppercase tracking-wider mb-1">평가 기준 물건</p>
-          <p className="text-sm font-bold text-slate-900 leading-snug">
-            {initialValue.addressRaw ?? "주소 정보 확인 필요"}
-          </p>
+          <p className="text-sm font-bold text-slate-900 leading-snug">{initialValue.addressRaw ?? "주소 정보 확인 필요"}</p>
           <p className="mt-1 text-sm text-slate-500">{formatCompactProperty(initialValue)}</p>
         </div>
-
-        {/* 입력 폼 */}
         <div className="grid grid-cols-2 gap-3">
           <label className="block">
             <span className="mb-1.5 block text-xs font-semibold text-slate-500 uppercase tracking-wide">담당자명</span>
@@ -194,7 +193,6 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
             </button>
           </div>
         </div>
-
         {error && (
           <div className="mt-4 flex items-start gap-3 rounded-xl bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
             <span className="text-base">⚠</span>
@@ -203,11 +201,9 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
         )}
       </section>
 
-      {/* 결과 섹션 */}
       {result && (
         <div className="report-section space-y-5">
-
-          {/* 결과 수치 카드 */}
+          {/* 결과 수치 카드 4개 */}
           <section className="rounded-3xl border border-slate-200 bg-white p-7 shadow-sm">
             <div className="mb-5 flex items-center justify-between border-b border-slate-100 pb-4">
               <div>
@@ -219,7 +215,6 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
                 PDF 저장
               </button>
             </div>
-
             <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
               {/* 보정 평균가 */}
               <div className="rounded-2xl border border-emerald-100 bg-emerald-50/60 p-5">
@@ -229,16 +224,19 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
                 </p>
                 <p className="mt-2 text-xs text-slate-400">실거래 유사도 보정 기준</p>
               </div>
-
               {/* 권리 반영가 */}
               <div className="rounded-2xl border border-red-100 bg-red-50/60 p-5">
                 <p className="text-xs font-bold text-red-600 uppercase tracking-wide">권리 반영가</p>
                 <p className="mt-3 text-2xl font-black tabular-nums leading-tight text-red-700 whitespace-pre-line">
-                  {formatKoreanPrice(result.riskAdjustedPrice)}
+                  {result.riskAdjustedPrice === 0 ? (
+                    <span className="text-red-400">0원</span>
+                  ) : formatKoreanPrice(result.riskAdjustedPrice)}
                 </p>
                 <p className="mt-2 text-xs text-slate-400">선순위 권리 차감 후 기준</p>
+                {result.riskAdjustedPrice === 0 && (
+                  <p className="mt-1 text-xs text-red-400">⚠ 차감액이 시세 초과</p>
+                )}
               </div>
-
               {/* 신뢰도 */}
               <div className={`rounded-2xl border p-5 ${conf?.bg ?? "border-slate-200 bg-slate-50"}`}>
                 <p className={`text-xs font-bold uppercase tracking-wide ${conf?.color ?? "text-slate-500"}`}>평가 신뢰도</p>
@@ -248,18 +246,69 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
                 </div>
                 <p className="mt-2 text-xs text-slate-400">비교 거래 {result.comparableCount}건 기준</p>
               </div>
-
-              {/* 차감 요약 */}
-              <div className="rounded-2xl border border-blue-100 bg-blue-50/50 p-5">
-                <p className="text-xs font-bold text-blue-600 uppercase tracking-wide">권리 반영 요약</p>
-                <p className="mt-3 text-lg font-black tabular-nums leading-tight text-slate-900">
+              {/* 선순위 차감액 */}
+              <div className="rounded-2xl border border-orange-100 bg-orange-50/50 p-5">
+                <p className="text-xs font-bold text-orange-600 uppercase tracking-wide">선순위 차감액</p>
+                <p className="mt-3 text-lg font-black tabular-nums leading-tight text-slate-900 whitespace-pre-line">
                   {totalDeductedAmount > 0 ? formatKoreanPrice(totalDeductedAmount) : "-"}
                 </p>
                 <p className="mt-2 text-xs text-slate-400 leading-relaxed">
-                  {totalDeductedAmount > 0 ? "근저당 + 임차보증금 차감" : "차감 반영 금액 없음"}
+                  {seniorMortgageAmount > 0 && `근저당 ${formatKoreanPrice(seniorMortgageAmount)}`}
+                  {seniorMortgageAmount > 0 && tenantDeposit > 0 && " + "}
+                  {tenantDeposit > 0 && `임차보증금 ${formatKoreanPrice(tenantDeposit)}`}
+                  {totalDeductedAmount === 0 && "차감 반영 금액 없음"}
                 </p>
               </div>
             </div>
+
+            {/* 근저당 테이블 - 등기부 추출 기준 */}
+            {mortgages.length > 0 && (
+              <div className="mt-6">
+                <div className="mb-3 flex items-center justify-between">
+                  <div>
+                    <p className="text-[11px] font-bold tracking-widest text-red-500 uppercase">Mortgage Detail</p>
+                    <h3 className="mt-0.5 text-base font-bold text-slate-900">근저당권 현황</h3>
+                  </div>
+                  <span className="rounded-full bg-red-100 px-3 py-1 text-xs font-bold text-red-700">
+                    합계 {formatKoreanPrice(seniorMortgageAmount)}
+                  </span>
+                </div>
+                <div className="overflow-hidden rounded-2xl border border-red-100">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="bg-red-50/60 border-b border-red-100">
+                        <th className="px-4 py-3 text-left text-xs font-bold text-red-600 uppercase tracking-wide w-[60px]">순위</th>
+                        <th className="px-4 py-3 text-left text-xs font-bold text-red-600 uppercase tracking-wide">근저당권자</th>
+                        <th className="px-4 py-3 text-right text-xs font-bold text-red-600 uppercase tracking-wide w-[200px]">채권최고액</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-red-50">
+                      {mortgages.map((m) => (
+                        <tr key={`${m.rank}-${m.creditor}`} className="hover:bg-red-50/30 transition-colors">
+                          <td className="px-4 py-3 text-slate-600 font-semibold">{m.rank}순위</td>
+                          <td className="px-4 py-3 font-medium text-slate-900">
+                            {m.creditor || "-"}
+                            {m.targetOwner && (
+                              <span className="ml-2 text-xs text-slate-400">({m.targetOwner})</span>
+                            )}
+                          </td>
+                          <td className="px-4 py-3 text-right font-bold tabular-nums text-red-700 whitespace-pre-line">
+                            {formatKoreanPrice(m.amount)}
+                          </td>
+                        </tr>
+                      ))}
+                      {/* 합계 행 */}
+                      <tr className="bg-red-50/60 border-t border-red-100">
+                        <td className="px-4 py-3 font-bold text-red-900" colSpan={2}>합계</td>
+                        <td className="px-4 py-3 text-right font-black tabular-nums text-red-900 whitespace-pre-line">
+                          {formatKoreanPrice(seniorMortgageAmount)}
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
           </section>
 
           {/* 비교 거래 내역 */}
@@ -281,7 +330,6 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
                   ))}
                 </div>
               </div>
-
               <div className="overflow-hidden rounded-2xl border border-slate-200">
                 <div className="overflow-x-auto">
                   <table className="report-table text-sm">
@@ -396,7 +444,7 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
             )}
           </div>
 
-          {/* 평가기준 접기/펼치기 */}
+          {/* 평가기준 */}
           {result.valuationBasis.length > 0 && (
             <details className="rounded-3xl border border-slate-200 bg-white px-6 py-5 shadow-sm group">
               <summary className="cursor-pointer list-none flex items-center justify-between text-sm font-bold text-slate-700 select-none">
