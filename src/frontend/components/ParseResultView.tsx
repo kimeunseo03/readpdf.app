@@ -100,33 +100,54 @@ export function ParseResultView({ response }: { response: ParseApiResponse }) {
   function updateDraft<K extends keyof EditableProperty>(key: K, value: EditableProperty[K]) {
     setDraftProperty((prev) => ({ ...prev, [key]: value }));
   }
-  function startEdit() { setDraftProperty(editableProperty); setIsEditing(true); }
-  function cancelEdit() { setDraftProperty(editableProperty); setIsEditing(false); }
-  function applyEdit() { setEditableProperty(draftProperty); setIsEditing(false); }
+
+  function startEdit() {
+    setDraftProperty(editableProperty);
+    setIsEditing(true);
+  }
+
+  function cancelEdit() {
+    setDraftProperty(editableProperty);
+    setIsEditing(false);
+  }
+
+  function applyEdit() {
+    setEditableProperty(draftProperty);
+    setIsEditing(false);
+  }
 
   return (
     <div className="space-y-5">
-      <section className="rounded-3xl border border-slate-200 bg-white shadow-sm overflow-hidden">
-        <div className="flex items-center justify-between gap-4 px-7 py-5 border-b border-slate-100 bg-slate-50/60">
+      <section className="print-shell rounded-3xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+        <div className="no-print flex items-center justify-between gap-4 px-7 py-5 border-b border-slate-100 bg-slate-50/60">
           <div>
             <p className="text-[11px] font-bold tracking-widest text-blue-500 uppercase">Registry Extraction</p>
             <h2 className="mt-0.5 text-lg font-bold text-slate-900">등기부 판독 결과</h2>
           </div>
-          <div className="no-print flex items-center gap-2">
+          <div className="flex items-center gap-2">
             {isEditing ? (
               <>
-                <button type="button" onClick={cancelEdit}
-                  className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-600 shadow-sm hover:bg-slate-50 transition-colors">
+                <button
+                  type="button"
+                  onClick={cancelEdit}
+                  className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-600 shadow-sm hover:bg-slate-50 transition-colors"
+                >
                   취소
                 </button>
-                <button type="button" onClick={applyEdit}
-                  className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 transition-colors">
+                <button
+                  type="button"
+                  onClick={applyEdit}
+                  className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 transition-colors"
+                >
                   적용
                 </button>
               </>
             ) : (
-              <button type="button" onClick={startEdit}
-                className="rounded-xl border border-blue-200 bg-blue-50 px-4 py-2 text-sm font-semibold text-blue-700 shadow-sm hover:bg-blue-100 transition-colors">
+              <button
+                type="button"
+                onClick={startEdit}
+                className="rounded-xl border border-blue-200 bg-blue-50 px-4 py-2 text-sm font-semibold text-blue-700 shadow-sm hover:bg-blue-100 transition-colors"
+              >
                 추출값 수정
               </button>
             )}
@@ -134,14 +155,12 @@ export function ParseResultView({ response }: { response: ParseApiResponse }) {
         </div>
 
         <div className="grid gap-0 xl:grid-cols-[380px_minmax(0,1fr)]">
-          <div className="border-b xl:border-b-0 xl:border-r border-slate-100 bg-slate-50/40 p-6 xl:sticky xl:top-6 xl:self-start">
+          <div className="no-print border-b xl:border-b-0 xl:border-r border-slate-100 bg-slate-50/40 p-6 xl:sticky xl:top-6 xl:self-start">
             <p className="text-[11px] font-bold tracking-widest text-slate-400 uppercase mb-4">Property Info</p>
             {isEditing ? (
               <div className="grid gap-3.5">
-                <EditableField label="지번주소" value={draftProperty.addressRaw} textarea
-                  onChange={(v) => updateDraft("addressRaw", v)} />
-                <EditableField label="도로명주소" value={draftProperty.roadAddress} textarea
-                  onChange={(v) => updateDraft("roadAddress", v)} />
+                <EditableField label="지번주소" value={draftProperty.addressRaw} textarea onChange={(v) => updateDraft("addressRaw", v)} />
+                <EditableField label="도로명주소" value={draftProperty.roadAddress} textarea onChange={(v) => updateDraft("roadAddress", v)} />
                 <div className="grid grid-cols-3 gap-2">
                   <EditableField label="시도" value={draftProperty.sido} onChange={(v) => updateDraft("sido", v)} />
                   <EditableField label="시군구" value={draftProperty.sigungu} onChange={(v) => updateDraft("sigungu", v)} />
@@ -151,11 +170,9 @@ export function ParseResultView({ response }: { response: ParseApiResponse }) {
                 <div className="grid grid-cols-3 gap-2">
                   <EditableField label="동" value={draftProperty.buildingDong} onChange={(v) => updateDraft("buildingDong", v)} />
                   <EditableField label="호수" value={draftProperty.unitNumber} onChange={(v) => updateDraft("unitNumber", v)} />
-                  <EditableField label="층수" type="number" value={draftProperty.floor}
-                    onChange={(v) => updateDraft("floor", normalizeNumberInput(v))} />
+                  <EditableField label="층수" type="number" value={draftProperty.floor} onChange={(v) => updateDraft("floor", normalizeNumberInput(v))} />
                 </div>
-                <EditableField label="전유면적㎡" type="number" value={draftProperty.exclusiveAreaM2}
-                  onChange={(v) => updateDraft("exclusiveAreaM2", normalizeNumberInput(v))} />
+                <EditableField label="전유면적㎡" type="number" value={draftProperty.exclusiveAreaM2} onChange={(v) => updateDraft("exclusiveAreaM2", normalizeNumberInput(v))} />
                 <p className="rounded-xl bg-blue-50 border border-blue-100 p-3 text-xs leading-5 text-blue-700">
                   수정값은 원본 PDF를 변경하지 않으며, 가치평가 실행과 보고서 산출에만 반영됩니다.
                 </p>
@@ -176,7 +193,7 @@ export function ParseResultView({ response }: { response: ParseApiResponse }) {
             )}
           </div>
 
-          <div className="p-6">
+          <div className="print-content p-6">
             <ValuationForm
               initialValue={{
                 addressRaw: editableProperty.addressRaw,
@@ -192,7 +209,7 @@ export function ParseResultView({ response }: { response: ParseApiResponse }) {
       </section>
 
       {review.manualReviewRequired && (
-        <section className="rounded-2xl border border-amber-200 bg-amber-50/70 px-6 py-5">
+        <section className="no-print rounded-2xl border border-amber-200 bg-amber-50/70 px-6 py-5">
           <div className="flex items-start gap-3">
             <span className="mt-0.5 text-amber-500 text-lg">⚠</span>
             <div>
@@ -200,7 +217,12 @@ export function ParseResultView({ response }: { response: ParseApiResponse }) {
               <h3 className="mt-0.5 font-bold text-amber-900">수동 검토 필요</h3>
               {reviewReasons.length > 0 && (
                 <ul className="mt-3 space-y-1 text-sm text-amber-800">
-                  {reviewReasons.map((r) => <li key={r} className="flex items-start gap-2"><span className="mt-1.5 w-1 h-1 rounded-full bg-amber-400 shrink-0" />{r}</li>)}
+                  {reviewReasons.map((r) => (
+                    <li key={r} className="flex items-start gap-2">
+                      <span className="mt-1.5 w-1 h-1 rounded-full bg-amber-400 shrink-0" />
+                      {r}
+                    </li>
+                  ))}
                 </ul>
               )}
               {missingRequiredFields.length > 0 && (
