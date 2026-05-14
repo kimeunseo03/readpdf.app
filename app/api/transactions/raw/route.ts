@@ -48,12 +48,13 @@ function isApartmentNameMatch(apiName: string, targetName: string) {
 }
 
 function isComparable(params: {
+  maxDaysAgo: number;
   daysAgo: number;
   areaDifferenceM2?: number;
   floorDifference?: number;
 }) {
   return (
-    params.daysAgo <= 365 &&
+    params.daysAgo <= params.maxDaysAgo &&
     params.areaDifferenceM2 !== undefined &&
     params.floorDifference !== undefined &&
     params.areaDifferenceM2 <= 5 &&
@@ -96,78 +97,82 @@ export async function POST(req: NextRequest) {
 
     const lawdCd = legalDongCode.slice(0, 5);
     const targetDong = resolvedAddress?.eupmyeondong;
-    const sameApartmentRows: any[] = [];
-    const fallbackRows: any[] = [];
-    const seen = new Set<string>();
 
-    for (const dealYearMonth of getRecentDealYearMonths(12)) {
-      const url = new URL("https://apis.data.go.kr/1613000/RTMSDataSvcAptTrade/getRTMSDataSvcAptTrade");
-      url.searchParams.set("serviceKey", apiKey);
-      url.searchParams.set("LAWD_CD", lawdCd);
-      url.searchParams.set("DEAL_YMD", dealYearMonth);
-      url.searchParams.set("pageNo", "1");
-      url.searchParams.set("numOfRows", "200");
+    const collectRows = async (monthCount: number, maxDaysAgo: number) => {
+      const sameApartmentRows: any[] = [];
+      const fallbackRows: any[] = [];
+      const seen = new Set<string>();
 
-      const res = await fetch(url.toString(), { method: "GET", cache: "no-store" });
-      if (!res.ok) continue;
+      for (const dealYearMonth of getRecentDealYearMonths(monthCount)) {
+        const url = new URL("https://apis.data.go.kr/1613000/RTMSDataSvcAptTrade/getRTMSDataSvcAptTrade");
+        url.searchParams.set("serviceKey", apiKey);
+        url.searchParams.set("LAWD_CD", lawdCd);
+        url.searchParams.set("DEAL_YMD", dealYearMonth);
+        url.searchParams.set("pageNo", "1");
+        url.searchParams.set("numOfRows", "200");
 
-      const xml = await res.text();
-      const itemMatches = [...xml.matchAll(/<item>([\s\S]*?)<\/item>/g)];
+        const res = await fetch(url.toString(), { method: "GET", cache: "no-store" });
+        if (!res.ok) continue;
 
-      for (const match of itemMatches) {
-        const x = match[1];
-        const aptNm = pickTag(x, "aptNm");
-        const area = Number(pickTag(x, "excluUseAr"));
-        const dealAmount = Number(pickTag(x, "dealAmount").replace(/,/g, ""));
-        const dealYear = Number(pickTag(x, "dealYear"));
-        const dealMonth = Number(pickTag(x, "dealMonth"));
-        const dealDay = Number(pickTag(x, "dealDay"));
-        const floor = Number(pickTag(x, "floor"));
-        const buildYear = Number(pickTag(x, "buildYear"));
-        const jibun = pickTag(x, "jibun");
-        const dong = pickTag(x, "umdNm");
-        if (!aptNm || !dealAmount || !dealYear || !dealMonth || !area || !floor) continue;
+        const xml = await res.text();
+        const itemMatches = [...xml.matchAll(/<item>([\s\S]*?)<\/item>/g)];
 
-        const isSameDong = targetDong ? dong === targetDong : true;
-        if (!isSameDong) continue;
+        for (const match of itemMatches) {
+          const x = match[1];
+          const aptNm = pickTag(x, "aptNm");
+          const area = Number(pickTag(x, "excluUseAr"));
+          const dealAmount = Number(pickTag(x, "dealAmount").replace(/,/g, ""));
+          const dealYear = Number(pickTag(x, "dealYear"));
+          const dealMonth = Number(pickTag(x, "dealMonth"));
+          const dealDay = Number(pickTag(x, "dealDay"));
+          const floor = Number(pickTag(x, "floor"));
+          const buildYear = Number(pickTag(x, "buildYear"));
+          const jibun = pickTag(x, "jibun");
+          const dong = pickTag(x, "umdNm");
+          if (!aptNm || !dealAmount || !dealYear || !dealMonth || !area || !floor) continue;
 
-        const areaDifferenceM2 = Math.abs(area - exclusiveAreaM2);
-        const floorDifference = Math.abs(floor - targetFloor);
-        const daysAgo = getDaysAgo(dealYear, dealMonth, dealDay);
-        if (!isComparable({ daysAgo, areaDifferenceM2, floorDifference })) continue;
+          const isSameDong = targetDong ? dong === targetDong : true;
+          if (!isSameDong) continue;
 
-        const key = [dealAmount, dealYear, dealMonth, dealDay, area, floor, aptNm, jibun].join("|");
-        if (seen.has(key)) continue;
-        seen.add(key);
+          const areaDifferenceM2 = Math.abs(area - exclusiveAreaM2);
+          const floorDifference = Math.abs(floor - targetFloor);
+          const daysAgo = getDaysAgo(dealYear, dealMonth, dealDay);
+          if (!isComparable({ maxDaysAgo, daysAgo, areaDifferenceM2, floorDifference })) continue;
 
-        const isSameApartment = isApartmentNameMatch(aptNm, buildingName);
-        const row = {
-          dealDate: `${dealYear}.${String(dealMonth).padStart(2, "0")}.${String(dealDay).padStart(2, "0")}`,
-          dealDateKey: parseDealDateKey({ dealYear, dealMonth, dealDay }),
-          aptNm,
-          dong,
-          jibun,
-          area,
-          floor,
-          dealAmount,
-          buildYear,
-          areaDifferenceM2,
-          floorDifference,
-          daysAgo,
-          isSameApartment,
-          matchType: isSameApartment ? "same_apartment" : "same_dong_fallback",
-        };
+          const key = [dealAmount, dealYear, dealMonth, dealDay, area, floor, aptNm, jibun].join("|");
+          if (seen.has(key)) continue;
+          seen.add(key);
 
-        if (isSameApartment) sameApartmentRows.push(row);
-        else fallbackRows.push(row);
+          const isSameApartment = isApartmentNameMatch(aptNm, buildingName);
+          const row = {
+            dealDate: `${dealYear}.${String(dealMonth).padStart(2, "0")}.${String(dealDay).padStart(2, "0")}`,
+            dealDateKey: parseDealDateKey({ dealYear, dealMonth, dealDay }),
+            aptNm,
+            dong,
+            jibun,
+            area,
+            floor,
+            dealAmount,
+            buildYear,
+            areaDifferenceM2,
+            floorDifference,
+            daysAgo,
+            isSameApartment,
+            matchType: isSameApartment ? "same_apartment" : "same_dong_fallback",
+          };
+
+          if (isSameApartment) sameApartmentRows.push(row);
+          else fallbackRows.push(row);
+        }
       }
-    }
 
-    const sortRecent = (a: any, b: any) => b.dealDateKey - a.dealDateKey;
-    const sameApartmentSelected = sameApartmentRows.sort(sortRecent).slice(0, limit);
-    const needed = Math.max(0, limit - sameApartmentSelected.length);
-    const fallbackSelected = fallbackRows.sort(sortRecent).slice(0, needed);
-    const selected = [...sameApartmentSelected, ...fallbackSelected].sort(sortRecent);
+      const sortRecent = (a: any, b: any) => b.dealDateKey - a.dealDateKey;
+      const selected = [...sameApartmentRows.sort(sortRecent), ...fallbackRows.sort(sortRecent)].slice(0, limit);
+      return { selected, monthCount };
+    };
+
+    const oneYearResult = await collectRows(12, 365);
+    const result = oneYearResult.selected.length < limit ? await collectRows(24, 730) : oneYearResult;
 
     return NextResponse.json({
       success: true,
@@ -176,8 +181,11 @@ export async function POST(req: NextRequest) {
       apiLawdCd: lawdCd,
       targetDong,
       resolvedAddress,
-      note: "최근 12개월 내 같은 동·같은 아파트에서 면적 ±5㎡, 층수 ±5층 거래를 최신순으로 먼저 10건 선정합니다. 부족하면 같은 동 다른 아파트의 유사 면적·층수 거래로 채웁니다.",
-      transactions: selected,
+      searchMonths: result.monthCount,
+      note: result.monthCount === 24
+        ? "최근 12개월 조건으로 10건 미만이라 최근 24개월로 다시 조회했습니다. 동일단지를 우선 정렬하고, 각 구분 안에서는 최신거래일순으로 최대 10건 선정합니다."
+        : "최근 12개월 내 동일단지를 우선 정렬하고, 각 구분 안에서는 최신거래일순으로 최대 10건 선정합니다.",
+      transactions: result.selected,
     });
   } catch (error) {
     console.error("raw_transaction_lookup_failed", error);
