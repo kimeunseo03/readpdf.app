@@ -1,196 +1,434 @@
-import { normalizeAddress } from "./normalizeAddress";
-import { fetchPublicTransactions } from "./publicTransactionApi";
-import { extractRegion } from "./extractRegion";
-import { findLegalDongCode } from "./legalDongCode";
-import { searchAddressByKakao } from "./addressSearchApi";
-import type { ValuationInput, ValuationResult } from "./types";
+import type { RegistryParseResult } from "@shared/types/registry";
+import { maskSensitiveText } from "@backend/compliance/piiMasking";
+import { detectOcrNeed } from "./detectOcrNeed";
 
-function average(numbers: number[]) {
-  if (!numbers.length) return 0;
-  return Math.round(numbers.reduce((a, b) => a + b, 0) / numbers.length);
+type Evidence = RegistryParseResult["sourceEvidence"][number];
+
+const SIDO_PATTERN = /(서울특별시|부산광역시|대구광역시|인천광역시|광주광역시|대전광역시|울산광역시|세종특별자치시|경기도|강원특별자치도|충청북도|충청남도|전북특별자치도|전라남도|경상북도|경상남도|제주특별자치도)/;
+const BUILDING_NAME_SUFFIX_PATTERN = /(아파트|오피스텔|빌라|맨션|타운|주공|에스-?클래스|리버시티|힐즈|캐슬|자이|푸르지오|래미안|아이파크|더샵|e편한세상|롯데캐슬)/;
+
+function normalizeText(text: string): string {
+  return text
+    .replace(/\u0000/g, " ")
+    .replace(/\s+/g, " ")
+    .replace(/\[\s*집합건물\s*\]/g, "[집합건물]")
+    .trim();
 }
 
-function weightedAverage(values: number[], weights: number[]) {
-  if (!values.length || values.length !== weights.length) return 0;
-  const totalWeight = weights.reduce((s, w) => s + w, 0);
-  if (!totalWeight) return average(values);
-  return Math.round(values.reduce((s, v, i) => s + v * weights[i], 0) / totalWeight);
+function findSnippet(text: string, regex: RegExp, before = 70, after = 180): string | undefined {
+  const match = text.match(regex);
+  if (!match) return undefined;
+  const index = match.index ?? 0;
+  return text
+    .slice(Math.max(0, index - before), Math.min(text.length, index + after))
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
-function removeOutliersByIqr(values: number[]) {
-  if (values.length < 4) return values;
-  const sorted = [...values].sort((a, b) => a - b);
-  const q1 = sorted[Math.floor((sorted.length - 1) * 0.25)];
-  const q3 = sorted[Math.floor((sorted.length - 1) * 0.75)];
-  const iqr = q3 - q1;
-  return sorted.filter((v) => v >= q1 - iqr * 1.5 && v <= q3 + iqr * 1.5);
+function addEvidence(evidence: Evidence[], field: string, textSnippet?: string, confidence = 0.7) {
+  if (!textSnippet) return;
+  evidence.push({ field, page: 1, textSnippet, confidence });
 }
 
-function parseKoreanMoneyTextToWon(value?: string) {
+function extractPrimaryAddressSegment(text: string): string | undefined {
+  const headerMatch = text.match(
+    new RegExp(`\\[집합건물\\]\\s*(${SIDO_PATTERN.source}.{0,180}?제\\s*\\d{1,4}\\s*동\\s*제\\s*\\d{1,2}\\s*층\\s*제\\s*\\d{1,4}\\s*호)`)
+  );
+  if (headerMatch?.[1]) {
+    return headerMatch[1].replace(/\s+/g, " ").trim();
+  }
+  const fallback = text.match(new RegExp(`(${SIDO_PATTERN.source}.{0,180}?제\\s*\\d{1,4}\\s*동\\s*제\\s*\\d{1,2}\\s*층\\s*제\\s*\\d{1,4}\\s*호)`));
+  return fallback?.[1]?.replace(/\s+/g, " ").trim();
+}
+
+// ✅ 1번 수정: 도로명 주소 추출 함수 추가
+function extractRoadAddress(text: string): string | undefined {
+  // [도로명주소] 태그 다음에 오는 주소 추출
+  const roadMatch = text.match(
+    /\[도로명주소\]\s*((?:서울특별시|부산광역시|대구광역시|인천광역시|광주광역시|대전광역시|울산광역시|세종특별자치시|경기도|강원특별자치도|충청북도|충청남도|전북특별자치도|전라남도|경상북도|경상남도|제주특별자치도)[가-힣\s\d\-]+(?:로|길)\s*\d+[가-힣\d\-\s,]*)/
+  );
+  if (roadMatch?.[1]) {
+    return roadMatch[1].replace(/\s+/g, " ").trim();
+  }
+  // 도로명주소 태그 없이 본문에서 추출 시도
+  const inlineMatch = text.match(
+    /((?:서울특별시|부산광역시|대구광역시|인천광역시|광주광역시|대전광역시|울산광역시|세종특별자치시|경기도|강원특별자치도|충청북도|충청남도|전북특별자치도|전라남도|경상북도|경상남도|제주특별자치도)[가-힣\s]+(?:시|군|구)[가-힣\s]+(?:로|길)\s*\d+[가-힣\d\-\s]*)/
+  );
+  return inlineMatch?.[1]?.replace(/\s+/g, " ").trim();
+}
+
+function parseAdministrativeArea(address?: string): Pick<RegistryParseResult["property"], "sido" | "sigungu" | "eupmyeondong"> {
+  if (!address) return {};
+  const sido = address.match(SIDO_PATTERN)?.[1];
+  const afterSido = sido ? address.slice(address.indexOf(sido) + sido.length).trim() : address;
+  const parts = afterSido.split(/\s+/).filter(Boolean);
+  const sigunguParts: string[] = [];
+  let eupmyeondong: string | undefined;
+  for (const part of parts) {
+    const clean = part.replace(/[(),]/g, "");
+    if (/^(제?\d+동|제?\d+층|제?\d+호)$/.test(clean)) break;
+    if (/\d/.test(clean) && !/[가-힣]/.test(clean)) continue;
+    if (!eupmyeondong && /[가-힣0-9]+(?:읍|면|동|리)$/.test(clean)) {
+      eupmyeondong = clean;
+      break;
+    }
+    if (/[가-힣]+(?:시|군|구)$/.test(clean)) {
+      sigunguParts.push(clean);
+    }
+  }
+  return {
+    sido,
+    sigungu: sigunguParts.length ? sigunguParts.join(" ") : undefined,
+    eupmyeondong
+  };
+}
+
+function extractBuildingDong(address?: string): string | undefined {
+  const match = address?.match(/제\s*(\d{1,4})\s*동/);
+  return match ? `${match[1]}동` : undefined;
+}
+
+function extractFloor(address?: string): number | undefined {
+  const match = address?.match(/제\s*(\d{1,2})\s*층/);
+  return match ? Number(match[1]) : undefined;
+}
+
+function extractUnitNumber(address?: string): string | undefined {
+  const match = address?.match(/제\s*(\d{1,4})\s*호/);
+  return match ? `${match[1]}호` : undefined;
+}
+
+function extractBuildingNameFromAddress(address?: string, buildingDong?: string): string | undefined {
+  if (!address || !buildingDong) return undefined;
+  const beforeDong = address.split(new RegExp(`제\\s*${buildingDong.replace("동", "")}\\s*동`))[0]?.trim();
+  if (!beforeDong) return undefined;
+  const tokens = beforeDong.split(/\s+/).filter(Boolean);
+  const lastToken = tokens[tokens.length - 1]?.replace(/[(),]/g, "");
+  if (!lastToken || /^\d/.test(lastToken)) return undefined;
+  if (!BUILDING_NAME_SUFFIX_PATTERN.test(lastToken)) return undefined;
+  return lastToken;
+}
+
+function extractBuildingNameFromRoadAddress(text: string, buildingDong?: string, unitNumber?: string): string | undefined {
+  if (!buildingDong || !unitNumber) return undefined;
+  const dongNo = buildingDong.replace("동", "");
+  const unitNo = unitNumber.replace("호", "");
+  const sameUnitPattern = new RegExp(`${dongNo}\\s*동\\s*${unitNo}\\s*호\\s*\\([^)]*,\\s*([^)]*${BUILDING_NAME_SUFFIX_PATTERN.source}[^)]*)\\)`);
+  const match = text.match(sameUnitPattern);
+  return match?.[1]?.replace(/\s+/g, "").trim();
+}
+
+function extractExclusiveAreaM2(text: string, floor?: number, unitNumber?: string): number | undefined {
+  const sectionStart = text.search(/【\s*표\s*제\s*부\s*】.{0,80}\(\s*전유부분의 건물의 표시\s*\)/);
+  const section = sectionStart >= 0 ? text.slice(sectionStart, sectionStart + 1200) : text;
+  const unitNo = unitNumber?.replace("호", "");
+  const floorSpecificPattern = floor && unitNo
+    ? new RegExp(`제\\s*${floor}\\s*층\\s*제\\s*${unitNo}\\s*호.{0,180}?(\\d{1,3}(?:\\.\\d+)?)\\s*(?:㎡|제곱미터|m2)`, "i")
+    : undefined;
+  const specificMatch = floorSpecificPattern ? section.match(floorSpecificPattern) : undefined;
+  const fallbackMatch = section.match(/건\s*물\s*내\s*역.{0,260}?(\d{1,3}(?:\.\d+)?)\s*(?:㎡|제곱미터|m2)/i)
+    || section.match(/제\s*\d{1,2}\s*층\s*제\s*\d{1,4}\s*호.{0,180}?(\d{1,3}(?:\.\d+)?)\s*(?:㎡|제곱미터|m2)/i);
+  const value = Number((specificMatch || fallbackMatch)?.[1]);
+  if (!Number.isFinite(value)) return undefined;
+  if (value <= 0 || value > 500) return undefined;
+  return value;
+}
+
+function extractLandRightRatio(text: string): string | undefined {
+  const sectionStart = text.search(/\(\s*대지권의 표시\s*\)/);
+  const section = sectionStart >= 0 ? text.slice(sectionStart, sectionStart + 700) : text;
+  const directMatch = section.match(/소유권대지권\s+(\d+(?:\.\d+)?)분의\s+(\d+(?:\.\d+)?)/);
+  if (directMatch && !/^\d{4}$/.test(directMatch[2])) {
+    return `${directMatch[1]}분의${directMatch[2]}`;
+  }
+  const distortedMatch = section.match(/소유권대지권\s+(\d+(?:\.\d+)?)분의[\s\S]{0,80}?대지권\s+(\d+(?:\.\d+)?)/);
+  if (distortedMatch) {
+    return `${distortedMatch[1]}분의${distortedMatch[2]}`;
+  }
+  return undefined;
+}
+
+type MortgageEntry = {
+  rank: number;
+  creditor: string;
+  amount: number;
+  targetOwner?: string;
+};
+
+function parseWonAmount(value?: string): number {
   if (!value) return 0;
-  return Number(value.replace(/[^0-9]/g, "")) || 0;
+  const numeric = Number(value.replace(/[^0-9]/g, ""));
+  return Number.isFinite(numeric) ? numeric : 0;
 }
 
-function estimatePriorityRepaymentAmount(params: { tenantDepositAmount?: number }) {
-  const deposit = params.tenantDepositAmount ?? 0;
-  return deposit ? Math.min(deposit, 55_000_000) : 0;
-}
-
-function getSeniorMortgageAmount(input: ValuationInput) {
-  const mortgages = input.rightsRisk?.mortgages ?? [];
-  if (mortgages.length > 0) return mortgages.reduce((s, m) => s + m.amount, 0);
-  return parseKoreanMoneyTextToWon(input.rightsRisk?.mortgageAmountText);
-}
-
-function formatWon(value: number) {
+function formatWon(value: number): string {
   return `${value.toLocaleString()}원`;
 }
 
-export async function estimateApartmentValue(input: ValuationInput): Promise<ValuationResult> {
-  const normalized = normalizeAddress(input);
-  const warnings: string[] = [];
+function cleanSummaryCreditor(value?: string): string {
+  if (!value) return "확인 필요";
+  return value
+    .replace(/\s+/g, " ")
+    .replace(/\s+(?:\d{1,3}\s+근저당권설정|채권최고액|대상소유자|제\d+호|공동담보|채무자|말소|해지|변경|이전|$).*$/g, "")
+    .trim() || "확인 필요";
+}
 
-  // ─── 법정동코드 조회 (카카오 → 행정안전부) ────────────────────────────────
-  const region = extractRegion(normalized.normalizedAddress);
-  const legalDongCode = await findLegalDongCode(region, normalized.normalizedAddress);
-
-  console.log("valuation_debug", {
-    addressRaw: normalized.normalizedAddress,
-    buildingName: normalized.buildingName,
-    legalDongCode,
-    region,
-  });
-
-  // ─── 좌표 (카카오에서 이미 조회했으면 재사용) ─────────────────────────────
-  // kaptCode 관련 API 비활성화 (단지목록 API 빈 데이터)
-  const apartmentMeta = undefined;
-
-  if (!normalized.normalizedAddress) warnings.push("주소 정보가 부족합니다.");
-  if (!normalized.area) warnings.push("전용면적 정보가 부족합니다.");
-  if (!legalDongCode) warnings.push("법정동코드를 찾을 수 없어 실거래가 조회가 제한됩니다.");
-
-  // ─── 실거래 조회 ──────────────────────────────────────────────────────────
-  const transactions = await fetchPublicTransactions({
-    buildingName: normalized.buildingName,
-    exclusiveAreaM2: normalized.area,
-    region,
-    legalDongCode,
-    targetFloor: input.floor,
-    targetCoordinate: undefined,
-    targetBuildYear: undefined,
-    targetHouseholdCount: undefined,
-    targetSubwayWalkMinutes: undefined,
-    targetKaptCode: undefined,
-  });
-
-  if (transactions.some((tx) => tx.selectionReason?.includes("±5㎡"))) {
-    warnings.push("동일단지·유사층 거래가 부족하여 전용면적 비교 범위를 ±5㎡까지 자동 확장했습니다.");
+function extractActiveMortgagesFromSummary(text: string): MortgageEntry[] {
+  const summaryStart = text.indexOf("주요 등기사항 요약");
+  if (summaryStart < 0) return [];
+  const summaryText = text.slice(summaryStart);
+  const sectionMatch = summaryText.match(
+    /3\.\s*\(근\)저당권 및 전세권 등\s*\(\s*을구\s*\)([\s\S]*?)(?:\[ 참 고 사 항 \]|출력일시|$)/
+  );
+  const section = sectionMatch?.[1] ?? "";
+  if (!section || /기록사항\s*없음/.test(section)) return [];
+  const rowRegex =
+    /(\d{1,3})\s+근저당권설정\s+[\s\S]*?채권최고액\s*(?:금)?\s*([0-9][0-9,]{4,})\s*원\s+근저당권자\s+(.+?)\s+([가-힣A-Za-z0-9·.\-()]+)(?=\s+\d{1,3}\s+근저당권설정|\s*\[ 참 고 사 항 \]|$)/g;
+  const results: MortgageEntry[] = [];
+  const seen = new Set<string>();
+  for (const match of section.matchAll(rowRegex)) {
+    const originalRank = Number(match[1]);
+    const amount = parseWonAmount(match[2]);
+    const creditor = cleanSummaryCreditor(match[3]);
+    const targetOwner = match[4]?.replace(/\s+/g, " ").trim();
+    if (!originalRank || !amount || !creditor || creditor === "확인 필요") continue;
+    const key = `${originalRank}-${creditor}-${amount}-${targetOwner ?? ""}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    results.push({ rank: originalRank, creditor, amount, targetOwner });
   }
-  if (transactions.length === 0) {
-    warnings.push("조건에 맞는 실거래 비교군을 찾지 못했습니다.");
-  } else if (transactions.length < 3) {
-    warnings.push("비교 가능한 실거래 데이터가 3건 미만입니다. 결과 신뢰도가 낮을 수 있습니다.");
-  }
+  return results.sort((a, b) => a.rank - b.rank);
+}
 
-  // ─── 이상치 제거 및 가격 계산 ────────────────────────────────────────────
-  const originalPrices = transactions.map((t) => t.dealAmount * 10000);
-  const filteredPriceSet = removeOutliersByIqr(originalPrices);
-  const excludedTransactions = transactions.filter((tx) => !filteredPriceSet.includes(tx.dealAmount * 10000));
+function extractMortgagesFromBody(text: string): MortgageEntry[] {
+  const eulguStart = text.indexOf("【 을 구 】");
+  if (eulguStart < 0) return [];
+  const source = text.slice(eulguStart);
+  const results: MortgageEntry[] = [];
+  const seen = new Set<string>();
+  const blockStartRegex = /(?:^|\s)(\d{1,3})\s+근저당권설정\s+\d{4}년\d{1,2}월\d{1,2}일/g;
+  const starts = Array.from(source.matchAll(blockStartRegex));
+  starts.forEach((startMatch, index) => {
+    const rank = Number(startMatch[1]);
+    const startIndex = startMatch.index ?? 0;
+    const nextIndex = index + 1 < starts.length ? starts[index + 1].index ?? source.length : source.length;
+    const block = source.slice(startIndex, nextIndex);
+    const cancellationRegex = new RegExp(`${rank}\\s*번\\s*근저당권설정등?\\s*기?말소|${rank}\\s*번근저당권설정등\\s*기말소`);
+    if (cancellationRegex.test(source)) return;
+    const amountMatch = block.match(/채권최고액\s*(?:금)?\s*([0-9][0-9,]{4,})\s*원/);
+    const creditorMatch = block.match(/근저당권자\s+(.+?)(?=\s+(?:[0-9]{6}-|서울|부산|대구|인천|광주|대전|울산|세종|경기|강원|충청|전라|전북|전남|경상|경북|경남|제주|채무자|채권최고액|공동담보|목록|접수|등기원인|-- 이 하 여 백 --|$))/);
+    const amount = parseWonAmount(amountMatch?.[1]);
+    const creditor = cleanSummaryCreditor(creditorMatch?.[1]);
+    if (!rank || !amount) return;
+    const key = `${rank}-${creditor}-${amount}`;
+    if (seen.has(key)) return;
+    seen.add(key);
+    results.push({ rank, creditor, amount });
+  });
+  return results.sort((a, b) => a.rank - b.rank);
+}
 
-  if (excludedTransactions.length > 0) {
-    warnings.push(`${excludedTransactions.length}건의 이상 거래가가 IQR 기준으로 자동 제외되었습니다.`);
-    excludedTransactions.forEach((tx) => {
-      warnings.push(`${tx.dealYear}.${String(tx.dealMonth).padStart(2,"0")}.${String(tx.dealDay).padStart(2,"0")} 거래 (${formatWon(tx.dealAmount * 10000)}) 이상치 제외`);
+function normalizeMortgageRanks(mortgages: MortgageEntry[]): MortgageEntry[] {
+  return mortgages.map((mortgage, index) => ({ ...mortgage, rank: index + 1 }));
+}
+
+function extractMortgages(text: string): MortgageEntry[] {
+  const summaryMortgages = extractActiveMortgagesFromSummary(text);
+  if (summaryMortgages.length > 0) return normalizeMortgageRanks(summaryMortgages);
+  return normalizeMortgageRanks(extractMortgagesFromBody(text));
+}
+
+export function parseRegistryText(params: {
+  fileId: string;
+  originalFileName: string;
+  text: string;
+  pageCount: number;
+}): RegistryParseResult {
+  const compactText = normalizeText(params.text);
+  const evidence: Evidence[] = [];
+  const ocrDecision = detectOcrNeed(compactText, params.pageCount);
+
+  const documentTypeConfidence = /(등기사항전부증명서|등기부등본)/.test(compactText) ? 0.9 : 0.45;
+  const registryType = /집합건물/.test(compactText) ? "collective_building" : "unknown";
+
+  // ✅ 1번: addressRaw에 도로명 주소 우선 사용
+  const jibunAddressRaw = extractPrimaryAddressSegment(compactText);
+  const roadAddressRaw = extractRoadAddress(compactText);
+
+  // 카카오 지오코딩 정확도를 위해 도로명 주소 우선
+  // 도로명 없으면 지번 주소 사용
+  const addressRaw = jibunAddressRaw; // 표시용 (지번 - 등기부 원문 기준)
+  const addressForGeocoding = roadAddressRaw ?? jibunAddressRaw; // 지오코딩용 (도로명 우선)
+
+  addEvidence(evidence, "property.addressRaw", addressRaw, addressRaw ? 0.9 : 0.25);
+
+  const { sido, sigungu, eupmyeondong } = parseAdministrativeArea(addressRaw);
+  const buildingDong = extractBuildingDong(addressRaw);
+  addEvidence(evidence, "property.buildingDong", addressRaw, buildingDong ? 0.9 : 0.2);
+
+  const floor = extractFloor(addressRaw);
+  const unitNumber = extractUnitNumber(addressRaw);
+  addEvidence(evidence, "property.unitNumber", addressRaw, unitNumber ? 0.9 : 0.2);
+
+  const buildingName = extractBuildingNameFromAddress(addressRaw, buildingDong)
+    || extractBuildingNameFromRoadAddress(compactText, buildingDong, unitNumber);
+  addEvidence(
+    evidence,
+    "property.buildingName",
+    buildingName ? findSnippet(compactText, new RegExp(buildingName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"))) : undefined,
+    buildingName ? 0.82 : 0.25
+  );
+
+  const exclusiveAreaM2 = extractExclusiveAreaM2(compactText, floor, unitNumber);
+  addEvidence(
+    evidence,
+    "property.exclusiveAreaM2",
+    findSnippet(compactText, /전유부분의 건물의 표시|제\s*\d{1,2}\s*층\s*제\s*\d{1,4}\s*호.{0,140}?\d+(?:\.\d+)?\s*㎡/),
+    exclusiveAreaM2 ? 0.84 : 0.25
+  );
+
+  const landRightRatio = extractLandRightRatio(compactText);
+  addEvidence(evidence, "property.landRightRatio", findSnippet(compactText, /소유권대지권.{0,180}/), landRightRatio ? 0.82 : 0.2);
+
+  const mortgages = extractMortgages(compactText);
+  const totalMortgageAmount = mortgages.reduce((sum, m) => sum + m.amount, 0);
+  const mortgageAmountText = totalMortgageAmount ? formatWon(totalMortgageAmount) : undefined;
+
+  const rightsRisk = {
+    hasMortgage: mortgages.length > 0,
+    hasSeizure: /(^|[^가])압류/.test(compactText),
+    hasProvisionalSeizure: /가압류/.test(compactText),
+    hasLeaseholdRight: /전세권|임차권/.test(compactText),
+    hasTrust: /신탁/.test(compactText),
+    coOwnerCount: undefined as number | undefined,
+    riskFlags: [] as string[],
+    riskLevel: "SAFE" as "SAFE" | "CAUTION" | "DANGER",
+    riskScore: 0,
+    summary: "",
+    mortgageAmountText,
+    mortgages,
+    hasCancellationKeyword: /말소|해지|말소등기/.test(compactText),
+    riskDetails: [] as { type: string; label: string; severity: "LOW" | "MEDIUM" | "HIGH"; description: string }[]
+  };
+
+  if (rightsRisk.hasMortgage) {
+    rightsRisk.riskFlags.push("mortgage_detected");
+    rightsRisk.riskScore += 25;
+    rightsRisk.riskDetails.push({
+      type: "mortgage", label: "근저당", severity: "MEDIUM",
+      description: rightsRisk.mortgages.length
+        ? `근저당권 ${rightsRisk.mortgages.length}건, 채권최고액 합계 ${rightsRisk.mortgageAmountText}이 확인되었습니다.`
+        : rightsRisk.mortgageAmountText
+          ? `근저당권 및 채권최고액 ${rightsRisk.mortgageAmountText}이 확인되었습니다.`
+          : "근저당권 설정 문구가 확인되었습니다."
     });
   }
+  if (rightsRisk.hasLeaseholdRight) {
+    rightsRisk.riskFlags.push("leasehold_or_tenant_right_detected");
+    rightsRisk.riskScore += 20;
+    rightsRisk.riskDetails.push({ type: "leasehold", label: "전세권/임차권", severity: "MEDIUM", description: "전세권 또는 임차권 관련 문구가 확인되었습니다." });
+  }
+  if (rightsRisk.hasSeizure) {
+    rightsRisk.riskFlags.push("seizure_detected");
+    rightsRisk.riskScore += 45;
+    rightsRisk.riskDetails.push({ type: "seizure", label: "압류", severity: "HIGH", description: "압류 관련 문구가 확인되어 고위험 권리관계 검토가 필요합니다." });
+  }
+  if (rightsRisk.hasProvisionalSeizure) {
+    rightsRisk.riskFlags.push("provisional_seizure_detected");
+    rightsRisk.riskScore += 45;
+    rightsRisk.riskDetails.push({ type: "provisional_seizure", label: "가압류", severity: "HIGH", description: "가압류 관련 문구가 확인되어 고위험 권리관계 검토가 필요합니다." });
+  }
+  if (rightsRisk.hasTrust) {
+    rightsRisk.riskFlags.push("trust_detected");
+    rightsRisk.riskScore += 40;
+    rightsRisk.riskDetails.push({ type: "trust", label: "신탁", severity: "HIGH", description: "신탁 관련 문구가 확인되어 소유권 및 처분 제한 검토가 필요합니다." });
+  }
+  if (rightsRisk.hasCancellationKeyword) {
+    rightsRisk.riskScore = Math.max(0, rightsRisk.riskScore - 15);
+    rightsRisk.riskDetails.push({ type: "cancellation_keyword", label: "말소/해지 문구", severity: "LOW", description: "말소 또는 해지 관련 문구가 확인되었습니다. 실제 유효 여부는 원문 확인이 필요합니다." });
+  }
+  rightsRisk.riskScore = Math.min(100, rightsRisk.riskScore);
+  if (rightsRisk.riskScore >= 60) rightsRisk.riskLevel = "DANGER";
+  else if (rightsRisk.riskScore >= 25) rightsRisk.riskLevel = "CAUTION";
+  else rightsRisk.riskLevel = "SAFE";
 
-  const filteredTransactions = transactions.filter((tx) => filteredPriceSet.includes(tx.dealAmount * 10000));
-  const filteredPrices = filteredTransactions.map((t) => t.dealAmount * 10000);
-  const weights = filteredTransactions.map((t) => t.similarityScore ?? 50);
+  const riskLabels = rightsRisk.riskDetails.filter(d => d.type !== "cancellation_keyword").map(d => d.label);
+  rightsRisk.summary = riskLabels.length === 0
+    ? "특이 권리관계는 발견되지 않았습니다."
+    : `${riskLabels.join(", ")} 관련 권리관계가 확인되었습니다. 등기부 원문 기준의 추가 검토가 필요합니다.`;
 
-  const weightedAveragePrice = filteredPrices.length ? weightedAverage(filteredPrices, weights) : undefined;
-  const conservativePrice = filteredPrices.length ? Math.min(...filteredPrices) : undefined;
-  const upperReferencePrice = filteredPrices.length ? Math.max(...filteredPrices) : undefined;
+  addEvidence(
+    evidence, "rightsRisk",
+    findSnippet(compactText, /(근저당권|가압류|압류|전세권|임차권|신탁).{0,100}/),
+    rightsRisk.riskFlags.length ? 0.74 : 0.65
+  );
 
-  // ─── 권리 반영 ────────────────────────────────────────────────────────────
-  const mortgages = input.rightsRisk?.mortgages ?? [];
-  const seniorMortgageAmount = getSeniorMortgageAmount(input);
-  const tenantDepositAmount = input.tenantDepositAmount ?? 0;
-  const tenantMonthlyRent = input.tenantMonthlyRent ?? 0;
-  const priorityRepaymentAmount = estimatePriorityRepaymentAmount({ tenantDepositAmount });
-  const seniorDebtAmount = seniorMortgageAmount + tenantDepositAmount;
-  const riskAdjustedPrice = weightedAveragePrice !== undefined ? Math.max(weightedAveragePrice - seniorDebtAmount, 0) : undefined;
+  const missingRequiredFields: string[] = [];
+  if (!addressRaw) missingRequiredFields.push("addressRaw");
+  if (!buildingDong) missingRequiredFields.push("buildingDong");
+  if (!unitNumber) missingRequiredFields.push("unitNumber");
+  if (!exclusiveAreaM2) missingRequiredFields.push("exclusiveAreaM2");
 
-  if (seniorMortgageAmount > 0) warnings.push(`선순위 근저당 채권최고액 합계 ${formatWon(seniorMortgageAmount)}이 권리반영 기준가에 반영되었습니다.`);
-  if (tenantDepositAmount > 0) warnings.push(`임차보증금 ${formatWon(tenantDepositAmount)}이 권리반영 기준가에 반영되었습니다.`);
-  if (priorityRepaymentAmount > 0) warnings.push(`최우선변제금 추정액 ${formatWon(priorityRepaymentAmount)}은 참고 금액이며 임차보증금 전체가 차감에 반영됩니다.`);
+  const confidence = {
+    documentType: documentTypeConfidence,
+    address: addressRaw ? 0.9 : 0.25,
+    area: exclusiveAreaM2 ? 0.84 : 0.25,
+    rightsRisk: rightsRisk.riskFlags.length ? 0.74 : 0.65,
+    overall: 0
+  };
+  confidence.overall = Number(((confidence.documentType + confidence.address + confidence.area + confidence.rightsRisk + ocrDecision.confidence) / 5).toFixed(2));
 
-  // ─── 신뢰도 계산 ──────────────────────────────────────────────────────────
-  const averageSimilarity = weights.length ? average(weights) : 0;
-  const sameApartmentCount = filteredTransactions.filter((tx) => tx.isSameApartment).length;
-  const recentCount = filteredTransactions.filter((tx) => (tx.monthsAgo ?? 999) <= 6).length;
-  const excludedRatio = transactions.length > 0 ? excludedTransactions.length / transactions.length : 0;
-
-  let confidenceScore = 0;
-  confidenceScore += Math.min(filteredTransactions.length, 5) * 12;
-  confidenceScore += averageSimilarity * 0.35;
-  confidenceScore += sameApartmentCount > 0 ? 15 : 0;
-  confidenceScore += recentCount >= 3 ? 10 : recentCount * 3;
-  if (excludedRatio >= 0.4) confidenceScore -= 15;
-  else if (excludedRatio >= 0.2) confidenceScore -= 8;
-  if (!filteredTransactions.some((tx) => tx.isSameApartment)) confidenceScore -= 10;
-  if (filteredTransactions.some((tx) => tx.selectionReason?.includes("±5㎡"))) confidenceScore -= 8;
-  if (input.rightsRisk?.riskLevel === "CAUTION") confidenceScore -= 5;
-  if (input.rightsRisk?.riskLevel === "DANGER") confidenceScore -= 15;
-  if (seniorDebtAmount > 0) confidenceScore -= 8;
-  confidenceScore = Math.max(0, Math.min(100, confidenceScore));
-
-  let overallConfidence: "A" | "B" | "C" = "C";
-  if (confidenceScore >= 80) overallConfidence = "A";
-  else if (confidenceScore >= 60) overallConfidence = "B";
-  if (input.rightsRisk?.riskLevel === "DANGER" && overallConfidence === "A") overallConfidence = "B";
-
-  // ─── 종합 의견 ────────────────────────────────────────────────────────────
-  let finalComment =
-    overallConfidence === "A" ? "비교 가능한 실거래 데이터가 충분하고 유사도가 높아 신뢰도가 높은 편입니다." :
-    overallConfidence === "B" ? "비교 가능한 실거래 데이터는 확보되었으나 일부 보정 요소가 있어 추가 검토가 권장됩니다." :
-    "비교 가능한 실거래 데이터가 부족하거나 유사도가 낮아 보수적인 검토가 필요합니다.";
-
-  if (seniorDebtAmount > 0) finalComment += " 선순위 권리 금액을 반영한 권리반영 기준가를 함께 확인하세요.";
-  if (input.rightsRisk?.riskLevel === "DANGER") finalComment += " 고위험 권리관계가 감지되어 별도 권리분석 확인이 필요합니다.";
-  else if (input.rightsRisk?.riskLevel === "CAUTION") finalComment += " 권리관계상 주의 요소가 있어 관련 서류 확인이 필요합니다.";
-
-  if (input.rightsRisk?.riskLevel === "DANGER") warnings.push("압류/가압류/신탁 등 고위험 권리관계가 감지되었습니다.");
-  else if (input.rightsRisk?.riskLevel === "CAUTION") warnings.push("근저당 또는 임차권/전세권 관련 권리관계 검토가 필요합니다.");
+  const reasons = [
+    ...ocrDecision.reasons,
+    ...(documentTypeConfidence < 0.75 ? ["등본 문서 여부 신뢰도가 낮습니다."] : []),
+    ...(missingRequiredFields.length ? ["가치평가 입력 필수 필드가 누락되었습니다."] : []),
+    ...(rightsRisk.riskFlags.length ? ["권리관계 리스크 키워드가 탐지되었습니다. 법률 판단이 아닌 내부 검토 플래그입니다."] : [])
+  ];
 
   return {
-    success: true,
-    normalizedAddress: normalized.normalizedAddress,
-    buildingName: normalized.buildingName,
-    comparableCount: transactions.length,
-    lowestPrice: filteredPrices.length ? Math.min(...filteredPrices) : undefined,
-    highestPrice: filteredPrices.length ? Math.max(...filteredPrices) : undefined,
-    averagePrice: weightedAveragePrice,
-    conservativePrice,
-    upperReferencePrice,
-    riskAdjustedPrice,
-    seniorDebtAmount,
-    seniorMortgageAmount,
-    mortgages,
-    tenantDepositAmount,
-    tenantMonthlyRent,
-    priorityRepaymentAmount,
-    recentTransactions: transactions,
-    valuationBasis: [
-      "동일 법정동 실거래 비교",
-      "동일단지 우선 비교 (단지명 매칭)",
-      "유사 면적 비교",
-      "층수 유사도 반영",
-      "거래 시점 최신성 반영",
-      "직거래 제외",
-    ],
-    overallConfidence,
-    finalComment,
-    warnings: [...new Set(warnings)],
+    document: {
+      fileId: params.fileId,
+      originalFileName: params.originalFileName,
+      pageCount: params.pageCount,
+      documentType: documentTypeConfidence >= 0.75 ? "real_estate_registry" : "unknown",
+      registryType,
+      textExtractionMethod: "native_pdf_text",
+      parsedAt: new Date().toISOString()
+    },
+    property: {
+      // 표시용은 지번 주소 (등기부 원문)
+      addressRaw,
+      // ✅ 도로명 주소를 roadAddress 필드로 추가 제공 (지오코딩용)
+      roadAddress: roadAddressRaw,
+      sido,
+      sigungu,
+      eupmyeondong,
+      buildingName,
+      buildingDong,
+      unitNumber,
+      exclusiveAreaM2,
+      landRightRatio,
+      floor
+    },
+    rightsRisk,
+    confidence,
+    review: {
+      manualReviewRequired: reasons.length > 0 || confidence.overall < 0.75,
+      reasons,
+      missingRequiredFields
+    },
+    sourceEvidence: evidence,
+    meta: {
+      ocrRequired: ocrDecision.ocrRequired,
+      maskedTextPreview: maskSensitiveText(compactText).slice(0, 1200),
+      warnings: [
+        "원본 PDF는 현재 구현에서 저장하지 않습니다.",
+        "OCR은 1차 구현에서 필요 여부만 판단하며 실제 OCR 처리는 후속 구현 대상입니다.",
+        "건물명은 우선 상단 [집합건물] 주소 라인에서만 추출하며, 권리자/소유자 주소의 다른 아파트명은 배제합니다.",
+        "전유면적은 전유부분의 건물의 표시 섹션에서만 추출합니다.",
+        "KB부동산 등 유료 서비스 및 무단 크롤링 데이터는 사용하지 않습니다.",
+        "addressRaw는 등기부 원문 지번 주소, roadAddress는 도로명 주소(지오코딩 우선 사용)입니다."
+      ]
+    }
   };
 }
