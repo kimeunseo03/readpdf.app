@@ -7,15 +7,14 @@ export async function POST(req: NextRequest) {
 
     const result = await estimateApartmentValue({
       addressRaw: body.addressRaw,
-      // ✅ 1번: 도로명 주소 추가 전달 (parseRegistryPdf에서 추출한 roadAddress)
       roadAddress: body.roadAddress,
       buildingName: body.buildingName,
       exclusiveAreaM2: body.exclusiveAreaM2,
       floor: body.floor,
       tenantDepositAmount: body.tenantDepositAmount,
       tenantMonthlyRent: body.tenantMonthlyRent,
-      rightsRisk: body.rightsRisk,
-    } as any);
+      rightsRisk: body.rightsRisk
+    });
 
     return NextResponse.json(result);
   } catch (error) {
