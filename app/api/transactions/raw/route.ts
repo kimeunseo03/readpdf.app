@@ -125,7 +125,11 @@ export async function POST(req: NextRequest) {
     }
 
     const ranked = rows.sort((a, b) => {
+      const aSameDongApartment = a.isSameDong && a.isSameApartment;
+      const bSameDongApartment = b.isSameDong && b.isSameApartment;
+      if (Number(bSameDongApartment) !== Number(aSameDongApartment)) return Number(bSameDongApartment) - Number(aSameDongApartment);
       if (Number(b.isSameDong) !== Number(a.isSameDong)) return Number(b.isSameDong) - Number(a.isSameDong);
+      if (Number(b.isSameApartment) !== Number(a.isSameApartment)) return Number(b.isSameApartment) - Number(a.isSameApartment);
       if (a.areaDifferenceM2 !== undefined && b.areaDifferenceM2 !== undefined && a.areaDifferenceM2 !== b.areaDifferenceM2) return a.areaDifferenceM2 - b.areaDifferenceM2;
       if (a.areaDifferenceM2 === undefined && b.areaDifferenceM2 !== undefined) return 1;
       if (a.areaDifferenceM2 !== undefined && b.areaDifferenceM2 === undefined) return -1;
@@ -144,7 +148,7 @@ export async function POST(req: NextRequest) {
       apiLawdCd: lawdCd,
       targetDong,
       resolvedAddress,
-      note: "실거래 API는 5자리 시군구 코드로 조회합니다. 후보는 같은 동을 우선하고, 선택 입력값이 있으면 면적차/층수차 순으로 10건을 뽑은 뒤 거래일 최신순으로 표시합니다.",
+      note: "실거래 API는 5자리 시군구 코드로 조회합니다. 후보는 같은 동+같은 아파트명을 1순위로 하고, 선택 입력값이 있으면 면적차/층수차 순으로 10건을 뽑은 뒤 거래일 최신순으로 표시합니다.",
       transactions: selected,
     });
   } catch (error) {
