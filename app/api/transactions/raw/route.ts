@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { searchAddressByKakao } from "../../../../src/backend/valuation/addressSearchApi";
 
-function getRecentDealYearMonths(monthCount = 3): string[] {
+function getRecentDealYearMonths(monthCount = 12): string[] {
   const result: string[] = [];
   const now = new Date();
   for (let i = 0; i < monthCount; i++) {
@@ -53,7 +53,7 @@ function isComparable(params: {
   floorDifference?: number;
 }) {
   return (
-    params.daysAgo <= 93 &&
+    params.daysAgo <= 365 &&
     params.areaDifferenceM2 !== undefined &&
     params.floorDifference !== undefined &&
     params.areaDifferenceM2 <= 5 &&
@@ -100,7 +100,7 @@ export async function POST(req: NextRequest) {
     const fallbackRows: any[] = [];
     const seen = new Set<string>();
 
-    for (const dealYearMonth of getRecentDealYearMonths(3)) {
+    for (const dealYearMonth of getRecentDealYearMonths(12)) {
       const url = new URL("https://apis.data.go.kr/1613000/RTMSDataSvcAptTrade/getRTMSDataSvcAptTrade");
       url.searchParams.set("serviceKey", apiKey);
       url.searchParams.set("LAWD_CD", lawdCd);
@@ -176,7 +176,7 @@ export async function POST(req: NextRequest) {
       apiLawdCd: lawdCd,
       targetDong,
       resolvedAddress,
-      note: "최근 3개월 내 같은 동·같은 아파트에서 면적 ±5㎡, 층수 ±5층 거래를 최신순으로 먼저 10건 선정합니다. 부족하면 같은 동 다른 아파트의 유사 면적·층수 거래로 채웁니다.",
+      note: "최근 12개월 내 같은 동·같은 아파트에서 면적 ±5㎡, 층수 ±5층 거래를 최신순으로 먼저 10건 선정합니다. 부족하면 같은 동 다른 아파트의 유사 면적·층수 거래로 채웁니다.",
       transactions: selected,
     });
   } catch (error) {
