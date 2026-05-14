@@ -182,6 +182,7 @@ export function ParseResultView({ response }: { response: ParseApiResponse }) {
             <ValuationForm
               initialValue={{
                 addressRaw: editableProperty.addressRaw,
+                roadAddress: property.roadAddress,
                 buildingName: editableProperty.buildingName,
                 exclusiveAreaM2: editableProperty.exclusiveAreaM2,
                 floor: editableProperty.floor,
