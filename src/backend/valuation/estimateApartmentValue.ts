@@ -16,7 +16,6 @@ function weightedAverage(values: number[], weights: number[]) {
   return Math.round(values.reduce((s, v, i) => s + v * weights[i], 0) / totalWeight);
 }
 
-// ✅ 3번: 5건 미만이면 IQR 미적용
 function removeOutliersByIqr(values: number[]): number[] {
   if (values.length < 5) return values;
   const sorted = [...values].sort((a, b) => a - b);
@@ -26,12 +25,6 @@ function removeOutliersByIqr(values: number[]): number[] {
   return sorted.filter((v) => v >= q1 - iqr * 1.5 && v <= q3 + iqr * 1.5);
 }
 
-function parseKoreanMoneyTextToWon(value?: string) {
-  if (!value) return 0;
-  return Number(value.replace(/[^0-9]/g, "")) || 0;
-}
-
-// ✅ 2번: 최우선변제금 지역별 분기
 function estimatePriorityRepaymentAmount(params: {
   tenantDepositAmount?: number;
   sido?: string;
@@ -49,31 +42,30 @@ function estimatePriorityRepaymentAmount(params: {
   return Math.min(deposit, 25_000_000);
 }
 
-function getSeniorMortgageAmount(input: ValuationInput) {
-  const mortgages = input.rightsRisk?.mortgages ?? [];
-  if (mortgages.length > 0) return mortgages.reduce((s, m) => s + m.amount, 0);
-  return parseKoreanMoneyTextToWon(input.rightsRisk?.mortgageAmountText);
-}
-
 function formatWon(value: number) {
   return `${value.toLocaleString()}원`;
 }
 
-export async function estimateApartmentValue(input: ValuationInput & { roadAddress?: string }): Promise<ValuationResult> {
+export async function estimateApartmentValue(input: ValuationInput): Promise<ValuationResult> {
   const normalized = normalizeAddress(input);
   const warnings: string[] = [];
 
-  // ─── 법정동코드 조회 ──────────────────────────────────────────────────────
   const region = extractRegion(normalized.normalizedAddress);
 
-  // ✅ 1번: 도로명 주소 우선 지오코딩
-  const addressForGeocoding = input.roadAddress ?? normalized.normalizedAddress;
+  const addressForGeocoding =
+    normalized.normalizedAddress || input.addressRaw || input.roadAddress;
+  const addressBasisType =
+    addressForGeocoding && addressForGeocoding === input.roadAddress ? "road" : "jibun";
+  const addressBasisLabel = addressBasisType === "road" ? "도로명주소" : "지번주소";
+  const addressBasisAddress = addressForGeocoding;
+
   const legalDongCode = await findLegalDongCode(region, addressForGeocoding);
 
   console.log("valuation_debug", {
     addressRaw: normalized.normalizedAddress,
     roadAddress: input.roadAddress,
     addressForGeocoding,
+    addressBasisType,
     buildingName: normalized.buildingName,
     legalDongCode,
     region,
@@ -83,7 +75,6 @@ export async function estimateApartmentValue(input: ValuationInput & { roadAddre
   if (!normalized.area) warnings.push("전용면적 정보가 부족합니다.");
   if (!legalDongCode) warnings.push("법정동코드를 찾을 수 없어 실거래가 조회가 제한됩니다.");
 
-  // ─── 실거래 조회 ──────────────────────────────────────────────────────────
   const transactions = await fetchPublicTransactions({
     buildingName: normalized.buildingName,
     exclusiveAreaM2: normalized.area,
@@ -106,7 +97,6 @@ export async function estimateApartmentValue(input: ValuationInput & { roadAddre
     warnings.push("비교 가능한 실거래 데이터가 3건 미만입니다. 결과 신뢰도가 낮을 수 있습니다.");
   }
 
-  // ─── 이상치 제거 ──────────────────────────────────────────────────────────
   const originalPrices = transactions.map((t) => t.dealAmount * 10000);
   const filteredPriceSet = removeOutliersByIqr(originalPrices);
   const excludedTransactions = transactions.filter((tx) => !filteredPriceSet.includes(tx.dealAmount * 10000));
@@ -126,13 +116,12 @@ export async function estimateApartmentValue(input: ValuationInput & { roadAddre
   const conservativePrice = filteredPrices.length ? Math.min(...filteredPrices) : undefined;
   const upperReferencePrice = filteredPrices.length ? Math.max(...filteredPrices) : undefined;
 
-  // ─── 권리 반영 ────────────────────────────────────────────────────────────
-  const mortgages = input.rightsRisk?.mortgages ?? [];
-  const seniorMortgageAmount = getSeniorMortgageAmount(input);
+  const extractedMortgageCount = input.rightsRisk?.mortgages?.length ?? 0;
+  const mortgages = [];
+  const seniorMortgageAmount = 0;
   const tenantDepositAmount = input.tenantDepositAmount ?? 0;
   const tenantMonthlyRent = input.tenantMonthlyRent ?? 0;
 
-  // ✅ 2번: sido 전달해서 지역별 최우선변제금 계산
   const priorityRepaymentAmount = estimatePriorityRepaymentAmount({
     tenantDepositAmount,
     sido: region.sido,
@@ -143,12 +132,12 @@ export async function estimateApartmentValue(input: ValuationInput & { roadAddre
     ? Math.max(weightedAveragePrice - seniorDebtAmount, 0)
     : undefined;
 
-  if (seniorMortgageAmount > 0) warnings.push(`선순위 근저당 채권최고액 합계 ${formatWon(seniorMortgageAmount)}이 권리반영 기준가에 반영되었습니다.`);
+  if (extractedMortgageCount > 0 || input.rightsRisk?.mortgageAmountText) {
+    warnings.push("근저당권 자동 추출은 현재 검증 중입니다. 등기부 원문 기준으로 별도 확인이 필요합니다.");
+  }
   if (tenantDepositAmount > 0) warnings.push(`임차보증금 ${formatWon(tenantDepositAmount)}이 권리반영 기준가에 반영되었습니다.`);
   if (priorityRepaymentAmount > 0) warnings.push(`최우선변제금 추정액 ${formatWon(priorityRepaymentAmount)}은 참고 금액이며 임차보증금 전체가 차감에 반영됩니다.`);
 
-  // ─── 신뢰도 계산 (데이터 품질만 반영) ────────────────────────────────────
-  // ✅ 4번: 근저당/권리 감점 제거
   const averageSimilarity = weights.length ? average(weights) : 0;
   const sameApartmentCount = filteredTransactions.filter((tx) => tx.isSameApartment).length;
   const recentCount = filteredTransactions.filter((tx) => (tx.monthsAgo ?? 999) <= 6).length;
@@ -170,7 +159,6 @@ export async function estimateApartmentValue(input: ValuationInput & { roadAddre
   if (confidenceScore >= 80) overallConfidence = "A";
   else if (confidenceScore >= 60) overallConfidence = "B";
 
-  // ─── 종합 의견 ────────────────────────────────────────────────────────────
   let finalComment =
     overallConfidence === "A" ? "비교 가능한 실거래 데이터가 충분하고 유사도가 높아 신뢰도가 높은 편입니다." :
     overallConfidence === "B" ? "비교 가능한 실거래 데이터는 확보되었으나 일부 보정 요소가 있어 추가 검토가 권장됩니다." :
@@ -191,6 +179,9 @@ export async function estimateApartmentValue(input: ValuationInput & { roadAddre
     success: true,
     normalizedAddress: normalized.normalizedAddress,
     buildingName: normalized.buildingName,
+    addressBasisType,
+    addressBasisLabel,
+    addressBasisAddress,
     comparableCount: transactions.length,
     lowestPrice: filteredPrices.length ? Math.min(...filteredPrices) : undefined,
     highestPrice: filteredPrices.length ? Math.max(...filteredPrices) : undefined,
@@ -206,7 +197,7 @@ export async function estimateApartmentValue(input: ValuationInput & { roadAddre
     priorityRepaymentAmount,
     recentTransactions: transactions,
     valuationBasis: [
-      "동일 법정동 실거래 비교",
+      "동일 지역 실거래 비교",
       "동일단지 우선 비교 (단지명 매칭)",
       "유사 면적 비교",
       "층수 유사도 반영",
