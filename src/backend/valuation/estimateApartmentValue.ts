@@ -1,6 +1,5 @@
 import type { RegistryParseResult } from "@shared/types/registry";
 import { maskSensitiveText } from "@backend/compliance/piiMasking";
-import { detectOcrNeed } from "./detectOcrNeed";
 
 type Evidence = RegistryParseResult["sourceEvidence"][number];
 
