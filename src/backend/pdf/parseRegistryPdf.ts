@@ -177,25 +177,31 @@ function extractActiveMortgagesFromSummary(text: string): MortgageEntry[] {
   const summaryStart = text.indexOf("주요 등기사항 요약");
   if (summaryStart < 0) return [];
   const summaryText = text.slice(summaryStart);
+
   const sectionMatch = summaryText.match(
-    /3\.\s*\(근\)저당권 및 전세권 등\s*\(\s*을구\s*\)([\s\S]*?)(?:\[ 참 고 사 항 \]|출력일시|$)/
+    /3\.\s*\(근\)저당권 및 전세권 등\s*\(\s*을구\s*\)([\s\S]*?)(?:\[\s*참\s*고\s*사\s*항\s*\]|출력일시|$)/
   );
   const section = sectionMatch?.[1] ?? "";
   if (!section || /기록사항\s*없음/.test(section)) return [];
+
+  // 실제 PDF 추출 텍스트 구조:
+  // "1 근저당권설정 2021년2월17일 채권최고액 금96,000,000원 제28853호 근저당권자 농협은행주식회사 대상소유자 한상숙"
+  // 접수번호(제NNN호)가 채권최고액 뒤 또는 근저당권자 뒤 어디든 올 수 있음
   const rowRegex =
-    /(\d{1,3})\s+근저당권설정\s+[\s\S]*?채권최고액\s*(?:금)?\s*([0-9][0-9,]{4,})\s*원\s+근저당권자\s+(.+?)\s+([가-힣A-Za-z0-9·.\-()]+)(?=\s+\d{1,3}\s+근저당권설정|\s*\[ 참 고 사 항 \]|$)/g;
+    /(\d{1,3})\s+근저당권설정\s+\S+\s+채권최고액\s*(?:금)?\s*([0-9][0-9,]{4,})\s*원\s+(?:제\d+호\s+)?근저당권자\s+(.+?)\s+(?:제\d+호\s+)?대상소유자/g;
+
   const results: MortgageEntry[] = [];
   const seen = new Set<string>();
+
   for (const match of section.matchAll(rowRegex)) {
     const originalRank = Number(match[1]);
     const amount = parseWonAmount(match[2]);
     const creditor = cleanSummaryCreditor(match[3]);
-    const targetOwner = match[4]?.replace(/\s+/g, " ").trim();
     if (!originalRank || !amount || !creditor || creditor === "확인 필요") continue;
-    const key = `${originalRank}-${creditor}-${amount}-${targetOwner ?? ""}`;
+    const key = `${originalRank}-${amount}`;
     if (seen.has(key)) continue;
     seen.add(key);
-    results.push({ rank: originalRank, creditor, amount, targetOwner });
+    results.push({ rank: originalRank, creditor, amount });
   }
   return results.sort((a, b) => a.rank - b.rank);
 }
