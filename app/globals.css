@@ -54,7 +54,7 @@ table {
 }
 
 .report-section {
-  break-inside: avoid;
+  break-inside: auto;
 }
 
 .report-table {
@@ -112,7 +112,7 @@ table {
 @media print {
   @page {
     size: A4 landscape;
-    margin: 10mm;
+    margin: 6mm;
   }
 
   html,
@@ -145,7 +145,106 @@ table {
   }
 
   .print-report {
-    font-size: 11px;
+    font-size: 9px !important;
+    line-height: 1.25 !important;
+  }
+
+  .print-report .space-y-6 > :not([hidden]) ~ :not([hidden]),
+  .print-report .space-y-5 > :not([hidden]) ~ :not([hidden]) {
+    margin-top: 6px !important;
+  }
+
+  .print-report section,
+  .print-report details {
+    border-radius: 8px !important;
+    padding: 8px !important;
+    box-shadow: none !important;
+    break-inside: auto !important;
+    page-break-inside: auto !important;
+  }
+
+  .print-report h2 {
+    font-size: 15px !important;
+    line-height: 1.15 !important;
+    margin: 0 !important;
+  }
+
+  .print-report h3 {
+    font-size: 12px !important;
+    line-height: 1.2 !important;
+    margin: 0 0 4px 0 !important;
+  }
+
+  .print-report p,
+  .print-report li,
+  .print-report span,
+  .print-report div {
+    line-height: 1.25 !important;
+  }
+
+  .print-report .grid {
+    gap: 6px !important;
+  }
+
+  .print-report .rounded-3xl,
+  .print-report .rounded-2xl,
+  .print-report .rounded-xl,
+  .print-report .rounded-full {
+    border-radius: 8px !important;
+  }
+
+  .print-report .p-8,
+  .print-report .p-7,
+  .print-report .p-6,
+  .print-report .p-5 {
+    padding: 8px !important;
+  }
+
+  .print-report .px-6,
+  .print-report .px-5,
+  .print-report .px-4,
+  .print-report .px-3 {
+    padding-left: 6px !important;
+    padding-right: 6px !important;
+  }
+
+  .print-report .py-5,
+  .print-report .py-4,
+  .print-report .py-3 {
+    padding-top: 5px !important;
+    padding-bottom: 5px !important;
+  }
+
+  .print-report .mt-6,
+  .print-report .mt-5,
+  .print-report .mt-4,
+  .print-report .mt-3,
+  .print-report .mt-2,
+  .print-report .mt-1\.5,
+  .print-report .mt-1 {
+    margin-top: 4px !important;
+  }
+
+  .print-report .mb-6,
+  .print-report .mb-5,
+  .print-report .mb-4,
+  .print-report .mb-3 {
+    margin-bottom: 4px !important;
+  }
+
+  .print-report .pb-5,
+  .print-report .pb-4 {
+    padding-bottom: 5px !important;
+  }
+
+  .print-report .text-3xl,
+  .print-report .text-2xl {
+    font-size: 16px !important;
+    line-height: 1.15 !important;
+  }
+
+  .print-report .min-h-\[168px\] {
+    min-height: 0 !important;
   }
 
   .print-shell {
@@ -158,8 +257,24 @@ table {
     padding: 0 !important;
   }
 
+  .print-report summary {
+    display: none !important;
+  }
+
+  .print-report details,
+  .print-report details[open] {
+    display: block !important;
+  }
+
   .print-report table {
-    page-break-inside: auto;
+    page-break-inside: auto !important;
+    font-size: 8.5px !important;
+  }
+
+  .print-report th,
+  .print-report td {
+    padding: 3px 4px !important;
+    line-height: 1.2 !important;
   }
 
   .print-report tr {
@@ -167,10 +282,41 @@ table {
     break-inside: avoid;
   }
 
-  .print-report section,
-  .print-report div,
+  .print-report .report-table th:nth-child(1),
+  .print-report .report-table td:nth-child(1) {
+    width: 68px !important;
+  }
+
+  .print-report .report-table th:nth-child(2),
+  .print-report .report-table td:nth-child(2) {
+    width: 120px !important;
+  }
+
+  .print-report .report-table th:nth-child(3),
+  .print-report .report-table td:nth-child(3) {
+    width: 112px !important;
+  }
+
+  .print-report .report-table th:nth-child(4),
+  .print-report .report-table td:nth-child(4) {
+    width: 42px !important;
+  }
+
+  .print-report .report-table th:nth-child(5),
+  .print-report .report-table td:nth-child(5),
+  .print-report .report-table th:nth-child(6),
+  .print-report .report-table td:nth-child(6) {
+    width: 38px !important;
+  }
+
+  .print-report .report-table th:nth-child(7),
+  .print-report .report-table td:nth-child(7) {
+    width: auto !important;
+  }
+
   .report-section {
-    break-inside: avoid;
+    break-inside: auto !important;
+    page-break-inside: auto !important;
   }
 
   * {
