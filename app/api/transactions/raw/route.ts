@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { searchAddressByKakao } from "../../../../src/backend/valuation/addressSearchApi";
 
 function getRecentDealYearMonths(monthCount = 24): string[] {
   const result: string[] = [];
@@ -26,17 +27,30 @@ function normalizeApartmentName(value?: string) {
     .trim() ?? "";
 }
 
+function parseDealDateKey(value: { dealYear: number; dealMonth: number; dealDay: number }) {
+  return value.dealYear * 10000 + value.dealMonth * 100 + value.dealDay;
+}
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const legalDongCode = String(body.legalDongCode ?? "").replace(/[^0-9]/g, "");
+    const lookupType = String(body.lookupType ?? "legalDongCode");
+    const addressQuery = String(body.addressQuery ?? "").trim();
+    let legalDongCode = String(body.legalDongCode ?? "").replace(/[^0-9]/g, "");
+    let resolvedAddress: Awaited<ReturnType<typeof searchAddressByKakao>> | undefined;
+
+    if (lookupType === "jibun" || lookupType === "road") {
+      resolvedAddress = await searchAddressByKakao(addressQuery);
+      legalDongCode = resolvedAddress?.legalDongCode?.replace(/[^0-9]/g, "") ?? "";
+    }
+
     const buildingName = String(body.buildingName ?? "").trim();
     const exclusiveAreaM2 = body.exclusiveAreaM2 ? Number(body.exclusiveAreaM2) : undefined;
     const targetFloor = body.targetFloor ? Number(body.targetFloor) : undefined;
     const limit = Math.min(Math.max(Number(body.limit ?? 10), 1), 30);
 
     if (![5, 10].includes(legalDongCode.length)) {
-      return NextResponse.json({ success: false, message: "법정동코드는 5자리 또는 10자리로 입력하세요." }, { status: 400 });
+      return NextResponse.json({ success: false, message: "법정동코드 조회에 실패했습니다. 법정동코드는 5자리 또는 10자리여야 합니다." }, { status: 400 });
     }
 
     const apiKey = process.env.PUBLIC_DATA_API_KEY;
@@ -74,7 +88,7 @@ export async function POST(req: NextRequest) {
         const floor = Number(pickTag(x, "floor"));
         const buildYear = Number(pickTag(x, "buildYear"));
         const jibun = pickTag(x, "jibun");
-        const dong = pickTag(x, "umdNm") || pickTag(x, "umdNm");
+        const dong = pickTag(x, "umdNm");
         const dealType = pickTag(x, "dealingGbn") || pickTag(x, "dealGbn");
         if (!aptNm || !dealAmount || !dealYear || !dealMonth) continue;
 
@@ -91,6 +105,7 @@ export async function POST(req: NextRequest) {
 
         rows.push({
           dealDate: `${dealYear}.${String(dealMonth).padStart(2, "0")}.${String(dealDay).padStart(2, "0")}`,
+          dealDateKey: parseDealDateKey({ dealYear, dealMonth, dealDay }),
           aptNm,
           dong,
           jibun,
@@ -108,18 +123,15 @@ export async function POST(req: NextRequest) {
       if (rows.length >= limit * 3) break;
     }
 
-    const sorted = rows.sort((a, b) => {
-      if (b.isSameApartment !== a.isSameApartment) return Number(b.isSameApartment) - Number(a.isSameApartment);
-      if (a.areaDifferenceM2 !== undefined && b.areaDifferenceM2 !== undefined && a.areaDifferenceM2 !== b.areaDifferenceM2) return a.areaDifferenceM2 - b.areaDifferenceM2;
-      if (a.floorDifference !== undefined && b.floorDifference !== undefined && a.floorDifference !== b.floorDifference) return a.floorDifference - b.floorDifference;
-      return b.dealDate.localeCompare(a.dealDate);
-    });
+    const sorted = rows.sort((a, b) => b.dealDateKey - a.dealDateKey);
 
     return NextResponse.json({
       success: true,
+      lookupType,
       inputLegalDongCode: legalDongCode,
       apiLawdCd: lawdCd,
-      note: "실거래 API는 5자리 시군구 코드로 조회하고, 단지명/면적/층수는 조회 후 검증용으로 표시합니다.",
+      resolvedAddress,
+      note: "실거래 API는 5자리 시군구 코드로 조회합니다. 주소 입력 시 카카오 주소검색으로 법정동코드를 확인한 뒤 앞 5자리로 조회합니다. 거래일은 최신순입니다.",
       transactions: sorted.slice(0, limit),
     });
   } catch (error) {
