@@ -185,11 +185,6 @@ function cleanSummaryCreditor(value?: string): string {
     .trim() || "확인 필요";
 }
 
-function extractActiveMortgagesFromSummary(text: string): MortgageEntry[] {
-  const summaryStart = text.indexOf("주요 등기사항 요약");
-  if (summaryStart < 0) return [];
-  const summaryText = text.slice(summaryStart);
-
 function extractActiveMortgagesFromSummary(text: string): {
   foundSummary: boolean;
   mortgages: MortgageEntry[];
