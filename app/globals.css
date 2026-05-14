@@ -71,6 +71,44 @@ table {
   vertical-align: middle;
 }
 
+.report-table th:nth-child(1),
+.report-table td:nth-child(1) {
+  width: 92px !important;
+}
+
+.report-table th:nth-child(2),
+.report-table td:nth-child(2) {
+  width: 145px !important;
+}
+
+.report-table th:nth-child(3),
+.report-table td:nth-child(3) {
+  width: 145px !important;
+}
+
+.report-table th:nth-child(4),
+.report-table td:nth-child(4) {
+  width: 86px !important;
+  padding-left: 8px !important;
+  padding-right: 8px !important;
+}
+
+.report-table th:nth-child(5),
+.report-table td:nth-child(5),
+.report-table th:nth-child(6),
+.report-table td:nth-child(6) {
+  width: 58px !important;
+  padding-left: 6px !important;
+  padding-right: 6px !important;
+}
+
+.report-table th:nth-child(7),
+.report-table td:nth-child(7) {
+  width: auto !important;
+  padding-left: 18px !important;
+  padding-right: 18px !important;
+}
+
 @media print {
   @page {
     size: A4 landscape;
@@ -108,6 +146,16 @@ table {
 
   .print-report {
     font-size: 11px;
+  }
+
+  .print-shell {
+    border: 0 !important;
+    box-shadow: none !important;
+    background: transparent !important;
+  }
+
+  .print-content {
+    padding: 0 !important;
   }
 
   .print-report table {
