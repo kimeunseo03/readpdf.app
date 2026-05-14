@@ -45,8 +45,8 @@ export async function searchAddressByKakao(
     const address = doc.address;
     const roadAddress = doc.road_address;
 
-    // address(지번) 없고 road_address만 있는 경우 처리
-    const legalDongCode = address?.b_code ?? roadAddress?.zone_no ?? undefined;
+    // b_code는 법정동코드, zone_no는 우편번호라 법정동코드로 사용하지 않음.
+    const legalDongCode = address?.b_code ?? undefined;
 
     console.log("kakao_address_result", {
       rawAddress,
@@ -54,6 +54,8 @@ export async function searchAddressByKakao(
       sido: address?.region_1depth_name,
       sigungu: address?.region_2depth_name,
       eupmyeondong: address?.region_3depth_name,
+      roadAddress: roadAddress?.address_name,
+      zoneNo: roadAddress?.zone_no,
     });
 
     return {
