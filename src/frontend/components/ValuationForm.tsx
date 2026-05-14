@@ -11,6 +11,7 @@ interface MortgageItem {
 interface ValuationFormProps {
   initialValue: {
     addressRaw?: string;
+    roadAddress?: string;  // ✅ 도로명 주소 (지오코딩용)
     buildingName?: string;
     exclusiveAreaM2?: number;
     floor?: number;
@@ -104,6 +105,7 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           addressRaw: initialValue.addressRaw,
+          roadAddress: initialValue.roadAddress,  // ✅ 도로명 주소 전달
           buildingName: initialValue.buildingName,
           exclusiveAreaM2: initialValue.exclusiveAreaM2,
           floor: initialValue.floor,
