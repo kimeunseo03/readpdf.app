@@ -19,7 +19,7 @@ type RawTransaction = {
   isSameApartment?: boolean;
   areaDifferenceM2?: number;
   floorDifference?: number;
-  matchLabel?: string;
+  matchType?: "same_apartment" | "same_dong_fallback";
 };
 
 type ResolvedAddress = {
@@ -207,15 +207,15 @@ export function RawTransactionLookup({ defaultBuildingName, defaultArea, default
 
           <div className="mt-4 overflow-hidden rounded-2xl border border-slate-200">
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[1180px] text-sm">
+              <table className="w-full min-w-[980px] text-sm">
                 <thead>
                   <tr className="border-b border-slate-200 bg-slate-50">
-                    <th className="px-3 py-3 text-left text-xs font-bold text-slate-500">조건</th>
                     <th className="px-3 py-3 text-left text-xs font-bold text-slate-500">거래일</th>
                     <th className="px-3 py-3 text-left text-xs font-bold text-slate-500">아파트명</th>
                     <th className="px-3 py-3 text-right text-xs font-bold text-slate-500">거래금액</th>
                     <th className="px-3 py-3 text-right text-xs font-bold text-slate-500">면적</th>
                     <th className="px-3 py-3 text-right text-xs font-bold text-slate-500">층</th>
+                    <th className="px-3 py-3 text-center text-xs font-bold text-slate-500">구분</th>
                     <th className="px-3 py-3 text-right text-xs font-bold text-slate-500">면적차</th>
                     <th className="px-3 py-3 text-right text-xs font-bold text-slate-500">층수차</th>
                   </tr>
@@ -223,12 +223,18 @@ export function RawTransactionLookup({ defaultBuildingName, defaultArea, default
                 <tbody className="divide-y divide-slate-100">
                   {sortedTransactions.map((tx, idx) => (
                     <tr key={`${tx.dealDate}-${tx.aptNm}-${tx.dealAmount}-${idx}`}>
-                      <td className="px-3 py-3 text-xs text-blue-700 font-semibold">{tx.matchLabel ?? "-"}</td>
                       <td className="px-3 py-3 text-xs text-slate-600">{tx.dealDate}</td>
                       <td className="px-3 py-3 font-semibold text-slate-900">{tx.aptNm}</td>
                       <td className="px-3 py-3 text-right font-bold text-slate-900 whitespace-pre-line">{formatKoreanPrice(tx.dealAmount * 10000)}</td>
                       <td className="px-3 py-3 text-right">{formatNumber(tx.area, "㎡")}</td>
                       <td className="px-3 py-3 text-right">{formatNumber(tx.floor, "층")}</td>
+                      <td className="px-3 py-3 text-center">
+                        {tx.matchType === "same_dong_fallback" ? (
+                          <span className="rounded-full bg-amber-100 px-2 py-1 text-xs font-bold text-amber-700">유사단지</span>
+                        ) : (
+                          <span className="rounded-full bg-blue-100 px-2 py-1 text-xs font-bold text-blue-700">동일단지</span>
+                        )}
+                      </td>
                       <td className="px-3 py-3 text-right">{tx.areaDifferenceM2 !== undefined ? `${tx.areaDifferenceM2.toFixed(2)}㎡` : "-"}</td>
                       <td className="px-3 py-3 text-right">{tx.floorDifference !== undefined ? `${tx.floorDifference}층` : "-"}</td>
                     </tr>
