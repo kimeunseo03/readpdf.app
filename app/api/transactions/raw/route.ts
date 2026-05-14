@@ -31,6 +31,30 @@ function parseDealDateKey(value: { dealYear: number; dealMonth: number; dealDay:
   return value.dealYear * 10000 + value.dealMonth * 100 + value.dealDay;
 }
 
+function getMatchTier(params: {
+  isSameDong: boolean;
+  isSameApartment: boolean;
+  hasBuildingName: boolean;
+  hasArea: boolean;
+  hasFloor: boolean;
+  areaDifferenceM2?: number;
+  floorDifference?: number;
+}) {
+  const { isSameDong, isSameApartment, hasBuildingName, hasArea, hasFloor, areaDifferenceM2, floorDifference } = params;
+  const sameArea = hasArea && areaDifferenceM2 !== undefined && areaDifferenceM2 <= 0.01;
+  const sameFloor = hasFloor && floorDifference !== undefined && floorDifference === 0;
+  const areaWithin3 = hasArea && areaDifferenceM2 !== undefined && areaDifferenceM2 <= 3;
+  const floorWithin5 = hasFloor && floorDifference !== undefined && floorDifference <= 5;
+
+  if (isSameDong && hasBuildingName && isSameApartment && areaWithin3 && floorWithin5) return 4;
+  if (isSameDong && hasBuildingName && isSameApartment && areaWithin3) return 3;
+  if (isSameDong && hasBuildingName && isSameApartment && sameFloor) return 2;
+  if (isSameDong && hasBuildingName && isSameApartment && sameArea) return 2;
+  if (isSameDong && hasBuildingName && isSameApartment) return 1;
+  if (isSameDong && sameArea && sameFloor) return 5;
+  return 999;
+}
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
@@ -47,6 +71,9 @@ export async function POST(req: NextRequest) {
     const buildingName = String(body.buildingName ?? "").trim();
     const exclusiveAreaM2 = body.exclusiveAreaM2 ? Number(body.exclusiveAreaM2) : undefined;
     const targetFloor = body.targetFloor ? Number(body.targetFloor) : undefined;
+    const hasBuildingName = Boolean(buildingName);
+    const hasArea = exclusiveAreaM2 !== undefined;
+    const hasFloor = targetFloor !== undefined;
     const limit = Math.min(Math.max(Number(body.limit ?? 10), 1), 30);
 
     if (![5, 10].includes(legalDongCode.length)) {
@@ -101,6 +128,9 @@ export async function POST(req: NextRequest) {
         const isSameDong = targetDong ? dong === targetDong : true;
         const areaDifferenceM2 = exclusiveAreaM2 && area ? Math.abs(area - exclusiveAreaM2) : undefined;
         const floorDifference = targetFloor && floor ? Math.abs(floor - targetFloor) : undefined;
+        const matchTier = getMatchTier({ isSameDong, isSameApartment, hasBuildingName, hasArea, hasFloor, areaDifferenceM2, floorDifference });
+        if (matchTier === 999) continue;
+
         const key = [dealAmount, dealYear, dealMonth, dealDay, area, floor, aptNm, jibun].join("|");
         if (seen.has(key)) continue;
         seen.add(key);
@@ -120,22 +150,15 @@ export async function POST(req: NextRequest) {
           isSameDong,
           areaDifferenceM2,
           floorDifference,
+          matchTier,
         });
       }
     }
 
     const ranked = rows.sort((a, b) => {
-      const aSameDongApartment = a.isSameDong && a.isSameApartment;
-      const bSameDongApartment = b.isSameDong && b.isSameApartment;
-      if (Number(bSameDongApartment) !== Number(aSameDongApartment)) return Number(bSameDongApartment) - Number(aSameDongApartment);
-      if (Number(b.isSameDong) !== Number(a.isSameDong)) return Number(b.isSameDong) - Number(a.isSameDong);
-      if (Number(b.isSameApartment) !== Number(a.isSameApartment)) return Number(b.isSameApartment) - Number(a.isSameApartment);
+      if (a.matchTier !== b.matchTier) return a.matchTier - b.matchTier;
       if (a.areaDifferenceM2 !== undefined && b.areaDifferenceM2 !== undefined && a.areaDifferenceM2 !== b.areaDifferenceM2) return a.areaDifferenceM2 - b.areaDifferenceM2;
-      if (a.areaDifferenceM2 === undefined && b.areaDifferenceM2 !== undefined) return 1;
-      if (a.areaDifferenceM2 !== undefined && b.areaDifferenceM2 === undefined) return -1;
       if (a.floorDifference !== undefined && b.floorDifference !== undefined && a.floorDifference !== b.floorDifference) return a.floorDifference - b.floorDifference;
-      if (a.floorDifference === undefined && b.floorDifference !== undefined) return 1;
-      if (a.floorDifference !== undefined && b.floorDifference === undefined) return -1;
       return b.dealDateKey - a.dealDateKey;
     });
 
@@ -148,7 +171,7 @@ export async function POST(req: NextRequest) {
       apiLawdCd: lawdCd,
       targetDong,
       resolvedAddress,
-      note: "실거래 API는 5자리 시군구 코드로 조회합니다. 후보는 같은 동+같은 아파트명을 1순위로 하고, 선택 입력값이 있으면 면적차/층수차 순으로 10건을 뽑은 뒤 거래일 최신순으로 표시합니다.",
+      note: "실거래 API는 5자리 시군구 코드로 조회합니다. 같은 동+같은 아파트명 등 지정 조건에 맞는 후보만 추출하고, 선택된 거래는 최신순으로 표시합니다.",
       transactions: selected,
     });
   } catch (error) {
