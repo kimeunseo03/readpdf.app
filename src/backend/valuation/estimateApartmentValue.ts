@@ -245,8 +245,7 @@ export function parseRegistryText(params: {
 }): RegistryParseResult {
   const compactText = normalizeText(params.text);
   const evidence: Evidence[] = [];
-  const ocrDecision = detectOcrNeed(compactText, params.pageCount);
-
+  const ocrDecision = { ocrRequired: false, confidence: 0.8, reasons: [] as string[] };
   const documentTypeConfidence = /(등기사항전부증명서|등기부등본)/.test(compactText) ? 0.9 : 0.45;
   const registryType = /집합건물/.test(compactText) ? "collective_building" : "unknown";
 
@@ -375,10 +374,9 @@ export function parseRegistryText(params: {
     rightsRisk: rightsRisk.riskFlags.length ? 0.74 : 0.65,
     overall: 0
   };
-  confidence.overall = Number(((confidence.documentType + confidence.address + confidence.area + confidence.rightsRisk + ocrDecision.confidence) / 5).toFixed(2));
+  confidence.overall = Number(((confidence.documentType + confidence.address + confidence.area + confidence.rightsRisk) / 4).toFixed(2));
 
   const reasons = [
-    ...ocrDecision.reasons,
     ...(documentTypeConfidence < 0.75 ? ["등본 문서 여부 신뢰도가 낮습니다."] : []),
     ...(missingRequiredFields.length ? ["가치평가 입력 필수 필드가 누락되었습니다."] : []),
     ...(rightsRisk.riskFlags.length ? ["권리관계 리스크 키워드가 탐지되었습니다. 법률 판단이 아닌 내부 검토 플래그입니다."] : [])
@@ -418,7 +416,7 @@ export function parseRegistryText(params: {
     },
     sourceEvidence: evidence,
     meta: {
-      ocrRequired: ocrDecision.ocrRequired,
+      ocrRequired: false,
       maskedTextPreview: maskSensitiveText(compactText).slice(0, 1200),
       warnings: [
         "원본 PDF는 현재 구현에서 저장하지 않습니다.",
