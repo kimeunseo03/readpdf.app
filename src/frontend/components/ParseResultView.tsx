@@ -2,6 +2,7 @@
 import { useState } from "react";
 import type { ParseApiResponse } from "@frontend/lib/api";
 import { ValuationForm } from "./ValuationForm";
+import { RawTransactionLookup } from "./RawTransactionLookup";
 
 type EditableProperty = {
   addressRaw?: string;
@@ -32,44 +33,20 @@ function FieldRow({ label, value }: { label: string; value?: string | number | b
     <div className="grid grid-cols-[88px_1fr] gap-2 border-b border-slate-100 py-2.5 text-sm last:border-b-0">
       <dt className="font-medium text-slate-400 text-xs pt-0.5">{label}</dt>
       <dd className="break-words font-semibold text-slate-800 text-sm leading-snug">
-        {value === undefined || value === null || value === "" ? (
-          <span className="text-slate-300">-</span>
-        ) : (
-          String(value)
-        )}
+        {value === undefined || value === null || value === "" ? <span className="text-slate-300">-</span> : String(value)}
       </dd>
     </div>
   );
 }
 
-function EditableField({
-  label, value, onChange, type = "text", textarea = false
-}: {
-  label: string;
-  value?: string | number;
-  onChange: (value: string) => void;
-  type?: "text" | "number";
-  textarea?: boolean;
-}) {
+function EditableField({ label, value, onChange, type = "text", textarea = false }: { label: string; value?: string | number; onChange: (value: string) => void; type?: "text" | "number"; textarea?: boolean; }) {
   return (
     <label className="block">
-      <span className="mb-1.5 block text-xs font-semibold text-slate-500 tracking-wide uppercase">
-        {label}
-      </span>
+      <span className="mb-1.5 block text-xs font-semibold text-slate-500 tracking-wide uppercase">{label}</span>
       {textarea ? (
-        <textarea
-          value={value ?? ""}
-          onChange={(e) => onChange(e.target.value)}
-          rows={3}
-          className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-medium text-slate-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-4 focus:ring-blue-100 resize-none"
-        />
+        <textarea value={value ?? ""} onChange={(e) => onChange(e.target.value)} rows={3} className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-medium text-slate-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-4 focus:ring-blue-100 resize-none" />
       ) : (
-        <input
-          type={type}
-          value={value ?? ""}
-          onChange={(e) => onChange(e.target.value)}
-          className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-medium text-slate-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-4 focus:ring-blue-100"
-        />
+        <input type={type} value={value ?? ""} onChange={(e) => onChange(e.target.value)} className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-medium text-slate-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-4 focus:ring-blue-100" />
       )}
     </label>
   );
@@ -100,21 +77,9 @@ export function ParseResultView({ response }: { response: ParseApiResponse }) {
   function updateDraft<K extends keyof EditableProperty>(key: K, value: EditableProperty[K]) {
     setDraftProperty((prev) => ({ ...prev, [key]: value }));
   }
-
-  function startEdit() {
-    setDraftProperty(editableProperty);
-    setIsEditing(true);
-  }
-
-  function cancelEdit() {
-    setDraftProperty(editableProperty);
-    setIsEditing(false);
-  }
-
-  function applyEdit() {
-    setEditableProperty(draftProperty);
-    setIsEditing(false);
-  }
+  function startEdit() { setDraftProperty(editableProperty); setIsEditing(true); }
+  function cancelEdit() { setDraftProperty(editableProperty); setIsEditing(false); }
+  function applyEdit() { setEditableProperty(draftProperty); setIsEditing(false); }
 
   return (
     <div className="space-y-5">
@@ -127,29 +92,11 @@ export function ParseResultView({ response }: { response: ParseApiResponse }) {
           <div className="flex items-center gap-2">
             {isEditing ? (
               <>
-                <button
-                  type="button"
-                  onClick={cancelEdit}
-                  className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-600 shadow-sm hover:bg-slate-50 transition-colors"
-                >
-                  취소
-                </button>
-                <button
-                  type="button"
-                  onClick={applyEdit}
-                  className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 transition-colors"
-                >
-                  적용
-                </button>
+                <button type="button" onClick={cancelEdit} className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-600 shadow-sm hover:bg-slate-50 transition-colors">취소</button>
+                <button type="button" onClick={applyEdit} className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 transition-colors">적용</button>
               </>
             ) : (
-              <button
-                type="button"
-                onClick={startEdit}
-                className="rounded-xl border border-blue-200 bg-blue-50 px-4 py-2 text-sm font-semibold text-blue-700 shadow-sm hover:bg-blue-100 transition-colors"
-              >
-                추출값 수정
-              </button>
+              <button type="button" onClick={startEdit} className="rounded-xl border border-blue-200 bg-blue-50 px-4 py-2 text-sm font-semibold text-blue-700 shadow-sm hover:bg-blue-100 transition-colors">추출값 수정</button>
             )}
           </div>
         </div>
@@ -173,9 +120,7 @@ export function ParseResultView({ response }: { response: ParseApiResponse }) {
                   <EditableField label="층수" type="number" value={draftProperty.floor} onChange={(v) => updateDraft("floor", normalizeNumberInput(v))} />
                 </div>
                 <EditableField label="전유면적㎡" type="number" value={draftProperty.exclusiveAreaM2} onChange={(v) => updateDraft("exclusiveAreaM2", normalizeNumberInput(v))} />
-                <p className="rounded-xl bg-blue-50 border border-blue-100 p-3 text-xs leading-5 text-blue-700">
-                  수정값은 원본 PDF를 변경하지 않으며, 가치평가 실행과 보고서 산출에만 반영됩니다.
-                </p>
+                <p className="rounded-xl bg-blue-50 border border-blue-100 p-3 text-xs leading-5 text-blue-700">수정값은 원본 PDF를 변경하지 않으며, 가치평가 실행과 보고서 산출에만 반영됩니다.</p>
               </div>
             ) : (
               <dl className="divide-y divide-slate-100">
@@ -194,19 +139,12 @@ export function ParseResultView({ response }: { response: ParseApiResponse }) {
           </div>
 
           <div className="print-content p-6">
-            <ValuationForm
-              initialValue={{
-                addressRaw: editableProperty.addressRaw,
-                roadAddress: editableProperty.roadAddress,
-                buildingName: editableProperty.buildingName,
-                exclusiveAreaM2: editableProperty.exclusiveAreaM2,
-                floor: editableProperty.floor,
-                rightsRisk,
-              }}
-            />
+            <ValuationForm initialValue={{ addressRaw: editableProperty.addressRaw, roadAddress: editableProperty.roadAddress, buildingName: editableProperty.buildingName, exclusiveAreaM2: editableProperty.exclusiveAreaM2, floor: editableProperty.floor, rightsRisk }} />
           </div>
         </div>
       </section>
+
+      <RawTransactionLookup defaultBuildingName={editableProperty.buildingName} defaultArea={editableProperty.exclusiveAreaM2} defaultFloor={editableProperty.floor} />
 
       {review.manualReviewRequired && (
         <section className="no-print rounded-2xl border border-amber-200 bg-amber-50/70 px-6 py-5">
@@ -215,21 +153,8 @@ export function ParseResultView({ response }: { response: ParseApiResponse }) {
             <div>
               <p className="text-xs font-bold tracking-widest text-amber-600 uppercase">Manual Review</p>
               <h3 className="mt-0.5 font-bold text-amber-900">수동 검토 필요</h3>
-              {reviewReasons.length > 0 && (
-                <ul className="mt-3 space-y-1 text-sm text-amber-800">
-                  {reviewReasons.map((r) => (
-                    <li key={r} className="flex items-start gap-2">
-                      <span className="mt-1.5 w-1 h-1 rounded-full bg-amber-400 shrink-0" />
-                      {r}
-                    </li>
-                  ))}
-                </ul>
-              )}
-              {missingRequiredFields.length > 0 && (
-                <p className="mt-2 text-sm font-semibold text-amber-900">
-                  누락 필드: <span className="font-normal">{missingRequiredFields.join(", ")}</span>
-                </p>
-              )}
+              {reviewReasons.length > 0 && <ul className="mt-3 space-y-1 text-sm text-amber-800">{reviewReasons.map((r) => <li key={r} className="flex items-start gap-2"><span className="mt-1.5 w-1 h-1 rounded-full bg-amber-400 shrink-0" />{r}</li>)}</ul>}
+              {missingRequiredFields.length > 0 && <p className="mt-2 text-sm font-semibold text-amber-900">누락 필드: <span className="font-normal">{missingRequiredFields.join(", ")}</span></p>}
             </div>
           </div>
         </section>
