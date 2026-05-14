@@ -41,20 +41,32 @@ function extractPrimaryAddressSegment(text: string): string | undefined {
   return fallback?.[1]?.replace(/\s+/g, " ").trim();
 }
 
-// ✅ 1번 수정: 도로명 주소 추출 함수 추가
+// ✅ 1번 수정: 도로명 주소 추출 함수 (층수·면적 오염 방지)
 function extractRoadAddress(text: string): string | undefined {
-  // [도로명주소] 태그 다음에 오는 주소 추출
-  const roadMatch = text.match(
-    /\[도로명주소\]\s*((?:서울특별시|부산광역시|대구광역시|인천광역시|광주광역시|대전광역시|울산광역시|세종특별자치시|경기도|강원특별자치도|충청북도|충청남도|전북특별자치도|전라남도|경상북도|경상남도|제주특별자치도)[가-힣\s\d\-]+(?:로|길)\s*\d+[가-힣\d\-\s,]*)/
+  // 등기부 도로명주소 패턴:
+  //   "마포대로 2층 315.5824㎡ ... 195" → 층수/면적을 건너뛰고 번지(정수) 추출
+  //   "올림픽로 262.62㎡ 435"           → 소수점 숫자(면적) 건너뛰고 번지 추출
+  //   "송파대로 345"                     → 바로 번지
+  const SIDO_SRC =
+    "서울특별시|부산광역시|대구광역시|인천광역시|광주광역시|대전광역시|울산광역시|세종특별자치시|경기도|강원특별자치도|충청북도|충청남도|전북특별자치도|전라남도|경상북도|경상남도|제주특별자치도";
+
+  // [도로명주소] 태그 이후 300자 이내에서 탐색
+  const tagMatch = text.match(/\[도로명주소\]\s*(.{0,300})/);
+  const searchText = tagMatch ? tagMatch[1] : text;
+
+  // 로/길 뒤에 면적(소수점)/층수 토큰이 오더라도 건너뛰고 정수 번지 추출
+  const pattern = new RegExp(
+    `((${SIDO_SRC})[가-힣\\s]+(로|길))\\s*` + // 시도+로/길
+    `(?:[\\d.]+\\s*㎡\\s*|\\d+층\\s*)*` +     // 면적/층수 건너뜀 (0회 이상)
+    `(\\d+)`                                    // 실제 번지 (정수)
   );
-  if (roadMatch?.[1]) {
-    return roadMatch[1].replace(/\s+/g, " ").trim();
+
+  const m = searchText.match(pattern);
+  if (m) {
+    return `${m[1]} ${m[4]}`.replace(/\s+/g, " ").trim();
   }
-  // 도로명주소 태그 없이 본문에서 추출 시도
-  const inlineMatch = text.match(
-    /((?:서울특별시|부산광역시|대구광역시|인천광역시|광주광역시|대전광역시|울산광역시|세종특별자치시|경기도|강원특별자치도|충청북도|충청남도|전북특별자치도|전라남도|경상북도|경상남도|제주특별자치도)[가-힣\s]+(?:시|군|구)[가-힣\s]+(?:로|길)\s*\d+[가-힣\d\-\s]*)/
-  );
-  return inlineMatch?.[1]?.replace(/\s+/g, " ").trim();
+
+  return undefined;
 }
 
 function parseAdministrativeArea(address?: string): Pick<RegistryParseResult["property"], "sido" | "sigungu" | "eupmyeondong"> {
