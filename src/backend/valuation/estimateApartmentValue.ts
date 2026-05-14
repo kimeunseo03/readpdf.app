@@ -2,7 +2,7 @@ import { normalizeAddress } from "./normalizeAddress";
 import { fetchPublicTransactions } from "./publicTransactionApi";
 import { extractRegion } from "./extractRegion";
 import { findLegalDongCode } from "./legalDongCode";
-import type { ValuationInput, ValuationResult } from "./types";
+import type { MortgageItem, ValuationInput, ValuationResult } from "./types";
 
 function average(numbers: number[]) {
   if (!numbers.length) return 0;
@@ -117,7 +117,7 @@ export async function estimateApartmentValue(input: ValuationInput): Promise<Val
   const upperReferencePrice = filteredPrices.length ? Math.max(...filteredPrices) : undefined;
 
   const extractedMortgageCount = input.rightsRisk?.mortgages?.length ?? 0;
-  const mortgages = [];
+  const mortgages: MortgageItem[] = [];
   const seniorMortgageAmount = 0;
   const tenantDepositAmount = input.tenantDepositAmount ?? 0;
   const tenantMonthlyRent = input.tenantMonthlyRent ?? 0;
