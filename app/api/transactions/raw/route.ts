@@ -38,6 +38,15 @@ function getDaysAgo(dealYear: number, dealMonth: number, dealDay: number) {
   return Math.max(0, Math.floor(diff / (1000 * 60 * 60 * 24)));
 }
 
+function isApartmentNameMatch(apiName: string, targetName: string) {
+  const normalizedApiName = normalizeApartmentName(apiName);
+  const normalizedTargetName = normalizeApartmentName(targetName);
+  return Boolean(
+    normalizedTargetName &&
+    (normalizedApiName.includes(normalizedTargetName) || normalizedTargetName.includes(normalizedApiName))
+  );
+}
+
 function getMatchTier(params: {
   isSameDong: boolean;
   isSameApartment: boolean;
@@ -58,80 +67,32 @@ function getMatchTier(params: {
   const areaWithin5 = hasArea && areaDifferenceM2 !== undefined && areaDifferenceM2 <= 5;
   const floorWithin3 = hasFloor && floorDifference !== undefined && floorDifference <= 3;
 
-  if (hasArea && hasFloor) {
-    if (inOneMonth && sameArea && sameFloor) return 1;
-    if (inThreeMonths && sameArea && sameFloor) return 2;
-    if (inOneMonth && sameArea && floorWithin3) return 3;
-    if (inThreeMonths && sameArea && floorWithin3) return 4;
-    if (inOneMonth && areaWithin3 && sameFloor) return 5;
-    if (inThreeMonths && areaWithin3 && sameFloor) return 6;
-    if (inOneMonth && areaWithin3 && floorWithin3) return 7;
-    if (inThreeMonths && areaWithin5 && sameFloor) return 8;
-    if (inOneMonth && areaWithin5 && floorWithin3) return 9;
-    if (inThreeMonths && areaWithin5 && floorWithin3) return 10;
-    return 999;
-  }
-
-  if (hasArea) {
-    if (inOneMonth && sameArea) return 1;
-    if (inThreeMonths && sameArea) return 2;
-    if (inOneMonth && areaWithin3) return 3;
-    if (inThreeMonths && areaWithin3) return 4;
-    if (inOneMonth && areaWithin5) return 5;
-    if (inThreeMonths && areaWithin5) return 6;
-    return 999;
-  }
-
-  if (hasFloor) {
-    if (inOneMonth && sameFloor) return 1;
-    if (inThreeMonths && sameFloor) return 2;
-    if (inOneMonth && floorWithin3) return 3;
-    if (inThreeMonths && floorWithin3) return 4;
-    return 999;
-  }
-
+  // 기본 필수 우선순위: 최근 1개월/3개월 같은 동 + 같은 아파트.
   if (inOneMonth) return 1;
   if (inThreeMonths) return 2;
-  return 999;
-}
 
-function getMatchLabel(tier: number, hasArea: boolean, hasFloor: boolean) {
+  // 아래 조건은 향후 조회 범위를 늘렸을 때 사용하는 세부 보조 순위.
   if (hasArea && hasFloor) {
-    const labels: Record<number, string> = {
-      1: "최근 한달 · 같은 동·같은 아파트·같은 면적·같은 층",
-      2: "최근 3개월 · 같은 동·같은 아파트·같은 면적·같은 층",
-      3: "최근 한달 · 같은 동·같은 아파트·같은 면적·층수 ±3층",
-      4: "최근 3개월 · 같은 동·같은 아파트·같은 면적·층수 ±3층",
-      5: "최근 한달 · 같은 동·같은 아파트·면적 ±3㎡·같은 층",
-      6: "최근 3개월 · 같은 동·같은 아파트·면적 ±3㎡·같은 층",
-      7: "최근 한달 · 같은 동·같은 아파트·면적 ±3㎡·층수 ±3층",
-      8: "최근 3개월 · 같은 동·같은 아파트·면적 ±5㎡·같은 층",
-      9: "최근 한달 · 같은 동·같은 아파트·면적 ±5㎡·층수 ±3층",
-      10: "최근 3개월 · 같은 동·같은 아파트·면적 ±5㎡·층수 ±3층",
-    };
-    return labels[tier] ?? "조건 불일치";
+    if (sameArea && sameFloor) return 3;
+    if (sameArea && floorWithin3) return 4;
+    if (areaWithin3 && sameFloor) return 5;
+    if (areaWithin3 && floorWithin3) return 6;
+    if (areaWithin5 && sameFloor) return 7;
+    if (areaWithin5 && floorWithin3) return 8;
   }
+
   if (hasArea) {
-    const labels: Record<number, string> = {
-      1: "최근 한달 · 같은 동·같은 아파트·같은 면적",
-      2: "최근 3개월 · 같은 동·같은 아파트·같은 면적",
-      3: "최근 한달 · 같은 동·같은 아파트·면적 ±3㎡",
-      4: "최근 3개월 · 같은 동·같은 아파트·면적 ±3㎡",
-      5: "최근 한달 · 같은 동·같은 아파트·면적 ±5㎡",
-      6: "최근 3개월 · 같은 동·같은 아파트·면적 ±5㎡",
-    };
-    return labels[tier] ?? "조건 불일치";
+    if (sameArea) return 3;
+    if (areaWithin3) return 4;
+    if (areaWithin5) return 5;
   }
+
   if (hasFloor) {
-    const labels: Record<number, string> = {
-      1: "최근 한달 · 같은 동·같은 아파트·같은 층",
-      2: "최근 3개월 · 같은 동·같은 아파트·같은 층",
-      3: "최근 한달 · 같은 동·같은 아파트·층수 ±3층",
-      4: "최근 3개월 · 같은 동·같은 아파트·층수 ±3층",
-    };
-    return labels[tier] ?? "조건 불일치";
+    if (sameFloor) return 3;
+    if (floorWithin3) return 4;
   }
-  return tier === 1 ? "최근 한달 · 같은 동·같은 아파트" : "최근 3개월 · 같은 동·같은 아파트";
+
+  return 999;
 }
 
 export async function POST(req: NextRequest) {
@@ -155,7 +116,7 @@ export async function POST(req: NextRequest) {
     const limit = Math.min(Math.max(Number(body.limit ?? 10), 1), 30);
 
     if (![5, 10].includes(legalDongCode.length)) {
-      return NextResponse.json({ success: false, message: "법정동코드 조회에 실패했습니다. 법정동코드는 5자리 또는 10자리여야 합니다." }, { status: 400 });
+      return NextResponse.json({ success: false, message: "법정동코드를 확인하지 못했습니다. 주소를 더 구체적으로 입력하거나 5자리/10자리 법정동코드로 조회하세요." }, { status: 400 });
     }
     if (!buildingName) {
       return NextResponse.json({ success: false, message: "같은 아파트명 기준 조회를 위해 단지명을 입력하세요." }, { status: 400 });
@@ -168,7 +129,6 @@ export async function POST(req: NextRequest) {
 
     const lawdCd = legalDongCode.slice(0, 5);
     const targetDong = resolvedAddress?.eupmyeondong;
-    const normalizedTargetName = normalizeApartmentName(buildingName);
     const rows: any[] = [];
     const seen = new Set<string>();
 
@@ -201,11 +161,7 @@ export async function POST(req: NextRequest) {
         const dealType = pickTag(x, "dealingGbn") || pickTag(x, "dealGbn");
         if (!aptNm || !dealAmount || !dealYear || !dealMonth) continue;
 
-        const normalizedApiName = normalizeApartmentName(aptNm);
-        const isSameApartment = Boolean(
-          normalizedTargetName &&
-          (normalizedApiName.includes(normalizedTargetName) || normalizedTargetName.includes(normalizedApiName))
-        );
+        const isSameApartment = isApartmentNameMatch(aptNm, buildingName);
         const isSameDong = targetDong ? dong === targetDong : true;
         const areaDifferenceM2 = exclusiveAreaM2 && area ? Math.abs(area - exclusiveAreaM2) : undefined;
         const floorDifference = targetFloor && floor ? Math.abs(floor - targetFloor) : undefined;
@@ -234,15 +190,12 @@ export async function POST(req: NextRequest) {
           floorDifference,
           daysAgo,
           matchTier,
-          matchLabel: getMatchLabel(matchTier, hasArea, hasFloor),
         });
       }
     }
 
     const ranked = rows.sort((a, b) => {
       if (a.matchTier !== b.matchTier) return a.matchTier - b.matchTier;
-      if (a.areaDifferenceM2 !== undefined && b.areaDifferenceM2 !== undefined && a.areaDifferenceM2 !== b.areaDifferenceM2) return a.areaDifferenceM2 - b.areaDifferenceM2;
-      if (a.floorDifference !== undefined && b.floorDifference !== undefined && a.floorDifference !== b.floorDifference) return a.floorDifference - b.floorDifference;
       return b.dealDateKey - a.dealDateKey;
     });
 
@@ -253,7 +206,7 @@ export async function POST(req: NextRequest) {
       apiLawdCd: lawdCd,
       targetDong,
       resolvedAddress,
-      note: "최근 1개월/3개월 기준으로 같은 동·같은 아파트 거래만 단계적으로 추출합니다. 화면에서 최신순·면적순·층수순 정렬을 전환할 수 있습니다.",
+      note: "최근 1개월 같은 동·같은 아파트를 우선하고, 이후 최근 3개월 같은 동·같은 아파트까지 확장합니다. 다른 아파트명 거래는 제외합니다.",
       transactions: ranked.slice(0, limit),
     });
   } catch (error) {
