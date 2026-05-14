@@ -2,6 +2,8 @@
 import { useState } from "react";
 import { formatKoreanPrice } from "../../backend/valuation/formatKoreanPrice";
 
+type LookupType = "legalDongCode" | "jibun" | "road";
+
 type RawTransaction = {
   dealDate: string;
   aptNm: string;
@@ -17,6 +19,24 @@ type RawTransaction = {
   floorDifference?: number;
 };
 
+type ResolvedAddress = {
+  sido?: string;
+  sigungu?: string;
+  eupmyeondong?: string;
+  jibunAddress?: string;
+  roadAddress?: string;
+  legalDongCode?: string;
+};
+
+type LookupResult = {
+  apiLawdCd: string;
+  inputLegalDongCode: string;
+  lookupType?: LookupType;
+  note: string;
+  resolvedAddress?: ResolvedAddress;
+  transactions: RawTransaction[];
+};
+
 type Props = {
   defaultBuildingName?: string;
   defaultArea?: number;
@@ -29,14 +49,16 @@ function formatNumber(value?: number, suffix = "") {
 }
 
 export function RawTransactionLookup({ defaultBuildingName, defaultArea, defaultFloor }: Props) {
+  const [lookupType, setLookupType] = useState<LookupType>("legalDongCode");
   const [legalDongCode, setLegalDongCode] = useState("");
+  const [addressQuery, setAddressQuery] = useState("");
   const [buildingName, setBuildingName] = useState(defaultBuildingName ?? "");
   const [exclusiveAreaM2, setExclusiveAreaM2] = useState(defaultArea ? String(defaultArea) : "");
   const [targetFloor, setTargetFloor] = useState(defaultFloor ? String(defaultFloor) : "");
   const [limit, setLimit] = useState("10");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [result, setResult] = useState<{ apiLawdCd: string; inputLegalDongCode: string; note: string; transactions: RawTransaction[] } | null>(null);
+  const [result, setResult] = useState<LookupResult | null>(null);
 
   async function lookup() {
     setLoading(true);
@@ -47,7 +69,9 @@ export function RawTransactionLookup({ defaultBuildingName, defaultArea, default
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          legalDongCode,
+          lookupType,
+          legalDongCode: lookupType === "legalDongCode" ? legalDongCode : undefined,
+          addressQuery: lookupType === "legalDongCode" ? undefined : addressQuery.trim(),
           buildingName: buildingName.trim() || undefined,
           exclusiveAreaM2: exclusiveAreaM2 ? Number(exclusiveAreaM2) : undefined,
           targetFloor: targetFloor ? Number(targetFloor) : undefined,
@@ -64,21 +88,51 @@ export function RawTransactionLookup({ defaultBuildingName, defaultArea, default
     }
   }
 
+  const isCodeLookup = lookupType === "legalDongCode";
+
   return (
     <section className="no-print rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
       <div className="mb-5 flex items-start justify-between gap-4">
         <div>
           <p className="text-[11px] font-bold tracking-widest text-blue-500 uppercase">Raw Transaction Lookup</p>
           <h3 className="mt-0.5 text-lg font-bold text-slate-900">실거래 원천 조회</h3>
-          <p className="mt-1 text-sm text-slate-500">법정동코드만 필수입니다. 단지명, 전용면적, 층수는 검증용 선택값입니다.</p>
+          <p className="mt-1 text-sm text-slate-500">법정동코드, 지번주소, 도로명주소 중 하나로 조회합니다. 단지명, 전용면적, 층수는 검증용 선택값입니다.</p>
         </div>
       </div>
 
-      <div className="grid gap-3 xl:grid-cols-[180px_1fr_140px_120px_100px_auto]">
-        <label className="block">
-          <span className="mb-1.5 block text-xs font-semibold text-slate-500 uppercase tracking-wide">법정동코드 *</span>
-          <input value={legalDongCode} onChange={(e) => setLegalDongCode(e.target.value.replace(/[^0-9]/g, ""))} placeholder="5자리 또는 10자리" className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-4 focus:ring-blue-100" />
-        </label>
+      <div className="mb-3 flex flex-wrap gap-2">
+        {[
+          { value: "legalDongCode", label: "법정동코드" },
+          { value: "jibun", label: "지번주소" },
+          { value: "road", label: "도로명주소" },
+        ].map((option) => (
+          <button
+            key={option.value}
+            type="button"
+            onClick={() => setLookupType(option.value as LookupType)}
+            className={`rounded-full border px-4 py-2 text-sm font-bold transition-colors ${
+              lookupType === option.value
+                ? "border-blue-200 bg-blue-50 text-blue-700"
+                : "border-slate-200 bg-white text-slate-500 hover:bg-slate-50"
+            }`}
+          >
+            {option.label}
+          </button>
+        ))}
+      </div>
+
+      <div className="grid gap-3 xl:grid-cols-[minmax(220px,1.2fr)_minmax(220px,1fr)_140px_120px_100px_auto]">
+        {isCodeLookup ? (
+          <label className="block">
+            <span className="mb-1.5 block text-xs font-semibold text-slate-500 uppercase tracking-wide">법정동코드 *</span>
+            <input value={legalDongCode} onChange={(e) => setLegalDongCode(e.target.value.replace(/[^0-9]/g, ""))} placeholder="5자리 또는 10자리" className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-4 focus:ring-blue-100" />
+          </label>
+        ) : (
+          <label className="block">
+            <span className="mb-1.5 block text-xs font-semibold text-slate-500 uppercase tracking-wide">{lookupType === "jibun" ? "지번주소 *" : "도로명주소 *"}</span>
+            <input value={addressQuery} onChange={(e) => setAddressQuery(e.target.value)} placeholder={lookupType === "jibun" ? "예: 서울 송파구 가락동 913" : "예: 서울 송파구 송파대로 345"} className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-4 focus:ring-blue-100" />
+          </label>
+        )}
         <label className="block">
           <span className="mb-1.5 block text-xs font-semibold text-slate-500 uppercase tracking-wide">단지명 선택</span>
           <input value={buildingName} onChange={(e) => setBuildingName(e.target.value)} placeholder="예: 헬리오시티" className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-4 focus:ring-blue-100" />
@@ -107,7 +161,13 @@ export function RawTransactionLookup({ defaultBuildingName, defaultArea, default
       {result && (
         <div className="mt-5">
           <div className="mb-3 rounded-xl border border-blue-100 bg-blue-50 px-4 py-3 text-xs leading-5 text-blue-700">
-            입력 코드 {result.inputLegalDongCode} · API 호출 코드 {result.apiLawdCd}<br />{result.note}
+            조회방식 {result.lookupType ?? lookupType} · 변환 법정동코드 {result.inputLegalDongCode} · API 호출 코드 {result.apiLawdCd}<br />
+            {result.resolvedAddress && (
+              <>
+                지번: {result.resolvedAddress.jibunAddress ?? "-"} · 도로명: {result.resolvedAddress.roadAddress ?? "-"}<br />
+              </>
+            )}
+            {result.note}
           </div>
           <div className="overflow-hidden rounded-2xl border border-slate-200">
             <div className="overflow-x-auto">
