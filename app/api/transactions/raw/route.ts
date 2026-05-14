@@ -59,6 +59,7 @@ export async function POST(req: NextRequest) {
     }
 
     const lawdCd = legalDongCode.slice(0, 5);
+    const targetDong = resolvedAddress?.eupmyeondong;
     const normalizedTargetName = normalizeApartmentName(buildingName);
     const rows: any[] = [];
     const seen = new Set<string>();
@@ -97,6 +98,7 @@ export async function POST(req: NextRequest) {
           normalizedTargetName &&
           (normalizedApiName.includes(normalizedTargetName) || normalizedTargetName.includes(normalizedApiName))
         );
+        const isSameDong = targetDong ? dong === targetDong : true;
         const areaDifferenceM2 = exclusiveAreaM2 && area ? Math.abs(area - exclusiveAreaM2) : undefined;
         const floorDifference = targetFloor && floor ? Math.abs(floor - targetFloor) : undefined;
         const key = [dealAmount, dealYear, dealMonth, dealDay, area, floor, aptNm, jibun].join("|");
@@ -115,24 +117,35 @@ export async function POST(req: NextRequest) {
           buildYear,
           dealType,
           isSameApartment,
+          isSameDong,
           areaDifferenceM2,
           floorDifference,
         });
       }
-
-      if (rows.length >= limit * 3) break;
     }
 
-    const sorted = rows.sort((a, b) => b.dealDateKey - a.dealDateKey);
+    const ranked = rows.sort((a, b) => {
+      if (Number(b.isSameDong) !== Number(a.isSameDong)) return Number(b.isSameDong) - Number(a.isSameDong);
+      if (a.areaDifferenceM2 !== undefined && b.areaDifferenceM2 !== undefined && a.areaDifferenceM2 !== b.areaDifferenceM2) return a.areaDifferenceM2 - b.areaDifferenceM2;
+      if (a.areaDifferenceM2 === undefined && b.areaDifferenceM2 !== undefined) return 1;
+      if (a.areaDifferenceM2 !== undefined && b.areaDifferenceM2 === undefined) return -1;
+      if (a.floorDifference !== undefined && b.floorDifference !== undefined && a.floorDifference !== b.floorDifference) return a.floorDifference - b.floorDifference;
+      if (a.floorDifference === undefined && b.floorDifference !== undefined) return 1;
+      if (a.floorDifference !== undefined && b.floorDifference === undefined) return -1;
+      return b.dealDateKey - a.dealDateKey;
+    });
+
+    const selected = ranked.slice(0, limit).sort((a, b) => b.dealDateKey - a.dealDateKey);
 
     return NextResponse.json({
       success: true,
       lookupType,
       inputLegalDongCode: legalDongCode,
       apiLawdCd: lawdCd,
+      targetDong,
       resolvedAddress,
-      note: "실거래 API는 5자리 시군구 코드로 조회합니다. 주소 입력 시 카카오 주소검색으로 법정동코드를 확인한 뒤 앞 5자리로 조회합니다. 거래일은 최신순입니다.",
-      transactions: sorted.slice(0, limit),
+      note: "실거래 API는 5자리 시군구 코드로 조회합니다. 후보는 같은 동을 우선하고, 선택 입력값이 있으면 면적차/층수차 순으로 10건을 뽑은 뒤 거래일 최신순으로 표시합니다.",
+      transactions: selected,
     });
   } catch (error) {
     console.error("raw_transaction_lookup_failed", error);
