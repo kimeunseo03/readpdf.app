@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { searchAddressByKakao } from "../../../../src/backend/valuation/addressSearchApi";
 
-function getRecentDealYearMonths(monthCount = 24): string[] {
+function getRecentDealYearMonths(monthCount = 3): string[] {
   const result: string[] = [];
   const now = new Date();
   for (let i = 0; i < monthCount; i++) {
@@ -31,59 +31,107 @@ function parseDealDateKey(value: { dealYear: number; dealMonth: number; dealDay:
   return value.dealYear * 10000 + value.dealMonth * 100 + value.dealDay;
 }
 
+function getDaysAgo(dealYear: number, dealMonth: number, dealDay: number) {
+  const now = new Date();
+  const dealDate = new Date(dealYear, dealMonth - 1, dealDay || 1);
+  const diff = now.getTime() - dealDate.getTime();
+  return Math.max(0, Math.floor(diff / (1000 * 60 * 60 * 24)));
+}
+
 function getMatchTier(params: {
   isSameDong: boolean;
   isSameApartment: boolean;
   hasArea: boolean;
   hasFloor: boolean;
+  daysAgo: number;
   areaDifferenceM2?: number;
   floorDifference?: number;
 }) {
-  const { isSameDong, isSameApartment, hasArea, hasFloor, areaDifferenceM2, floorDifference } = params;
+  const { isSameDong, isSameApartment, hasArea, hasFloor, daysAgo, areaDifferenceM2, floorDifference } = params;
   if (!isSameDong || !isSameApartment) return 999;
 
+  const inOneMonth = daysAgo <= 31;
+  const inThreeMonths = daysAgo <= 93;
   const sameArea = hasArea && areaDifferenceM2 !== undefined && areaDifferenceM2 <= 0.01;
   const sameFloor = hasFloor && floorDifference !== undefined && floorDifference === 0;
   const areaWithin3 = hasArea && areaDifferenceM2 !== undefined && areaDifferenceM2 <= 3;
+  const areaWithin5 = hasArea && areaDifferenceM2 !== undefined && areaDifferenceM2 <= 5;
   const floorWithin3 = hasFloor && floorDifference !== undefined && floorDifference <= 3;
 
   if (hasArea && hasFloor) {
-    if (sameArea && sameFloor) return 1;
-    if (sameArea && floorWithin3) return 2;
-    if (areaWithin3 && floorWithin3) return 3;
+    if (inOneMonth && sameArea && sameFloor) return 1;
+    if (inThreeMonths && sameArea && sameFloor) return 2;
+    if (inOneMonth && sameArea && floorWithin3) return 3;
+    if (inThreeMonths && sameArea && floorWithin3) return 4;
+    if (inOneMonth && areaWithin3 && sameFloor) return 5;
+    if (inThreeMonths && areaWithin3 && sameFloor) return 6;
+    if (inOneMonth && areaWithin3 && floorWithin3) return 7;
+    if (inThreeMonths && areaWithin5 && sameFloor) return 8;
+    if (inOneMonth && areaWithin5 && floorWithin3) return 9;
+    if (inThreeMonths && areaWithin5 && floorWithin3) return 10;
     return 999;
   }
 
   if (hasArea) {
-    if (sameArea) return 1;
-    if (areaWithin3) return 2;
+    if (inOneMonth && sameArea) return 1;
+    if (inThreeMonths && sameArea) return 2;
+    if (inOneMonth && areaWithin3) return 3;
+    if (inThreeMonths && areaWithin3) return 4;
+    if (inOneMonth && areaWithin5) return 5;
+    if (inThreeMonths && areaWithin5) return 6;
     return 999;
   }
 
   if (hasFloor) {
-    if (sameFloor) return 1;
-    if (floorWithin3) return 2;
+    if (inOneMonth && sameFloor) return 1;
+    if (inThreeMonths && sameFloor) return 2;
+    if (inOneMonth && floorWithin3) return 3;
+    if (inThreeMonths && floorWithin3) return 4;
     return 999;
   }
 
-  return 1;
+  if (inOneMonth) return 1;
+  if (inThreeMonths) return 2;
+  return 999;
 }
 
 function getMatchLabel(tier: number, hasArea: boolean, hasFloor: boolean) {
   if (hasArea && hasFloor) {
-    if (tier === 1) return "같은 동·같은 아파트·같은 면적·같은 층";
-    if (tier === 2) return "같은 동·같은 아파트·같은 면적·층수 ±3층";
-    if (tier === 3) return "같은 동·같은 아파트·면적 ±3㎡·층수 ±3층";
+    const labels: Record<number, string> = {
+      1: "최근 한달 · 같은 동·같은 아파트·같은 면적·같은 층",
+      2: "최근 3개월 · 같은 동·같은 아파트·같은 면적·같은 층",
+      3: "최근 한달 · 같은 동·같은 아파트·같은 면적·층수 ±3층",
+      4: "최근 3개월 · 같은 동·같은 아파트·같은 면적·층수 ±3층",
+      5: "최근 한달 · 같은 동·같은 아파트·면적 ±3㎡·같은 층",
+      6: "최근 3개월 · 같은 동·같은 아파트·면적 ±3㎡·같은 층",
+      7: "최근 한달 · 같은 동·같은 아파트·면적 ±3㎡·층수 ±3층",
+      8: "최근 3개월 · 같은 동·같은 아파트·면적 ±5㎡·같은 층",
+      9: "최근 한달 · 같은 동·같은 아파트·면적 ±5㎡·층수 ±3층",
+      10: "최근 3개월 · 같은 동·같은 아파트·면적 ±5㎡·층수 ±3층",
+    };
+    return labels[tier] ?? "조건 불일치";
   }
   if (hasArea) {
-    if (tier === 1) return "같은 동·같은 아파트·같은 면적";
-    if (tier === 2) return "같은 동·같은 아파트·면적 ±3㎡";
+    const labels: Record<number, string> = {
+      1: "최근 한달 · 같은 동·같은 아파트·같은 면적",
+      2: "최근 3개월 · 같은 동·같은 아파트·같은 면적",
+      3: "최근 한달 · 같은 동·같은 아파트·면적 ±3㎡",
+      4: "최근 3개월 · 같은 동·같은 아파트·면적 ±3㎡",
+      5: "최근 한달 · 같은 동·같은 아파트·면적 ±5㎡",
+      6: "최근 3개월 · 같은 동·같은 아파트·면적 ±5㎡",
+    };
+    return labels[tier] ?? "조건 불일치";
   }
   if (hasFloor) {
-    if (tier === 1) return "같은 동·같은 아파트·같은 층";
-    if (tier === 2) return "같은 동·같은 아파트·층수 ±3층";
+    const labels: Record<number, string> = {
+      1: "최근 한달 · 같은 동·같은 아파트·같은 층",
+      2: "최근 3개월 · 같은 동·같은 아파트·같은 층",
+      3: "최근 한달 · 같은 동·같은 아파트·층수 ±3층",
+      4: "최근 3개월 · 같은 동·같은 아파트·층수 ±3층",
+    };
+    return labels[tier] ?? "조건 불일치";
   }
-  return "같은 동·같은 아파트";
+  return tier === 1 ? "최근 한달 · 같은 동·같은 아파트" : "최근 3개월 · 같은 동·같은 아파트";
 }
 
 export async function POST(req: NextRequest) {
@@ -124,7 +172,7 @@ export async function POST(req: NextRequest) {
     const rows: any[] = [];
     const seen = new Set<string>();
 
-    for (const dealYearMonth of getRecentDealYearMonths(24)) {
+    for (const dealYearMonth of getRecentDealYearMonths(3)) {
       const url = new URL("https://apis.data.go.kr/1613000/RTMSDataSvcAptTrade/getRTMSDataSvcAptTrade");
       url.searchParams.set("serviceKey", apiKey);
       url.searchParams.set("LAWD_CD", lawdCd);
@@ -161,7 +209,8 @@ export async function POST(req: NextRequest) {
         const isSameDong = targetDong ? dong === targetDong : true;
         const areaDifferenceM2 = exclusiveAreaM2 && area ? Math.abs(area - exclusiveAreaM2) : undefined;
         const floorDifference = targetFloor && floor ? Math.abs(floor - targetFloor) : undefined;
-        const matchTier = getMatchTier({ isSameDong, isSameApartment, hasArea, hasFloor, areaDifferenceM2, floorDifference });
+        const daysAgo = getDaysAgo(dealYear, dealMonth, dealDay);
+        const matchTier = getMatchTier({ isSameDong, isSameApartment, hasArea, hasFloor, daysAgo, areaDifferenceM2, floorDifference });
         if (matchTier === 999) continue;
 
         const key = [dealAmount, dealYear, dealMonth, dealDay, area, floor, aptNm, jibun].join("|");
@@ -183,6 +232,7 @@ export async function POST(req: NextRequest) {
           isSameDong,
           areaDifferenceM2,
           floorDifference,
+          daysAgo,
           matchTier,
           matchLabel: getMatchLabel(matchTier, hasArea, hasFloor),
         });
@@ -196,8 +246,6 @@ export async function POST(req: NextRequest) {
       return b.dealDateKey - a.dealDateKey;
     });
 
-    const selected = ranked.slice(0, limit).sort((a, b) => b.dealDateKey - a.dealDateKey);
-
     return NextResponse.json({
       success: true,
       lookupType,
@@ -205,8 +253,8 @@ export async function POST(req: NextRequest) {
       apiLawdCd: lawdCd,
       targetDong,
       resolvedAddress,
-      note: "같은 동·같은 아파트를 기본 조건으로 하고, 면적/층수 입력 시 같은 면적+같은 층 → 같은 면적+층수 ±3층 → 면적 ±3㎡+층수 ±3층 순으로 10건을 추출합니다. 목록은 화면에서 최신순·면적순·층수순으로 전환할 수 있습니다.",
-      transactions: selected,
+      note: "최근 1개월/3개월 기준으로 같은 동·같은 아파트 거래만 단계적으로 추출합니다. 화면에서 최신순·면적순·층수순 정렬을 전환할 수 있습니다.",
+      transactions: ranked.slice(0, limit),
     });
   } catch (error) {
     console.error("raw_transaction_lookup_failed", error);
