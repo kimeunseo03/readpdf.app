@@ -5,6 +5,7 @@ import { ValuationForm } from "./ValuationForm";
 
 type EditableProperty = {
   addressRaw?: string;
+  roadAddress?: string;
   sido?: string;
   sigungu?: string;
   eupmyeondong?: string;
@@ -13,13 +14,17 @@ type EditableProperty = {
   unitNumber?: string;
   floor?: number;
   exclusiveAreaM2?: number;
-  landRightRatio?: string;
 };
 
 function normalizeNumberInput(value: string) {
   if (!value.trim()) return undefined;
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : undefined;
+}
+
+function formatAreaWithPyeong(area?: number) {
+  if (!area) return undefined;
+  return `${area}㎡ (${(area / 3.3058).toFixed(2)}평)`;
 }
 
 function FieldRow({ label, value }: { label: string; value?: string | number | boolean | null }) {
@@ -77,6 +82,7 @@ export function ParseResultView({ response }: { response: ParseApiResponse }) {
   const [isEditing, setIsEditing] = useState(false);
   const [editableProperty, setEditableProperty] = useState<EditableProperty>({
     addressRaw: property.addressRaw,
+    roadAddress: property.roadAddress,
     sido: property.sido,
     sigungu: property.sigungu,
     eupmyeondong: property.eupmyeondong,
@@ -85,7 +91,6 @@ export function ParseResultView({ response }: { response: ParseApiResponse }) {
     unitNumber: property.unitNumber,
     floor: property.floor,
     exclusiveAreaM2: property.exclusiveAreaM2,
-    landRightRatio: property.landRightRatio,
   });
   const [draftProperty, setDraftProperty] = useState<EditableProperty>(editableProperty);
 
@@ -102,7 +107,6 @@ export function ParseResultView({ response }: { response: ParseApiResponse }) {
   return (
     <div className="space-y-5">
       <section className="rounded-3xl border border-slate-200 bg-white shadow-sm overflow-hidden">
-        {/* 섹션 헤더 */}
         <div className="flex items-center justify-between gap-4 px-7 py-5 border-b border-slate-100 bg-slate-50/60">
           <div>
             <p className="text-[11px] font-bold tracking-widest text-blue-500 uppercase">Registry Extraction</p>
@@ -129,15 +133,15 @@ export function ParseResultView({ response }: { response: ParseApiResponse }) {
           </div>
         </div>
 
-        {/* 본문 */}
         <div className="grid gap-0 xl:grid-cols-[380px_minmax(0,1fr)]">
-          {/* 물건 정보 사이드바 */}
           <div className="border-b xl:border-b-0 xl:border-r border-slate-100 bg-slate-50/40 p-6 xl:sticky xl:top-6 xl:self-start">
             <p className="text-[11px] font-bold tracking-widest text-slate-400 uppercase mb-4">Property Info</p>
             {isEditing ? (
               <div className="grid gap-3.5">
-                <EditableField label="주소" value={draftProperty.addressRaw} textarea
+                <EditableField label="지번주소" value={draftProperty.addressRaw} textarea
                   onChange={(v) => updateDraft("addressRaw", v)} />
+                <EditableField label="도로명주소" value={draftProperty.roadAddress} textarea
+                  onChange={(v) => updateDraft("roadAddress", v)} />
                 <div className="grid grid-cols-3 gap-2">
                   <EditableField label="시도" value={draftProperty.sido} onChange={(v) => updateDraft("sido", v)} />
                   <EditableField label="시군구" value={draftProperty.sigungu} onChange={(v) => updateDraft("sigungu", v)} />
@@ -150,19 +154,16 @@ export function ParseResultView({ response }: { response: ParseApiResponse }) {
                   <EditableField label="층수" type="number" value={draftProperty.floor}
                     onChange={(v) => updateDraft("floor", normalizeNumberInput(v))} />
                 </div>
-                <div className="grid grid-cols-2 gap-2">
-                  <EditableField label="전유면적㎡" type="number" value={draftProperty.exclusiveAreaM2}
-                    onChange={(v) => updateDraft("exclusiveAreaM2", normalizeNumberInput(v))} />
-                  <EditableField label="대지권" value={draftProperty.landRightRatio}
-                    onChange={(v) => updateDraft("landRightRatio", v)} />
-                </div>
+                <EditableField label="전유면적㎡" type="number" value={draftProperty.exclusiveAreaM2}
+                  onChange={(v) => updateDraft("exclusiveAreaM2", normalizeNumberInput(v))} />
                 <p className="rounded-xl bg-blue-50 border border-blue-100 p-3 text-xs leading-5 text-blue-700">
                   수정값은 원본 PDF를 변경하지 않으며, 가치평가 실행과 보고서 산출에만 반영됩니다.
                 </p>
               </div>
             ) : (
               <dl className="divide-y divide-slate-100">
-                <FieldRow label="주소" value={editableProperty.addressRaw} />
+                <FieldRow label="지번주소" value={editableProperty.addressRaw} />
+                <FieldRow label="도로명" value={editableProperty.roadAddress} />
                 <FieldRow label="시도" value={editableProperty.sido} />
                 <FieldRow label="시군구" value={editableProperty.sigungu} />
                 <FieldRow label="읍면동" value={editableProperty.eupmyeondong} />
@@ -170,19 +171,16 @@ export function ParseResultView({ response }: { response: ParseApiResponse }) {
                 <FieldRow label="동" value={editableProperty.buildingDong} />
                 <FieldRow label="호수" value={editableProperty.unitNumber} />
                 <FieldRow label="층수" value={editableProperty.floor} />
-                <FieldRow label="전유면적"
-                  value={editableProperty.exclusiveAreaM2 ? `${editableProperty.exclusiveAreaM2}㎡` : undefined} />
-                <FieldRow label="대지권" value={editableProperty.landRightRatio} />
+                <FieldRow label="전유면적" value={formatAreaWithPyeong(editableProperty.exclusiveAreaM2)} />
               </dl>
             )}
           </div>
 
-          {/* 가치평가 폼 */}
           <div className="p-6">
             <ValuationForm
               initialValue={{
                 addressRaw: editableProperty.addressRaw,
-                roadAddress: property.roadAddress,
+                roadAddress: editableProperty.roadAddress,
                 buildingName: editableProperty.buildingName,
                 exclusiveAreaM2: editableProperty.exclusiveAreaM2,
                 floor: editableProperty.floor,
@@ -193,7 +191,6 @@ export function ParseResultView({ response }: { response: ParseApiResponse }) {
         </div>
       </section>
 
-      {/* 수동 검토 배너 */}
       {review.manualReviewRequired && (
         <section className="rounded-2xl border border-amber-200 bg-amber-50/70 px-6 py-5">
           <div className="flex items-start gap-3">
