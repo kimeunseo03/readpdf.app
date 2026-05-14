@@ -16,6 +16,7 @@ interface FetchParams {
 
 type ApartmentTradeApiParams = PublicTransactionApiParams & {
   region?: ExtractedRegion;
+  floorTolerance?: number;
 };
 
 function getRecentDealYearMonths(monthCount = 24): string[] {
@@ -97,6 +98,10 @@ function applyGeneralBuildYearScore(params: { buildYear?: number; similarityScor
   return { similarityScore, similarityReason };
 }
 
+function getFloorToleranceLabel(floorTolerance?: number) {
+  return floorTolerance === undefined ? "층수 조건 완화" : `층수 ±${floorTolerance}층`;
+}
+
 async function fetchApartmentTradeApi(params: ApartmentTradeApiParams): Promise<TransactionItem[]> {
   try {
     if (!params.legalDongCode) return [];
@@ -136,6 +141,11 @@ async function fetchApartmentTradeApi(params: ApartmentTradeApiParams): Promise<
       const areaToleranceM2 = params.areaToleranceM2 ?? 3;
       const areaDifferenceM2 = params.exclusiveAreaM2 ? Math.abs(area - params.exclusiveAreaM2) : undefined;
       if (areaDifferenceM2 !== undefined && areaDifferenceM2 > areaToleranceM2) continue;
+
+      if (params.targetFloor && floor && params.floorTolerance !== undefined) {
+        const floorDifference = Math.abs(floor - params.targetFloor);
+        if (floorDifference > params.floorTolerance) continue;
+      }
 
       const monthsAgo = getMonthsAgo(dealYear, dealMonth, dealDay);
       if (monthsAgo > 24) continue;
@@ -195,13 +205,17 @@ async function fetchApartmentTradeApi(params: ApartmentTradeApiParams): Promise<
       if (similarityScore >= 85) reliabilityGrade = "A";
       else if (similarityScore >= 65) reliabilityGrade = "B";
 
+      const floorLabel = getFloorToleranceLabel(params.floorTolerance);
+
       transactions.push({
         dealAmount, dealYear, dealMonth, dealDay,
         area, floor, buildYear,
         isSameApartment, areaDifferenceM2, monthsAgo,
         distanceMeters: undefined,
         similarityScore, similarityReason, reliabilityGrade,
-        selectionReason: isSameApartment ? "동일 단지 거래" : `동일 지역 유사 거래(±${areaToleranceM2}㎡)`,
+        selectionReason: isSameApartment
+          ? `동일 단지 거래 · 면적 ±${areaToleranceM2}㎡ · ${floorLabel}`
+          : `동일 지역 유사 거래 · 면적 ±${areaToleranceM2}㎡ · ${floorLabel}`,
       });
     }
 
@@ -218,9 +232,15 @@ export async function fetchPublicTransactions(params: FetchParams): Promise<Tran
   if (!params.legalDongCode) return [];
 
   const recentMonths = getRecentDealYearMonths(24);
-  const areaTolerances = [3, 5];
+  const searchStages = [
+    { areaToleranceM2: 3, floorTolerance: 5 },
+    { areaToleranceM2: 3, floorTolerance: 10 },
+    { areaToleranceM2: 3, floorTolerance: undefined },
+    { areaToleranceM2: 5, floorTolerance: 10 },
+    { areaToleranceM2: 5, floorTolerance: undefined },
+  ];
 
-  for (const areaToleranceM2 of areaTolerances) {
+  for (const stage of searchStages) {
     const allTransactions: TransactionItem[] = [];
 
     for (const dealYearMonth of recentMonths) {
@@ -229,7 +249,8 @@ export async function fetchPublicTransactions(params: FetchParams): Promise<Tran
         dealYearMonth,
         buildingName: params.buildingName,
         exclusiveAreaM2: params.exclusiveAreaM2,
-        areaToleranceM2,
+        areaToleranceM2: stage.areaToleranceM2,
+        floorTolerance: stage.floorTolerance,
         targetFloor: params.targetFloor,
         targetBuildYear: params.targetBuildYear,
         targetHouseholdCount: params.targetHouseholdCount,
