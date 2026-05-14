@@ -149,7 +149,7 @@ async function fetchApartmentTradeApi(params: ApartmentTradeApiParams): Promise<
       const isSameApartment = isSameApartmentByName;
 
       let similarityScore = 20;
-      let similarityReason = "동일 법정동 유사 면적";
+      let similarityReason = "동일 지역 유사 면적";
 
       if (isSameApartment) {
         similarityScore += 35;
@@ -162,7 +162,6 @@ async function fetchApartmentTradeApi(params: ApartmentTradeApiParams): Promise<
         else { similarityScore += 3; similarityReason += ` · 면적 차이 ${areaDifferenceM2.toFixed(2)}㎡`; }
       }
 
-      // 거래 시점 점수
       const recency = getRecencyScore(monthsAgo);
       similarityScore += recency.score;
       if (recency.reason) similarityReason += ` · ${recency.reason}`;
@@ -181,7 +180,6 @@ async function fetchApartmentTradeApi(params: ApartmentTradeApiParams): Promise<
         similarityReason = general.similarityReason;
       }
 
-      // ✅ 5번: 직거래 완전 제외 → 감점으로 복원
       if (dealType.includes("직거래")) {
         similarityScore -= 15;
         similarityReason += " · 직거래 감점";
@@ -203,7 +201,7 @@ async function fetchApartmentTradeApi(params: ApartmentTradeApiParams): Promise<
         isSameApartment, areaDifferenceM2, monthsAgo,
         distanceMeters: undefined,
         similarityScore, similarityReason, reliabilityGrade,
-        selectionReason: isSameApartment ? "동일 단지 거래" : `법정동 fallback 거래(±${areaToleranceM2}㎡)`,
+        selectionReason: isSameApartment ? "동일 단지 거래" : `동일 지역 유사 거래(±${areaToleranceM2}㎡)`,
       });
     }
 
