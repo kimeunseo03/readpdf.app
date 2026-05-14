@@ -36,8 +36,8 @@ function normalizeApartmentName(value?: string): string {
       .replace(/에스-?클래스/g, "s클래스")
       .replace(/S-?클래스/gi, "s클래스")
       .replace(/이편한세상/g, "e편한세상")
-      .replace(/[0-9]+단지/g, "")   // "1단지" "2단지" 제거
-      .replace(/[가-힣]?동$/g, "")  // 뒤 "동" 제거 방지 오매칭
+      .replace(/[0-9]+단지/g, "")
+      .replace(/[가-힣]?동$/g, "")
       .trim() ?? ""
   );
 }
@@ -51,7 +51,6 @@ function getMonthsAgo(year: number, month: number, day: number): number {
   );
 }
 
-// ─── 거래 시점 점수 (신규 추가) ───────────────────────────────────────────────
 function getRecencyScore(monthsAgo?: number): { score: number; reason?: string } {
   if (monthsAgo === undefined) return { score: 0 };
   if (monthsAgo <= 3) return { score: 15, reason: "3개월 이내 거래" };
@@ -134,9 +133,6 @@ async function fetchApartmentTradeApi(params: ApartmentTradeApiParams): Promise<
 
       if (!dealAmount || !area || !dealYear || !dealMonth) continue;
 
-      // 직거래 제외 (시세 왜곡 방지)
-      if (dealType.includes("직거래")) continue;
-
       const areaToleranceM2 = params.areaToleranceM2 ?? 3;
       const areaDifferenceM2 = params.exclusiveAreaM2 ? Math.abs(area - params.exclusiveAreaM2) : undefined;
       if (areaDifferenceM2 !== undefined && areaDifferenceM2 > areaToleranceM2) continue;
@@ -146,22 +142,11 @@ async function fetchApartmentTradeApi(params: ApartmentTradeApiParams): Promise<
 
       const normalizedApiName = normalizeApartmentName(aptNm);
       const normalizedTargetName = normalizeApartmentName(params.buildingName);
-
-      const isSameApartmentByKaptCode = false; // kaptCode API 비활성화
       const isSameApartmentByName =
         normalizedTargetName.length > 0 &&
         (normalizedApiName.includes(normalizedTargetName) ||
           normalizedTargetName.includes(normalizedApiName));
-      const isSameApartment = isSameApartmentByKaptCode || isSameApartmentByName;
-
-      // 단지명 매칭 디버그
-      if (normalizedTargetName.length > 0) {
-        console.log("name_match_debug", {
-          target: normalizedTargetName,
-          api: normalizedApiName,
-          isSame: isSameApartment,
-        });
-      }
+      const isSameApartment = isSameApartmentByName;
 
       let similarityScore = 20;
       let similarityReason = "동일 법정동 유사 면적";
@@ -177,7 +162,7 @@ async function fetchApartmentTradeApi(params: ApartmentTradeApiParams): Promise<
         else { similarityScore += 3; similarityReason += ` · 면적 차이 ${areaDifferenceM2.toFixed(2)}㎡`; }
       }
 
-      // 거래 시점 점수 (신규)
+      // 거래 시점 점수
       const recency = getRecencyScore(monthsAgo);
       similarityScore += recency.score;
       if (recency.reason) similarityReason += ` · ${recency.reason}`;
@@ -194,6 +179,12 @@ async function fetchApartmentTradeApi(params: ApartmentTradeApiParams): Promise<
         const general = applyGeneralBuildYearScore({ buildYear, similarityScore, similarityReason });
         similarityScore = general.similarityScore;
         similarityReason = general.similarityReason;
+      }
+
+      // ✅ 5번: 직거래 완전 제외 → 감점으로 복원
+      if (dealType.includes("직거래")) {
+        similarityScore -= 15;
+        similarityReason += " · 직거래 감점";
       }
 
       similarityScore = Math.max(0, Math.min(100, similarityScore));
@@ -257,11 +248,8 @@ export async function fetchPublicTransactions(params: FetchParams): Promise<Tran
     if (allTransactions.length > 0) {
       return allTransactions
         .sort((a, b) => {
-          // 동일단지 우선
           if (b.isSameApartment !== a.isSameApartment) return (b.isSameApartment ? 1 : 0) - (a.isSameApartment ? 1 : 0);
-          // 유사도 높은 순
           if ((b.similarityScore ?? 0) !== (a.similarityScore ?? 0)) return (b.similarityScore ?? 0) - (a.similarityScore ?? 0);
-          // 최신 거래 우선
           const dateA = a.dealYear * 10000 + a.dealMonth * 100 + a.dealDay;
           const dateB = b.dealYear * 10000 + b.dealMonth * 100 + b.dealDay;
           return dateB - dateA;
