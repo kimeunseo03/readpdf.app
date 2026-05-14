@@ -190,17 +190,33 @@ function extractActiveMortgagesFromSummary(text: string): MortgageEntry[] {
   if (summaryStart < 0) return [];
   const summaryText = text.slice(summaryStart);
 
+function extractActiveMortgagesFromSummary(text: string): {
+  foundSummary: boolean;
+  mortgages: MortgageEntry[];
+} {
+  const summaryStart = text.indexOf("주요 등기사항 요약");
+  if (summaryStart < 0) {
+    return { foundSummary: false, mortgages: [] };
+  }
+
+  const summaryText = text.slice(summaryStart);
+
   const sectionMatch = summaryText.match(
     /3\.\s*\(근\)저당권 및 전세권 등\s*\(\s*을구\s*\)([\s\S]*?)(?:\[\s*참\s*고\s*사\s*항\s*\]|출력일시|$)/
   );
-  const section = sectionMatch?.[1] ?? "";
-  if (!section || /기록사항\s*없음/.test(section)) return [];
 
-  // 실제 PDF 추출 텍스트 구조:
-  // "1 근저당권설정 2021년2월17일 채권최고액 금96,000,000원 제28853호 근저당권자 농협은행주식회사 대상소유자 한상숙"
-  // 접수번호(제NNN호)가 채권최고액 뒤 또는 근저당권자 뒤 어디든 올 수 있음
+  const section = sectionMatch?.[1] ?? "";
+
+  if (!section) {
+    return { foundSummary: true, mortgages: [] };
+  }
+
+  if (/기록사항\s*없음/.test(section)) {
+    return { foundSummary: true, mortgages: [] };
+  }
+
   const rowRegex =
-    /(\d{1,3})\s+근저당권설정\s+\S+\s+채권최고액\s*(?:금)?\s*([0-9][0-9,]{4,})\s*원\s+(?:제\d+호\s+)?근저당권자\s+(.+?)\s+(?:제\d+호\s+)?대상소유자/g;
+    /(\d{1,3})\s+근저당권설정[\s\S]{0,120}?채권최고액\s*(?:금)?\s*([0-9][0-9,]{4,})\s*원[\s\S]{0,160}?근저당권자\s+(.+?)(?=\s+(?:대상소유자|참\s*고\s*사\s*항|\[\s*참|$))/g;
 
   const results: MortgageEntry[] = [];
   const seen = new Set<string>();
@@ -209,15 +225,26 @@ function extractActiveMortgagesFromSummary(text: string): MortgageEntry[] {
     const originalRank = Number(match[1]);
     const amount = parseWonAmount(match[2]);
     const creditor = cleanSummaryCreditor(match[3]);
-    if (!originalRank || !amount || !creditor || creditor === "확인 필요") continue;
-    const key = `${originalRank}-${amount}`;
-    if (seen.has(key)) continue;
-    seen.add(key);
-    results.push({ rank: originalRank, creditor, amount });
-  }
-  return results.sort((a, b) => a.rank - b.rank);
-}
 
+    if (!originalRank || !amount) continue;
+
+    const key = `${originalRank}-${amount}-${creditor}`;
+    if (seen.has(key)) continue;
+
+    seen.add(key);
+    results.push({
+      rank: originalRank,
+      creditor,
+      amount
+    });
+  }
+
+  return {
+    foundSummary: true,
+    mortgages: results.sort((a, b) => a.rank - b.rank)
+  };
+}
+  
 function extractMortgagesFromBody(text: string): MortgageEntry[] {
   const eulguStart = text.indexOf("【 을 구 】");
   if (eulguStart < 0) return [];
@@ -231,7 +258,11 @@ function extractMortgagesFromBody(text: string): MortgageEntry[] {
     const startIndex = startMatch.index ?? 0;
     const nextIndex = index + 1 < starts.length ? starts[index + 1].index ?? source.length : source.length;
     const block = source.slice(startIndex, nextIndex);
-    const cancellationRegex = new RegExp(`${rank}\\s*번\\s*근저당권설정등?\\s*기?말소|${rank}\\s*번근저당권설정등\\s*기말소`);
+    const cancellationRegex = new RegExp(
+      `${rank}\\s*번\\s*근저당권설정[\\s\\S]{0,20}?말소|` +
+      `${rank}\\s*번근저당권설정[\\s\\S]{0,20}?말소|` +
+      `${rank}\\s*번\\s*근저당권[\\s\\S]{0,20}?해지`
+    );
     if (cancellationRegex.test(source)) return;
     const amountMatch = block.match(/채권최고액\s*(?:금)?\s*([0-9][0-9,]{4,})\s*원/);
     const creditorMatch = block.match(/근저당권자\s+(.+?)(?=\s+(?:[0-9]{6}-|서울|부산|대구|인천|광주|대전|울산|세종|경기|강원|충청|전라|전북|전남|경상|경북|경남|제주|채무자|채권최고액|공동담보|목록|접수|등기원인|-- 이 하 여 백 --|$))/);
@@ -251,8 +282,12 @@ function normalizeMortgageRanks(mortgages: MortgageEntry[]): MortgageEntry[] {
 }
 
 function extractMortgages(text: string): MortgageEntry[] {
-  const summaryMortgages = extractActiveMortgagesFromSummary(text);
-  if (summaryMortgages.length > 0) return normalizeMortgageRanks(summaryMortgages);
+  const summaryResult = extractActiveMortgagesFromSummary(text);
+
+  if (summaryResult.foundSummary) {
+    return normalizeMortgageRanks(summaryResult.mortgages);
+  }
+
   return normalizeMortgageRanks(extractMortgagesFromBody(text));
 }
 
