@@ -2,7 +2,6 @@ export type RiskLevel = "SAFE" | "CAUTION" | "DANGER";
 export type ReliabilityGrade = "A" | "B" | "C";
 
 export interface MortgageItem {
-  
   rank: number;
 
   creditor: string;
@@ -36,6 +35,7 @@ export interface RightsRiskInput {
 
 export interface ValuationInput {
   addressRaw?: string;
+  roadAddress?: string;
   buildingName?: string;
   exclusiveAreaM2?: number;
   floor?: number;
@@ -100,6 +100,9 @@ export interface ValuationResult {
 
   normalizedAddress?: string;
   buildingName?: string;
+  addressBasisType?: "road" | "jibun";
+  addressBasisLabel?: string;
+  addressBasisAddress?: string;
 
   comparableCount: number;
 
@@ -120,7 +123,7 @@ export interface ValuationResult {
   seniorMortgageAmount?: number;
 
   mortgages?: MortgageItem[];
-  
+
   tenantDepositAmount?: number;
 
   tenantMonthlyRent?: number;
