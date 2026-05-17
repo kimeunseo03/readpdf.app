@@ -57,6 +57,13 @@ export type RegistryParseResult = {
 
     hasCancellationKeyword?: boolean;
 
+    /**
+     * true  → "주요 등기사항 요약" 3번 섹션을 실제로 찾음 (없음 = 기록사항 없음 확인)
+     * false → 요약 섹션을 찾지 못함 (본문 fallback 사용)
+     * undefined → 추출 로직 미실행
+     */
+    mortgageSummaryChecked?: boolean;
+
     riskDetails?: {
       type: string;
       label: string;
