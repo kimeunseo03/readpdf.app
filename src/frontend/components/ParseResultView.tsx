@@ -228,13 +228,13 @@ export function ParseResultView({ response, uploadSlot }: { response: ParseApiRe
         본 평가는 참고용이며 법적 효력이 없습니다. 담보 목적으로 사용 불가 · 출력일 {new Date().toLocaleDateString("ko-KR")}
       </div>
 
-      {/* ── 상단 2분할: [등기부 판독 결과] | [조회 조건] ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start print:block">
+      {/* ── 상단: 업로드 슬롯 + 통합 카드 ── */}
+      <div className="space-y-4 print:block">
+        {uploadSlot}
 
-        {/* ═══ LEFT: 업로드(슬롯) + 등기부 판독 결과 ═══ */}
-        <div className="space-y-4 print:block">
-          {uploadSlot}
-          <section className="print-shell rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+        {/* ═══ 등기부 판독 결과 + 조회 조건 통합 카드 ═══ */}
+        <section className="print-shell rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+
           {/* 카드 헤더 */}
           <div className="no-print flex items-center justify-between gap-4 px-6 py-4 border-b border-slate-100 bg-slate-50/60">
             <div className="flex items-center gap-3">
@@ -314,7 +314,7 @@ export function ParseResultView({ response, uploadSlot }: { response: ParseApiRe
                   </p>
                 </div>
                 {/* 3열 컴팩트 그리드 */}
-                <dl className="grid grid-cols-2 sm:grid-cols-3 gap-x-4">
+                <dl className="grid grid-cols-2 sm:grid-cols-4 gap-x-4">
                   {([
                     ["건물명",   editableProperty.buildingName],
                     ["동",       editableProperty.buildingDong],
@@ -375,107 +375,12 @@ export function ParseResultView({ response, uploadSlot }: { response: ParseApiRe
               </div>
             )}
           </div>
-        </section>
-        </div>
 
-        {/* ═══ RIGHT: 조회 조건 카드 (sticky) ═══ */}
-        <div className="no-print rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden lg:sticky lg:top-6">
-          {/* 카드 헤더 */}
-          <div className="flex items-center gap-3 px-5 py-4 border-b border-slate-100 bg-slate-50/60">
-            <div className="h-5 w-0.5 rounded-full bg-emerald-500" />
-            <div>
-              <p className="text-[10px] font-bold tracking-widest text-emerald-600 uppercase leading-none">Transaction Lookup</p>
-              <h2 className="mt-1 text-base font-bold text-slate-900 leading-none">조회 조건</h2>
-            </div>
-          </div>
+          {/* ── 임차보증금 + 조회 버튼 (구분선 아래) ── */}
+          <div className="no-print border-t border-slate-100 px-6 py-4 space-y-3">
 
-          <div className="p-4 space-y-3">
-            {/* PDF 추출값 확인 안내 */}
-            {!result && !loading && editableProperty.addressRaw && (
-              <div className="rounded-xl border border-blue-100 bg-blue-50/70 px-4 py-3 text-sm text-blue-700">
-                PDF에서 추출한 값이 입력됐습니다. 값을 확인하고 <strong>조회 시작</strong>을 누르세요.
-              </div>
-            )}
-
-            {/* 단지명 */}
-            <label className="block">
-              <span className="mb-1.5 block text-xs font-semibold text-slate-500 uppercase tracking-wide">단지명</span>
-              <input
-                value={buildingName}
-                onChange={(e) => setBuildingName(e.target.value)}
-                className={`w-full rounded-xl border px-3 py-2.5 text-sm shadow-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100 ${
-                  !buildingName.trim() ? "border-amber-300 bg-amber-50/60" : "border-slate-200"
-                }`}
-              />
-              {!buildingName.trim() && (
-                <p className="mt-1 text-xs text-amber-600">미입력 시 동일단지 우선 조회 불가</p>
-              )}
-            </label>
-
-            {/* 전용면적 */}
-            <label className="block">
-              <span className="mb-1.5 block text-xs font-semibold text-slate-500">전용면적 (㎡)</span>
-              <input
-                value={exclusiveAreaM2}
-                onChange={(e) => setExclusiveAreaM2(e.target.value)}
-                className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm shadow-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100"
-              />
-            </label>
-
-            {/* 층수 + 조회개수 */}
-            <div className="grid grid-cols-2 gap-2">
-              <label className="block">
-                <span className="mb-1.5 block text-xs font-semibold text-slate-500">층수</span>
-                <input
-                  value={targetFloor}
-                  onChange={(e) => setTargetFloor(e.target.value.replace(/[^0-9]/g, ""))}
-                  className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm shadow-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100"
-                />
-              </label>
-              <label className="block">
-                <span className="mb-1.5 block text-xs font-semibold text-slate-500">조회 개수</span>
-                <input
-                  value={limit}
-                  onChange={(e) => setLimit(e.target.value.replace(/[^0-9]/g, ""))}
-                  className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm shadow-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100"
-                />
-              </label>
-            </div>
-
-            {/* 차감 항목 */}
-            <div className="border-t border-slate-100 pt-2 space-y-2.5">
-              <p className="text-[10px] font-bold tracking-widest text-slate-400 uppercase">차감 항목</p>
-
-              {/* 선순위 근저당 — PDF 자동추출, 읽기 전용 */}
-              <div>
-                <p className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-slate-400">
-                  선순위 근저당
-                  <span className="ml-1 font-normal normal-case text-amber-500">· PDF 자동</span>
-                </p>
-                {(rightsRisk.mortgages ?? []).length > 0 ? (
-                  <div className="rounded-lg border border-slate-100 bg-slate-50 p-2 space-y-1.5">
-                    {rightsRisk.mortgages?.map((m, i) => (
-                      <div key={i} className="flex items-center gap-1.5 text-xs">
-                        <span className="shrink-0 rounded-full bg-slate-700 px-1.5 py-0.5 text-[10px] font-black text-white leading-none">
-                          {m.rank}순위
-                        </span>
-                        <span className="flex-1 truncate text-slate-500">{m.creditor}</span>
-                        <span className="shrink-0 font-bold text-red-600">{formatKoreanPrice(m.amount)}</span>
-                      </div>
-                    ))}
-                    {(rightsRisk.mortgages ?? []).length > 1 && (
-                      <div className="flex items-center justify-between border-t border-slate-200 pt-1.5 text-xs">
-                        <span className="font-bold text-slate-600">합계</span>
-                        <span className="font-black text-red-700">{formatKoreanPrice(mortgageAmt)}</span>
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  <p className="text-xs text-slate-300">추출된 근저당 없음</p>
-                )}
-              </div>
-
-              {/* 임차보증금 토글 */}
+            {/* 임차보증금 토글 + 입력 */}
+            <div className="space-y-2">
               <div
                 className={`flex cursor-pointer items-center justify-between rounded-lg border px-3 py-2 text-sm font-semibold transition-colors ${
                   hasTenant ? "border-blue-200 bg-blue-50 text-blue-700" : "border-slate-200 bg-white text-slate-500"
@@ -548,9 +453,9 @@ export function ParseResultView({ response, uploadSlot }: { response: ParseApiRe
               </p>
             )}
           </div>
-        </div>
 
-      </div>{/* end 상단 2분할 */}
+        </section>
+      </div>{/* end 상단 */}
 
       {/* ── 하단: 실거래 원천 조회 결과 (전체 너비) ── */}
       <div className="print-shell rounded-2xl border border-slate-200 bg-white shadow-sm">
