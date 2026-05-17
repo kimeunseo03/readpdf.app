@@ -1,6 +1,24 @@
+/**
+ * POST /api/documents/parse
+ * ─────────────────────────────────────────────────
+ * 등기부등본 PDF → 구조화 데이터 변환
+ *
+ * 처리 순서:
+ *   1. multipart/form-data에서 file 추출
+ *   2. validatePdfFile: MIME·확장자·크기 검증 (max 10MB)
+ *   3. hasPdfMagicBytes: %PDF 시그니처 바이트 확인
+ *   4. extractTextFromPdf: pdf-parse로 텍스트 추출
+ *   5. parseRegistryText: 정규식 기반 필드 파싱
+ *      → 주소, 면적, 층, 근저당, 임차권 등
+ *
+ * 보안:
+ *   - PDF 파일은 메모리에서만 처리, 서버 디스크 저장 없음
+ *   - 파일명·내용 로그 기록 없음 (에러 메시지만 로그)
+ * ─────────────────────────────────────────────────
+ */
 import { NextResponse } from "next/server";
 import { randomUUID } from "crypto";
-import { validatePdfFile } from "@backend/pdf/validatePdf";
+import { validatePdfFile, hasPdfMagicBytes } from "@backend/pdf/validatePdf";
 import { extractTextFromPdf } from "@backend/pdf/extractText";
 import { parseRegistryText } from "@backend/pdf/parseRegistryPdf";
 import { getCompliancePolicy } from "@backend/compliance/dataSourcePolicy";
@@ -24,6 +42,11 @@ export async function POST(request: Request) {
 
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
+
+    if (!hasPdfMagicBytes(buffer)) {
+      return NextResponse.json({ error: "올바른 PDF 파일이 아닙니다." }, { status: 400 });
+    }
+
     const extracted = await extractTextFromPdf(buffer);
 
     const parseResult = parseRegistryText({
@@ -39,11 +62,12 @@ export async function POST(request: Request) {
       compliance: getCompliancePolicy()
     });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "알 수 없는 오류가 발생했습니다.";
+    const msg = error instanceof Error ? error.message : String(error);
+    console.error("pdf_parse_error", msg);
     return NextResponse.json(
       {
         error: "PDF 판독 중 오류가 발생했습니다.",
-        detail: message,
+        detail: msg,
         hint: "암호화 PDF, 손상 PDF, 이미지 기반 스캔본일 수 있습니다."
       },
       { status: 500 }

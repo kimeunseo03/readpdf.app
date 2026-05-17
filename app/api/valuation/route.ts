@@ -1,3 +1,15 @@
+/**
+ * POST /api/valuation
+ * ─────────────────────────────────────────────────
+ * 아파트 종합 감정 평가 엔드포인트
+ *
+ * 입력: addressRaw, buildingName, exclusiveAreaM2, floor,
+ *       tenantDepositAmount, tenantMonthlyRent, rightsRisk
+ * 출력: estimateApartmentValue() 결과 (시세 추정 + 담보여력)
+ *
+ * 에러: 500 반환 (detail 미포함 — 내부 스택 미노출)
+ * ─────────────────────────────────────────────────
+ */
 import { NextRequest, NextResponse } from "next/server";
 import { estimateApartmentValue } from "../../../src/backend/valuation/estimateApartmentValue";
 
