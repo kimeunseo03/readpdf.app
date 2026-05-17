@@ -141,14 +141,11 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
 
   return (
     <div className="report-page print-report space-y-6">
-      <section className="no-print card-surface p-6">
-        <p className="text-[11px] font-bold tracking-widest text-blue-500 uppercase">Valuation Action</p>
-        <h2 className="mt-0.5 text-lg font-bold text-slate-900 mb-4">가치평가 실행</h2>
-        <div className="mb-5 rounded-2xl border border-blue-100 bg-blue-50/50 px-5 py-4">
+      <div className="no-print">
+        <div className="mb-5 rounded-xl border border-blue-100 bg-blue-50/50 px-5 py-4">
           <p className="text-[11px] font-bold text-blue-500 uppercase tracking-wider mb-1">평가 기준 물건</p>
           <p className="text-sm font-bold text-slate-900 leading-snug">{initialValue.addressRaw ?? "주소 정보 확인 필요"}</p>
           <p className="mt-1 text-sm text-slate-500">{formatCompactProperty(initialValue)}</p>
-          {initialValue.roadAddress && <p className="mt-2 rounded-xl bg-white/70 px-3 py-2 text-xs leading-5 text-blue-700">도로명 보조값: {initialValue.roadAddress}</p>}
         </div>
         <div className="grid grid-cols-2 gap-3">
           <label className="block"><span className="mb-1.5 block text-xs font-semibold text-slate-500 uppercase tracking-wide">담당자명</span><input value={managerName} onChange={(e) => setManagerName(e.target.value)} className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-4 focus:ring-blue-100" placeholder="예: 홍길동" /></label>
@@ -157,7 +154,7 @@ export function ValuationForm({ initialValue }: ValuationFormProps) {
           <div className="col-span-2 flex justify-end pt-1"><button type="button" onClick={runValuation} disabled={loading} className="rounded-xl bg-blue-600 px-6 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50 transition-colors">{loading ? "평가 중..." : "자동 평가 실행"}</button></div>
         </div>
         {error && <div className="mt-4 flex items-start gap-3 rounded-xl bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700"><span>⚠</span><span>{error}</span></div>}
-      </section>
+      </div>
       {result && <div className="report-section space-y-6">
         <section className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
           <div className="mb-6 flex items-start justify-between gap-6 border-b border-slate-100 pb-5"><div className="min-w-0"><p className="text-[11px] font-bold tracking-widest text-blue-500 uppercase">Valuation Result</p><h2 className="mt-1 text-2xl font-black tracking-tight text-slate-900">가치평가 결과</h2><p className="mt-2 text-sm font-semibold text-slate-700">{initialValue.buildingName ?? "단지명 확인 필요"}</p>{result.addressBasisAddress && <p className="mt-2 inline-flex max-w-full rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600">실거래 조회 기준: {result.addressBasisLabel ?? "주소"} · {result.addressBasisAddress}</p>}</div><button type="button" onClick={printReport} className="no-print shrink-0 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-600 shadow-sm hover:bg-slate-50 transition-colors">PDF 저장</button></div>
